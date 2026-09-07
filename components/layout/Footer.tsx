@@ -53,12 +53,17 @@ export default function Footer() {
                 Snap<span className="text-primary">Doc</span>
               </span>
             </Link>
-            <p className="text-xs text-base-content/70 leading-relaxed max-w-sm">
-              The modern, privacy-first online toolkit for compressing, resizing, converting, and editing images and PDF files. Fast, free, and secure.
-            </p>
-            <div className="text-xs text-base-content/50">
-              &copy; {new Date().getFullYear()} SnapDoc. All rights reserved.
-            </div>
+           <p className="text-xs text-base-content/70 leading-relaxed max-w-sm">
+  The modern, privacy-first online toolkit for compressing, resizing, converting, and editing images and PDF files. Fast, free, and secure.
+</p>
+
+<div className="text-xs text-base-content/60 mt-3">
+  Developed by <span className="font-medium text-base-content/80">Tasnim Sakib</span>
+</div>
+
+<div className="text-xs text-base-content/50 mt-2">
+  &copy; {new Date().getFullYear()} SnapDoc. All rights reserved.
+</div>
           </div>
 
           {/* Compress Tools */}

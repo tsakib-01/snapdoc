@@ -10,7 +10,18 @@ import {
   Zap,
   FileText,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Scissors,
+  Trash2,
+  Hash,
+  Stamp,
+  PenTool,
+  FileSpreadsheet,
+  FileCode,
+  Bot,
+  MessageSquare,
+  Camera,
+  ScanText,
 } from 'lucide-react';
 import { ToolMeta } from '@/lib/config/tools';
 
@@ -27,7 +38,17 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   FileText: <FileText className="w-5 h-5 text-red-500" />,
   Image: <FileImage className="w-5 h-5 text-blue-500" />,
   Layers: <Layers className="w-5 h-5 text-cyan-500" />,
-  Scissors: <Crop className="w-5 h-5 text-pink-500" />,
+  Scissors: <Scissors className="w-5 h-5 text-pink-500" />,
+  Trash2: <Trash2 className="w-5 h-5 text-rose-500" />,
+  Hash: <Hash className="w-5 h-5 text-emerald-500" />,
+  Stamp: <Stamp className="w-5 h-5 text-purple-500" />,
+  PenTool: <PenTool className="w-5 h-5 text-indigo-500" />,
+  FileSpreadsheet: <FileSpreadsheet className="w-5 h-5 text-green-600" />,
+  FileCode: <FileCode className="w-5 h-5 text-amber-600" />,
+  Bot: <Bot className="w-5 h-5 text-violet-600" />,
+  MessageSquare: <MessageSquare className="w-5 h-5 text-blue-600" />,
+  Camera: <Camera className="w-5 h-5 text-teal-600" />,
+  ScanText: <ScanText className="w-5 h-5 text-cyan-600" />,
 };
 
 export default function ToolCard({ tool }: { tool: ToolMeta }) {

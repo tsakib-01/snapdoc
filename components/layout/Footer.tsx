@@ -66,38 +66,43 @@ export default function Footer() {
 </div>
           </div>
 
-          {/* Compress Tools */}
+          {/* PDF Organize & Edit */}
           <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Compress Tools</h5>
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Organize & Edit</h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/compress-jpg" className="hover:text-primary transition-colors">Compress JPG</Link></li>
-              <li><Link href="/compress-jpg-to-10kb" className="hover:text-primary transition-colors text-primary font-medium">JPG to 10KB</Link></li>
-              <li><Link href="/compress-jpg-to-20kb" className="hover:text-primary transition-colors">JPG to 20KB</Link></li>
-              <li><Link href="/compress-jpg-to-50kb" className="hover:text-primary transition-colors">JPG to 50KB</Link></li>
-              <li><Link href="/compress-image" className="hover:text-primary transition-colors">Compress Image</Link></li>
+              <li><Link href="/organize-pdf" className="hover:text-primary transition-colors text-primary font-medium">Organize PDF</Link></li>
+              <li><Link href="/extract-pdf-pages" className="hover:text-primary transition-colors">Extract Pages</Link></li>
+              <li><Link href="/delete-pdf-pages" className="hover:text-primary transition-colors">Delete Pages</Link></li>
+              <li><Link href="/rotate-pdf" className="hover:text-primary transition-colors">Rotate PDF</Link></li>
+              <li><Link href="/sign-pdf" className="hover:text-primary transition-colors">Sign PDF (eSign)</Link></li>
+              <li><Link href="/add-page-numbers-to-pdf" className="hover:text-primary transition-colors">Page Numbers</Link></li>
+              <li><Link href="/watermark-pdf" className="hover:text-primary transition-colors">Watermark PDF</Link></li>
             </ul>
           </div>
 
-          {/* Convert & Edit */}
+          {/* Convert & Office */}
           <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Convert & Edit</h5>
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Convert & Office</h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/jpg-to-png" className="hover:text-primary transition-colors">JPG to PNG</Link></li>
-              <li><Link href="/png-to-jpg" className="hover:text-primary transition-colors">PNG to JPG</Link></li>
-              <li><Link href="/jpg-to-webp" className="hover:text-primary transition-colors">JPG to WebP</Link></li>
-              <li><Link href="/resize-image" className="hover:text-primary transition-colors">Resize Image</Link></li>
-              <li><Link href="/crop-image" className="hover:text-primary transition-colors">Crop Image</Link></li>
-            </ul>
-          </div>
-
-          {/* PDF & Legal */}
-          <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">PDF & Info</h5>
-            <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/image-to-pdf" className="hover:text-primary transition-colors">Image to PDF</Link></li>
+              <li><Link href="/pdf-to-word" className="hover:text-primary transition-colors">PDF to Word</Link></li>
+              <li><Link href="/pdf-to-excel" className="hover:text-primary transition-colors">PDF to Excel</Link></li>
               <li><Link href="/pdf-to-jpg" className="hover:text-primary transition-colors">PDF to JPG</Link></li>
-              <li><Link href="/merge-pdf" className="hover:text-primary transition-colors">Merge PDF</Link></li>
-              <li><Link href="/split-pdf" className="hover:text-primary transition-colors">Split PDF</Link></li>
+              <li><Link href="/pdf-to-png" className="hover:text-primary transition-colors">PDF to PNG</Link></li>
+              <li><Link href="/word-to-pdf" className="hover:text-primary transition-colors">Word to PDF</Link></li>
+              <li><Link href="/excel-to-pdf" className="hover:text-primary transition-colors">Excel to PDF</Link></li>
+              <li><Link href="/txt-to-pdf" className="hover:text-primary transition-colors">TXT to PDF</Link></li>
+            </ul>
+          </div>
+
+          {/* AI & Image Tools */}
+          <div className="space-y-3">
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">AI & Compress</h5>
+            <ul className="space-y-2 text-xs text-base-content/70">
+              <li><Link href="/ai-pdf" className="hover:text-primary transition-colors text-violet-600 font-medium">AI PDF Assistant</Link></li>
+              <li><Link href="/chat-with-pdf" className="hover:text-primary transition-colors">Chat with PDF</Link></li>
+              <li><Link href="/pdf-scanner" className="hover:text-primary transition-colors">Camera Scanner</Link></li>
+              <li><Link href="/compress-pdf" className="hover:text-primary transition-colors">Compress PDF</Link></li>
+              <li><Link href="/compress-jpg-to-10kb" className="hover:text-primary transition-colors">JPG to 10KB</Link></li>
               <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
             </ul>

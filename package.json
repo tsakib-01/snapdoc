@@ -11,14 +11,17 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
+    "docx": "^9.7.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.453.0",
+    "mammoth": "^1.12.2",
     "next": "14.2.15",
     "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sharp": "^0.33.5",
-    "tailwind-merge": "^2.5.4"
+    "tailwind-merge": "^2.5.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",

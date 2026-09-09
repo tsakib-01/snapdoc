@@ -670,6 +670,605 @@ export const TOOLS: ToolMeta[] = [
         a: 'No, vector text and font curves remain perfectly crisp and sharp at any zoom level.'
       }
     ]
+  },
+  {
+    id: 'organize-pdf',
+    name: 'Organize PDF Pages',
+    shortName: 'Organize PDF',
+    slug: 'organize-pdf',
+    description: 'Reorder, rotate, delete, and organize PDF pages visually with live thumbnail previews.',
+    longDescription: 'Our visual PDF organizer renders interactive thumbnail previews of every page in your document. Easily drag to reorder, rotate individual pages, delete unwanted pages, and export your organized PDF.',
+    category: 'pdf',
+    badge: 'Visual Preview',
+    icon: 'Layers',
+    popular: true,
+    acceptedTypes: 'application/pdf',
+    keywords: ['organize pdf', 'reorder pdf pages', 'sort pdf', 'rotate pdf pages'],
+    features: [
+      'Live interactive thumbnail previews of all pages',
+      'One-click multi-page rotation and deletion',
+      'Batch selection: All, Odd, or Even pages',
+      'Drag & drop page reordering',
+      '100% In-memory processing with zero database storage'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'View all rendered page previews in the interactive workspace.' },
+      { step: '3', text: 'Reorder, rotate, or delete pages as desired.' },
+      { step: '4', text: 'Click "Finish" and download your organized PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I reorder pages in my PDF visually?',
+        a: 'Yes! The visual organizer generates real-time thumbnails for each page, allowing you to move, rotate, and delete pages seamlessly.'
+      }
+    ]
+  },
+  {
+    id: 'extract-pdf-pages',
+    name: 'Extract PDF Pages',
+    shortName: 'Extract Pages',
+    slug: 'extract-pdf-pages',
+    description: 'Select and extract specific pages from a PDF with interactive visual thumbnail previews.',
+    longDescription: 'Choose the exact pages you want to keep from your PDF with visual thumbnail cards. Export your extracted pages into a single new PDF document or download separate individual page PDFs.',
+    category: 'pdf',
+    badge: 'Visual Preview',
+    icon: 'Scissors',
+    popular: true,
+    acceptedTypes: 'application/pdf',
+    keywords: ['extract pdf pages', 'separate pdf', 'save specific pdf pages', 'split pdf visually'],
+    features: [
+      'Visual thumbnail page picker with zoom preview',
+      'Batch selection: All, Odd, or Even pages',
+      'Export as combined PDF or ZIP of separate pages',
+      'Instant client-side rendering with no data retention'
+    ],
+    howTo: [
+      { step: '1', text: 'Select or drop your PDF document.' },
+      { step: '2', text: 'Click on page cards to select the pages you want to extract.' },
+      { step: '3', text: 'Optionally toggle "Separate PDFs" if you want each page as its own file.' },
+      { step: '4', text: 'Click "Finish" to download your extracted document.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I extract non-consecutive pages?',
+        a: 'Yes! You can click any combination of pages to extract only those pages into a new file.'
+      }
+    ]
+  },
+  {
+    id: 'delete-pdf-pages',
+    name: 'Delete PDF Pages',
+    shortName: 'Delete Pages',
+    slug: 'delete-pdf-pages',
+    description: 'Quickly remove unwanted or blank pages from your PDF with visual thumbnail selection.',
+    longDescription: 'Select pages to delete or click the trash icon on individual thumbnail cards to instantly remove them from your PDF file.',
+    category: 'pdf',
+    badge: 'Visual Preview',
+    icon: 'Trash2',
+    acceptedTypes: 'application/pdf',
+    keywords: ['delete pdf pages', 'remove pages from pdf', 'cut pdf pages', 'delete blank pdf pages'],
+    features: [
+      'Interactive visual thumbnail selector',
+      'One-click trash action on any page card',
+      'Instant removal with zero quality loss',
+      '100% In-memory processing and strict privacy'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'Click the trash icon on the pages you want to discard.' },
+      { step: '3', text: 'Click "Finish" to download your cleaned PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Does deleting pages reduce the PDF file size?',
+        a: 'Yes, removing unwanted pages will noticeably decrease your total PDF file size.'
+      }
+    ]
+  },
+  {
+    id: 'rotate-pdf',
+    name: 'Rotate PDF Pages',
+    shortName: 'Rotate PDF',
+    slug: 'rotate-pdf',
+    description: 'Rotate individual pages or entire PDF documents with live thumbnail previews.',
+    longDescription: 'Fix upside-down or sideways scans. Rotate specific pages 90° clockwise, counter-clockwise, or 180° with live visual feedback.',
+    category: 'pdf',
+    badge: 'Visual Preview',
+    icon: 'RotateCw',
+    acceptedTypes: 'application/pdf',
+    keywords: ['rotate pdf', 'turn pdf', 'rotate upside down pdf', 'rotate pdf pages online'],
+    features: [
+      'Visual thumbnail page picker',
+      'Rotate individual pages or all pages at once',
+      'Lossless rotation without quality degradation',
+      '100% In-memory processing'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'Use the rotation buttons on page cards or top toolbar.' },
+      { step: '3', text: 'Click "Finish" to download your permanently rotated PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I rotate only page 1 and leave the rest unchanged?',
+        a: 'Yes! Hover over page 1 and click the rotate icon to adjust only that page.'
+      }
+    ]
+  },
+  {
+    id: 'add-page-numbers-to-pdf',
+    name: 'Add Page Numbers to PDF',
+    shortName: 'Page Numbers',
+    slug: 'add-page-numbers-to-pdf',
+    description: 'Insert page numbers into headers or footers with customizable format and placement.',
+    longDescription: 'Number your PDF pages with ease. Choose your desired position (bottom center, top right, etc.), format ("Page 1 of N", "1 of N", or "1"), font size, and starting page offset.',
+    category: 'pdf',
+    icon: 'Hash',
+    acceptedTypes: 'application/pdf',
+    keywords: ['add page numbers to pdf', 'number pdf pages', 'pdf pagination', 'page numbering online'],
+    features: [
+      '6 Visual placement positions: Top/Bottom, Left/Center/Right',
+      'Flexible numbering styles: "Page X of Y", "X of Y", or "1, 2, 3..."',
+      'Custom starting page and font sizing',
+      'Instant in-memory stamping with no storage'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'Select your preferred position on the page (e.g. Bottom Center).' },
+      { step: '3', text: 'Choose the numbering format and font size.' },
+      { step: '4', text: 'Click "Add Page Numbers" to download your numbered PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I start numbering from page 2 (skipping cover page)?',
+        a: 'Yes! Simply set "Start Numbering From Page" to 2 in the tool settings.'
+      }
+    ]
+  },
+  {
+    id: 'watermark-pdf',
+    name: 'Watermark PDF',
+    shortName: 'Watermark PDF',
+    slug: 'watermark-pdf',
+    description: 'Add custom text stamps (like CONFIDENTIAL, DRAFT) or company image logos to your PDF.',
+    longDescription: 'Protect your documents by stamping custom text or logos across every page with adjustable opacity and rotation angle.',
+    category: 'pdf',
+    icon: 'Stamp',
+    acceptedTypes: 'application/pdf',
+    keywords: ['watermark pdf', 'add watermark to pdf', 'stamp pdf', 'confidential watermark'],
+    features: [
+      'Text watermarks with custom color & text',
+      'Image logo watermark upload',
+      'Adjustable transparency (opacity) and rotation angle',
+      'Instant in-memory processing'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'Choose text or image watermark and customize opacity/rotation.' },
+      { step: '3', text: 'Click "Apply Watermark" to download your stamped document.' }
+    ],
+    faqs: [
+      {
+        q: 'Will the watermark appear on every page?',
+        a: 'Yes, the watermark is applied consistently across all pages of your PDF document.'
+      }
+    ]
+  },
+  {
+    id: 'sign-pdf',
+    name: 'Sign PDF Online',
+    shortName: 'Sign PDF',
+    slug: 'sign-pdf',
+    description: 'Draw, type, or upload your electronic signature and stamp it securely onto your PDF.',
+    longDescription: 'Sign contracts, agreements, and forms easily. Use our smooth drawing pad, type your name with an elegant handwriting font, or upload a transparent signature image.',
+    category: 'pdf',
+    badge: 'eSign',
+    icon: 'PenTool',
+    popular: true,
+    acceptedTypes: 'application/pdf',
+    keywords: ['sign pdf', 'esign pdf', 'sign document online', 'electronic signature pdf', 'free pdf signer'],
+    features: [
+      'Draw smooth signatures with mouse or touchscreen',
+      'Type signatures with stylish cursive calligraphy fonts',
+      'Upload pre-existing signature images',
+      '100% In-memory processing with zero document storage'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload the PDF document you want to sign.' },
+      { step: '2', text: 'Draw your signature, type your name, or upload a signature image.' },
+      { step: '3', text: 'Click "Sign & Finish" to download your signed PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Is this electronic signature legal?',
+        a: 'Yes, electronic signatures created with standard tools are widely recognized for contracts and agreements.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-to-word',
+    name: 'PDF to Word Converter',
+    shortName: 'PDF to Word',
+    slug: 'pdf-to-word',
+    description: 'Convert PDF documents into editable Word (.doc) and Text files.',
+    longDescription: 'Extract text, paragraphs, and content from your PDF documents directly into downloadable Word files so you can edit and reuse text freely.',
+    category: 'convert',
+    badge: 'Popular',
+    icon: 'FileText',
+    popular: true,
+    acceptedTypes: 'application/pdf',
+    keywords: ['pdf to word', 'convert pdf to word', 'pdf to doc', 'pdf to docx online', 'editable pdf'],
+    features: [
+      'Extracts selectable text and formatting from PDF',
+      'Download as Word (.doc) or plain text (.txt)',
+      'Direct copy-to-clipboard button',
+      '100% In-memory processing with no signup required'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'View extracted text content in the editor.' },
+      { step: '3', text: 'Select "Word" format and click Download.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I edit the converted file in Microsoft Word or Google Docs?',
+        a: 'Yes! The downloaded file can be opened and edited directly in Word or Google Docs.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-to-excel',
+    name: 'PDF to Excel / CSV',
+    shortName: 'PDF to Excel',
+    slug: 'pdf-to-excel',
+    description: 'Extract tabular data and text from PDF documents into spreadsheet-compatible CSV/Excel files.',
+    longDescription: 'Extract tables, records, and text lines from your PDF documents into structured CSV files that open immediately in Microsoft Excel or Google Sheets.',
+    category: 'convert',
+    icon: 'FileSpreadsheet',
+    acceptedTypes: 'application/pdf',
+    keywords: ['pdf to excel', 'pdf to csv', 'extract table from pdf', 'pdf data extractor'],
+    features: [
+      'Extracts structured rows and columns from PDF',
+      'Download as CSV compatible with Excel and Google Sheets',
+      'Live text preview before downloading',
+      'Zero permanent storage or data tracking'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document containing tabular data.' },
+      { step: '2', text: 'Review the extracted data in the preview box.' },
+      { step: '3', text: 'Click "Download Extracted EXCEL" to save your spreadsheet.' }
+    ],
+    faqs: [
+      {
+        q: 'Does it work with Excel and Google Sheets?',
+        a: 'Yes, the exported CSV spreadsheet imports directly into Excel and Sheets.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-to-png',
+    name: 'PDF to PNG Converter',
+    shortName: 'PDF to PNG',
+    slug: 'pdf-to-png',
+    description: 'Convert PDF document pages into high-resolution, crystal-clear PNG images.',
+    longDescription: 'Extract every page of your PDF as a lossless high-DPI PNG image. Preview all rendered pages in real time and download them individually or as a complete ZIP bundle.',
+    category: 'convert',
+    icon: 'Image',
+    acceptedTypes: 'application/pdf',
+    keywords: ['pdf to png', 'convert pdf to png', 'extract png from pdf', 'pdf pages to images'],
+    features: [
+      'High-DPI 2.0x retina image rendering',
+      'Preview every page thumbnail before downloading',
+      'One-click Download All (ZIP Archive)',
+      '100% Client-side and in-memory execution'
+    ],
+    howTo: [
+      { step: '1', text: 'Select or drag & drop your PDF file.' },
+      { step: '2', text: 'Wait a few seconds for all pages to render in your browser.' },
+      { step: '3', text: 'Download single pages or click "Download All Images (ZIP)".' }
+    ],
+    faqs: [
+      {
+        q: 'What is the difference between PDF to JPG and PDF to PNG?',
+        a: 'PNG provides lossless compression which keeps text and graphics extremely sharp with zero compression artifacts.'
+      }
+    ]
+  },
+  {
+    id: 'word-to-pdf',
+    name: 'Word to PDF Converter',
+    shortName: 'Word to PDF',
+    slug: 'word-to-pdf',
+    description: 'Convert Microsoft Word (.doc, .docx) and text documents into print-ready PDF files.',
+    longDescription: 'Turn your Word documents into universally compatible, secure PDF files with preserved formatting, clean margins, and crisp text typography.',
+    category: 'convert',
+    icon: 'FileText',
+    acceptedTypes: '.doc,.docx,.rtf,.txt',
+    keywords: ['word to pdf', 'convert word to pdf', 'docx to pdf', 'doc to pdf online'],
+    features: [
+      'Standard A4 and Letter layout rendering',
+      'Clean typography and margin wrapping',
+      'Zero formatting shift across devices',
+      '100% In-memory processing with no account required'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your Word document or text file.' },
+      { step: '2', text: 'Click "Convert to PDF" to start processing.' },
+      { step: '3', text: 'Download your finalized PDF document.' }
+    ],
+    faqs: [
+      {
+        q: 'Can anyone else see or store my uploaded Word document?',
+        a: 'No, all conversions are executed in volatile memory buffers with zero permanent disk storage.'
+      }
+    ]
+  },
+  {
+    id: 'excel-to-pdf',
+    name: 'Excel / CSV to PDF Converter',
+    shortName: 'Excel to PDF',
+    slug: 'excel-to-pdf',
+    description: 'Convert Excel sheets and CSV tabular data into structured, readable PDF tables.',
+    longDescription: 'Turn raw spreadsheet data, receipts, and table reports into clean, multi-page PDF documents with styled headers and organized columns.',
+    category: 'convert',
+    icon: 'FileSpreadsheet',
+    acceptedTypes: '.csv,.xlsx,.xls,.txt',
+    keywords: ['excel to pdf', 'csv to pdf', 'spreadsheet to pdf', 'convert table to pdf'],
+    features: [
+      'Automatic column width and row height calculation',
+      'Highlighted table header row and clean borders',
+      'Supports pasted CSV rows or uploaded files',
+      'Zero storage guarantee with instant download'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your CSV or Excel file, or paste table data directly.' },
+      { step: '2', text: 'Click "Convert to PDF" to generate the table layout.' },
+      { step: '3', text: 'Download your PDF report.' }
+    ],
+    faqs: [
+      {
+        q: 'Will multi-page tables automatically format properly?',
+        a: 'Yes, long tables are split cleanly across multiple PDF pages with consistent margins.'
+      }
+    ]
+  },
+  {
+    id: 'txt-to-pdf',
+    name: 'TXT to PDF Converter',
+    shortName: 'TXT to PDF',
+    slug: 'txt-to-pdf',
+    description: 'Convert plain text files (.txt) or pasted raw text into clean, formatted PDF documents.',
+    longDescription: 'Turn notes, code snippets, documentation, or meeting transcripts into high-quality PDF files with clean Helvetica typography and automatic word wrapping.',
+    category: 'convert',
+    icon: 'FileCode',
+    acceptedTypes: '.txt,.text,.md,.log',
+    keywords: ['txt to pdf', 'text to pdf', 'convert text to pdf', 'notepad to pdf online'],
+    features: [
+      'Automatic word wrapping and page break pagination',
+      'Supports file upload or direct text copy-paste',
+      'Clean document margins and title headings',
+      'Instant in-memory processing'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your .txt file or paste your text into the box.' },
+      { step: '2', text: 'Click "Convert to PDF" to generate the document.' },
+      { step: '3', text: 'Download your finalized PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I convert long documents with many pages?',
+        a: 'Yes! The converter automatically paginates and breaks long text across multiple pages seamlessly.'
+      }
+    ]
+  },
+  {
+    id: 'html-to-pdf',
+    name: 'HTML to PDF Converter',
+    shortName: 'HTML to PDF',
+    slug: 'html-to-pdf',
+    description: 'Convert HTML code, snippets, and markdown text into clean PDF files.',
+    longDescription: 'Turn raw HTML content, web templates, or code documentation into printable PDF documents in seconds.',
+    category: 'convert',
+    icon: 'FileCode',
+    acceptedTypes: '.html,.htm,.txt',
+    keywords: ['html to pdf', 'convert html to pdf', 'web page to pdf', 'code to pdf'],
+    features: [
+      'Strips tags or preserves code typography',
+      'Clean PDF pagination and margins',
+      'Instant client-side / in-memory compilation',
+      'Zero storage guarantee'
+    ],
+    howTo: [
+      { step: '1', text: 'Paste your HTML snippet or upload an HTML file.' },
+      { step: '2', text: 'Click "Convert to PDF" to format the output.' },
+      { step: '3', text: 'Download your PDF file.' }
+    ],
+    faqs: [
+      {
+        q: 'Can I convert raw HTML code directly without saving a file first?',
+        a: 'Yes! Simply paste your HTML code into the text area and click convert.'
+      }
+    ]
+  },
+  {
+    id: 'ai-pdf',
+    name: 'AI PDF Assistant & Summarizer',
+    shortName: 'AI PDF',
+    slug: 'ai-pdf',
+    description: 'Summarize lengthy documents, extract key insights, and chat with your PDF in real-time.',
+    longDescription: 'Our AI PDF Assistant processes research papers, legal contracts, reports, and textbooks in memory to produce executive summaries, key bullet takeaways, and answer questions directly.',
+    category: 'pdf',
+    badge: 'AI Powered',
+    icon: 'Bot',
+    popular: true,
+    acceptedTypes: 'application/pdf',
+    keywords: ['ai pdf', 'chat with pdf', 'pdf summarizer', 'ask pdf', 'ai document assistant', 'free ai pdf'],
+    features: [
+      'Instant executive summary & key takeaways',
+      'Interactive Q&A chat with document context',
+      'Automatic quiz and comprehension question generation',
+      '100% In-memory processing with no account needed'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'View the instant executive summary and key points.' },
+      { step: '3', text: 'Switch to the "Chat" tab to ask specific questions about the file.' }
+    ],
+    faqs: [
+      {
+        q: 'Do I need to sign up or provide an API key?',
+        a: 'No! The AI PDF Assistant is 100% free and ready to use immediately without any login, account, or API key.'
+      }
+    ]
+  },
+  {
+    id: 'chat-with-pdf',
+    name: 'Chat with PDF',
+    shortName: 'Chat with PDF',
+    slug: 'chat-with-pdf',
+    description: 'Ask questions and get instant answers directly from your PDF document.',
+    longDescription: 'Interact with any PDF document as if speaking with a research assistant. Ask for definitions, specific clauses, numbers, or summary paragraphs directly.',
+    category: 'pdf',
+    badge: 'AI Powered',
+    icon: 'MessageSquare',
+    acceptedTypes: 'application/pdf',
+    keywords: ['chat with pdf', 'ask pdf', 'talk to pdf', 'ai pdf reader'],
+    features: [
+      'Interactive chat interface with document memory',
+      'Instant semantic context lookup',
+      'No account or API subscription needed',
+      'Zero document retention guarantee'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'Type any question in the chat input.' },
+      { step: '3', text: 'Receive instant contextual answers derived from your text.' }
+    ],
+    faqs: [
+      {
+        q: 'Is my chat private?',
+        a: 'Yes, all interactions are processed locally in your session memory with zero database logging.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-scanner',
+    name: 'Camera PDF Scanner',
+    shortName: 'PDF Scanner',
+    slug: 'pdf-scanner',
+    description: 'Capture documents, receipts, and pages with your device camera and convert directly to PDF.',
+    longDescription: 'Turn your computer webcam or smartphone browser into a document scanner. Snap multi-page photos and combine them into a single clean PDF document in seconds.',
+    category: 'pdf',
+    badge: 'Camera',
+    icon: 'Camera',
+    acceptedTypes: 'image/*',
+    keywords: ['pdf scanner', 'scan to pdf', 'camera to pdf', 'online document scanner', 'mobile pdf scan'],
+    features: [
+      'Live camera viewfinder with document alignment guide',
+      'Multi-page scan capture and sequence ordering',
+      'Automatic high-resolution PDF generation',
+      'Works seamlessly on mobile and desktop browsers'
+    ],
+    howTo: [
+      { step: '1', text: 'Click "Open Camera" and allow camera permissions.' },
+      { step: '2', text: 'Align your document inside the viewfinder and click "Capture Page".' },
+      { step: '3', text: 'Capture additional pages if needed, then click "Convert Scans to PDF".' }
+    ],
+    faqs: [
+      {
+        q: 'Does it work on mobile phones without an app?',
+        a: 'Yes! It runs directly in Chrome, Safari, and Firefox on iOS and Android without downloading any app.'
+      }
+    ]
+  },
+  {
+    id: 'flatten-pdf',
+    name: 'Flatten PDF',
+    shortName: 'Flatten PDF',
+    slug: 'flatten-pdf',
+    description: 'Merge fillable form fields, annotations, and layers into an uneditable, secure PDF.',
+    longDescription: 'Lock and secure your PDF forms and annotations by flattening all active interactive fields into a permanent, non-editable document layer.',
+    category: 'pdf',
+    icon: 'Layers',
+    acceptedTypes: 'application/pdf',
+    keywords: ['flatten pdf', 'lock pdf form', 'make pdf uneditable', 'merge pdf layers'],
+    features: [
+      'Locks interactive form fields and signatures permanently',
+      'Prevents unauthorized field modifications',
+      'Optimizes document rendering across all PDF viewers',
+      '100% In-memory processing'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your interactive PDF or filled form.' },
+      { step: '2', text: 'Click "Flatten PDF" to merge all interactive layers.' },
+      { step: '3', text: 'Download your finalized, locked PDF.' }
+    ],
+    faqs: [
+      {
+        q: 'Why should I flatten a PDF?',
+        a: 'Flattening prevents other people from editing fillable fields, checkboxes, or comments, making it safe for legal submission and archiving.'
+      }
+    ]
+  },
+  {
+    id: 'crop-pdf',
+    name: 'Crop PDF',
+    shortName: 'Crop PDF',
+    slug: 'crop-pdf',
+    description: 'Trim margins and crop page dimensions across all pages in your PDF document.',
+    longDescription: 'Remove excess blank margins or trim outer boundaries uniformly across all pages of your PDF in seconds.',
+    category: 'pdf',
+    icon: 'Crop',
+    acceptedTypes: 'application/pdf',
+    keywords: ['crop pdf', 'trim pdf margins', 'resize pdf pages', 'cut pdf margins'],
+    features: [
+      'Uniform margin trimming slider (0px - 100px)',
+      'Adjusts PDF MediaBox and CropBox boundaries',
+      'Lossless content preservation',
+      'Zero storage guarantee'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF document.' },
+      { step: '2', text: 'Select how many pixels of margin you want to trim.' },
+      { step: '3', text: 'Click "Crop PDF" to download your trimmed document.' }
+    ],
+    faqs: [
+      {
+        q: 'Does cropping reduce PDF quality?',
+        a: 'No! Cropping simply adjusts the visible page viewport boundaries without recompressing text or images.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-ocr',
+    name: 'PDF OCR & Text Extractor',
+    shortName: 'PDF OCR',
+    slug: 'pdf-ocr',
+    description: 'Extract readable and selectable text from scanned PDF documents.',
+    longDescription: 'Extract text layers and recognize characters from scanned PDF documents and image files directly in memory.',
+    category: 'convert',
+    badge: 'OCR',
+    icon: 'ScanText',
+    acceptedTypes: 'application/pdf',
+    keywords: ['pdf ocr', 'scanned pdf to text', 'extract text from pdf', 'searchable pdf'],
+    features: [
+      'Extracts text streams and embedded character data',
+      'Download as .txt or .doc Word file',
+      'One-click Copy to clipboard',
+      'Zero storage guarantee'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your scanned PDF document.' },
+      { step: '2', text: 'View the recognized text in the editor.' },
+      { step: '3', text: 'Copy text or download as a text/word file.' }
+    ],
+    faqs: [
+      {
+        q: 'How does this OCR extractor work?',
+        a: 'It scans the underlying character streams and fonts embedded in your PDF document to reconstruct the plain text.'
+      }
+    ]
   }
 ];
 

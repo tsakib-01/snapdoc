@@ -32,6 +32,7 @@ export default function Header() {
 
             {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center gap-1">
+              {/* Image Tools */}
               <div className="dropdown dropdown-hover">
                 <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
                   <Image className="w-4 h-4 text-blue-500" />
@@ -51,19 +52,59 @@ export default function Header() {
                 </ul>
               </div>
 
+              {/* PDF Organize */}
               <div className="dropdown dropdown-hover">
                 <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
-                  <FileText className="w-4 h-4 text-red-500" />
-                  <span>PDF Tools</span>
+                  <FileText className="w-4 h-4 text-purple-500" />
+                  <span>Organize PDF</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </label>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-60 border border-base-300">
-                  <li><Link href="/image-to-pdf" className="text-xs font-medium py-2">Image to PDF</Link></li>
-                  <li><Link href="/jpg-to-pdf" className="text-xs font-medium py-2">JPG to PDF</Link></li>
-                  <li><Link href="/pdf-to-jpg" className="text-xs font-medium py-2">PDF to JPG</Link></li>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-300">
+                  <li><Link href="/organize-pdf" className="text-xs font-semibold py-2 text-primary">Visual Page Organizer</Link></li>
+                  <li><Link href="/extract-pdf-pages" className="text-xs font-medium py-2">Extract PDF Pages</Link></li>
+                  <li><Link href="/delete-pdf-pages" className="text-xs font-medium py-2">Delete PDF Pages</Link></li>
+                  <li><Link href="/rotate-pdf" className="text-xs font-medium py-2">Rotate PDF Pages</Link></li>
                   <li><Link href="/merge-pdf" className="text-xs font-medium py-2">Merge PDF</Link></li>
                   <li><Link href="/split-pdf" className="text-xs font-medium py-2">Split PDF</Link></li>
+                </ul>
+              </div>
+
+              {/* PDF Convert */}
+              <div className="dropdown dropdown-hover">
+                <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
+                  <FileText className="w-4 h-4 text-emerald-500" />
+                  <span>Convert PDF</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                </label>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-300">
+                  <li><Link href="/pdf-to-word" className="text-xs font-medium py-2 text-primary font-semibold">PDF to Word</Link></li>
+                  <li><Link href="/pdf-to-excel" className="text-xs font-medium py-2">PDF to Excel / CSV</Link></li>
+                  <li><Link href="/pdf-to-jpg" className="text-xs font-medium py-2">PDF to JPG</Link></li>
+                  <li><Link href="/pdf-to-png" className="text-xs font-medium py-2">PDF to PNG</Link></li>
+                  <li><Link href="/word-to-pdf" className="text-xs font-medium py-2">Word to PDF</Link></li>
+                  <li><Link href="/excel-to-pdf" className="text-xs font-medium py-2">Excel to PDF</Link></li>
+                  <li><Link href="/txt-to-pdf" className="text-xs font-medium py-2">TXT to PDF</Link></li>
+                  <li><Link href="/pdf-ocr" className="text-xs font-medium py-2">PDF OCR Text Extractor</Link></li>
+                </ul>
+              </div>
+
+              {/* Edit, Sign & AI */}
+              <div className="dropdown dropdown-hover">
+                <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Edit & AI</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                </label>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-300">
+                  <li><Link href="/sign-pdf" className="text-xs font-semibold py-2 text-primary">Sign PDF (eSign)</Link></li>
+                  <li><Link href="/add-page-numbers-to-pdf" className="text-xs font-medium py-2">Add Page Numbers</Link></li>
+                  <li><Link href="/watermark-pdf" className="text-xs font-medium py-2">Watermark PDF</Link></li>
                   <li><Link href="/compress-pdf" className="text-xs font-medium py-2">Compress PDF</Link></li>
+                  <li><Link href="/crop-pdf" className="text-xs font-medium py-2">Crop PDF</Link></li>
+                  <li><Link href="/flatten-pdf" className="text-xs font-medium py-2">Flatten PDF</Link></li>
+                  <li><Link href="/ai-pdf" className="text-xs font-semibold py-2 text-violet-600">AI PDF Summarizer</Link></li>
+                  <li><Link href="/chat-with-pdf" className="text-xs font-medium py-2">Chat with PDF</Link></li>
+                  <li><Link href="/pdf-scanner" className="text-xs font-medium py-2 text-teal-600">Camera Scanner</Link></li>
                 </ul>
               </div>
 

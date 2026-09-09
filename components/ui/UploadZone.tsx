@@ -8,7 +8,8 @@ interface UploadZoneProps {
   accept: string; // e.g. "image/jpeg,image/png" or "application/pdf"
   multiple?: boolean;
   maxFiles?: number;
-  files: File[];
+  maxSizeMb?: number;
+  files?: File[];
   onFilesSelected: (files: File[]) => void;
   onFileRemove?: (index: number) => void;
   title?: string;
@@ -20,7 +21,8 @@ export default function UploadZone({
   accept,
   multiple = false,
   maxFiles = 10,
-  files,
+  maxSizeMb,
+  files = [],
   onFilesSelected,
   onFileRemove,
   title = 'Drag & drop your files here',
@@ -58,18 +60,19 @@ export default function UploadZone({
           setErrorMessage(`"${f.name}" is not a valid PDF file. Please upload PDF files only.`);
           return;
         }
-      } else {
+      } else if (accept.includes('image')) {
         const isImg =
           f.type.startsWith('image/') ||
-          /\.(jpe?g|png|webp|avif|bmp|tiff)$/i.test(f.name);
+          /\.(jpe?g|png|webp|avif|bmp|tiff|gif)$/i.test(f.name);
         if (!isImg) {
           setErrorMessage(`"${f.name}" is not a supported image format. Please upload JPG, PNG, or WebP.`);
           return;
         }
       }
 
-      // Validate size (50MB image, 100MB PDF)
-      const maxSize = isPdfOnly ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
+      // Validate size
+      const defaultMaxSize = isPdfOnly ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
+      const maxSize = maxSizeMb ? maxSizeMb * 1024 * 1024 : defaultMaxSize;
       if (f.size > maxSize) {
         setErrorMessage(`"${f.name}" exceeds the maximum allowed file size of ${formatBytes(maxSize)}.`);
         return;

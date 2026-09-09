@@ -56,7 +56,7 @@ export default function TargetCompressorTool({
       const formData = new FormData();
       formData.append('file', files[0]);
       formData.append('targetKb', activeKb.toString());
-      formData.append('format', 'jpeg');
+      formData.append('format', 'original');
 
       const res = await fetch('/api/compress-target', {
         method: 'POST',

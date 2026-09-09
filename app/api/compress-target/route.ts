@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const targetKb = parseFloat(formData.get('targetKb') as string) || 10;
-    const format = (formData.get('format') as 'jpeg' | 'webp' | 'png') || 'jpeg';
+    const format = (formData.get('format') as any) || 'original';
 
     if (!file) {
       return NextResponse.json({ error: 'No image file uploaded.' }, { status: 400 });

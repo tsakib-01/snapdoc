@@ -2,7 +2,7 @@ import sharp from 'sharp';
 
 export interface TargetCompressOptions {
   targetBytes: number;
-  format?: 'jpeg' | 'webp' | 'png';
+  format?: 'original' | 'jpeg' | 'webp' | 'png';
   minQuality?: number;
   maxQuality?: number;
 }
@@ -30,14 +30,19 @@ export async function compressToTargetSize(
 ): Promise<CompressionResult> {
   const originalSize = inputBuffer.length;
   const targetBytes = options.targetBytes;
-  const targetFormat = options.format || 'jpeg';
 
   const metadata = await sharp(inputBuffer).metadata();
   const originalWidth = metadata.width || 800;
   const originalHeight = metadata.height || 600;
 
+  // Auto-detect format from input if 'original' or unspecified
+  let targetFormat = options.format && options.format !== 'original'
+    ? options.format
+    : (metadata.format === 'png' ? 'png' : metadata.format === 'webp' ? 'webp' : 'jpeg');
+
   // Prepare base pipeline
   let baseSharp = sharp(inputBuffer);
+  // ONLY flatten alpha to white if converting a transparent image explicitly to JPEG
   if (targetFormat === 'jpeg' && metadata.hasAlpha) {
     baseSharp = baseSharp.flatten({ background: { r: 255, g: 255, b: 255 } });
   }
@@ -124,16 +129,23 @@ export async function compressToTargetSize(
     }
   }
 
-  // Fallback if target is impossibly small: produce smallest possible render
+  // Fallback if target is impossibly small: produce smallest possible render in targetFormat
   if (!bestBuffer) {
     const minW = Math.min(128, originalWidth);
     const minH = Math.min(128, originalHeight);
-    bestBuffer = await sharp(cleanInput)
-      .resize(minW, minH, { fit: 'inside' })
-      .jpeg({ quality: 5, mozjpeg: true, chromaSubsampling: '4:2:0' })
-      .toBuffer();
+    let fallbackPipeline = sharp(cleanInput).resize(minW, minH, { fit: 'inside' });
+    
+    if (targetFormat === 'png') {
+      fallbackPipeline = fallbackPipeline.png({ compressionLevel: 9, palette: true, quality: 10 });
+    } else if (targetFormat === 'webp') {
+      fallbackPipeline = fallbackPipeline.webp({ quality: 10 });
+    } else {
+      fallbackPipeline = fallbackPipeline.jpeg({ quality: 5, mozjpeg: true, chromaSubsampling: '4:2:0' });
+    }
+
+    bestBuffer = await fallbackPipeline.toBuffer();
     bestSize = bestBuffer.length;
-    bestQuality = 5;
+    bestQuality = 10;
     bestScale = minW / originalWidth;
     bestWidth = minW;
     bestHeight = minH;

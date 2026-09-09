@@ -59,6 +59,31 @@ interface SavedSignature {
   label?: string;
 }
 
+// Dynamically recolor any signature transparent PNG using canvas composite operations
+function recolorSignatureDataUrl(dataUrl: string, targetHexColor: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      ctx.globalCompositeOperation = 'source-in';
+      ctx.fillStyle = targetHexColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export default function SignPdfTool() {
   // File & Rendering States
   const [file, setFile] = useState<File | null>(null);
@@ -420,6 +445,19 @@ export default function SignPdfTool() {
   const updateElementProp = (id: string, updates: Partial<PlacedElement>) => {
     const newItems = placedElements.map((el) => (el.id === id ? { ...el, ...updates } : el));
     recordState(newItems);
+  };
+
+  // Dynamically change color of any placed element (signature, text, symbol)
+  const handleColorChange = async (elemId: string, newColor: string) => {
+    const elem = placedElements.find((e) => e.id === elemId);
+    if (!elem) return;
+
+    if (elem.dataUrl) {
+      const recoloredUrl = await recolorSignatureDataUrl(elem.dataUrl, newColor);
+      updateElementProp(elemId, { color: newColor, dataUrl: recoloredUrl });
+    } else {
+      updateElementProp(elemId, { color: newColor });
+    }
   };
 
   // Mouse & Touch Dragging Handlers
@@ -1309,8 +1347,8 @@ export default function SignPdfTool() {
                         }}
                         className={`absolute cursor-move flex items-center justify-center transition-shadow select-none ${
                           isSelected
-                            ? 'ring-2 ring-red-500 rounded-md shadow-lg z-30'
-                            : 'hover:ring-1 hover:ring-primary/60 z-20'
+                            ? 'border-2 border-primary border-dashed rounded-md shadow-lg z-30 bg-primary/5'
+                            : 'hover:border hover:border-dashed hover:border-primary/60 z-20'
                         }`}
                       >
                         {/* Render Placed Signature/Initials Image */}
@@ -1357,21 +1395,30 @@ export default function SignPdfTool() {
                               className="absolute -top-11 left-1/2 -translate-x-1/2 bg-base-100 rounded-2xl shadow-xl border border-base-300 px-2.5 py-1 flex items-center gap-1.5 z-40 animate-in fade-in zoom-in-95 duration-150 scale-90 sm:scale-100"
                             >
                               {/* Color Picker */}
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 <button
                                   type="button"
-                                  onClick={() => updateElementProp(elem.id, { color: '#1e293b' })}
-                                  className={`w-3.5 h-3.5 rounded-full bg-slate-900 ${elem.color === '#1e293b' ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                  onClick={() => handleColorChange(elem.id, '#1e293b')}
+                                  className={`w-4 h-4 rounded-full bg-slate-900 border border-slate-700 transition-all ${
+                                    elem.color === '#1e293b' ? 'ring-2 ring-primary ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Black"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => updateElementProp(elem.id, { color: '#2563eb' })}
-                                  className={`w-3.5 h-3.5 rounded-full bg-blue-600 ${elem.color === '#2563eb' ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                  onClick={() => handleColorChange(elem.id, '#2563eb')}
+                                  className={`w-4 h-4 rounded-full bg-blue-600 border border-blue-400 transition-all ${
+                                    elem.color === '#2563eb' ? 'ring-2 ring-primary ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Blue"
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => updateElementProp(elem.id, { color: '#dc2626' })}
-                                  className={`w-3.5 h-3.5 rounded-full bg-red-600 ${elem.color === '#dc2626' ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+                                  onClick={() => handleColorChange(elem.id, '#dc2626')}
+                                  className={`w-4 h-4 rounded-full bg-red-600 border border-red-400 transition-all ${
+                                    elem.color === '#dc2626' ? 'ring-2 ring-primary ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Red"
                                 />
                               </div>
 
@@ -1423,7 +1470,7 @@ export default function SignPdfTool() {
                                   handleResizeStart(e.touches[0].clientX, e.touches[0].clientY, 'nw', elem);
                                 }
                               }}
-                              className="absolute -top-2 -left-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-nwse-resize z-30 touch-none"
+                              className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white cursor-nwse-resize z-30 touch-none shadow"
                             />
                             <div
                               onMouseDown={(e) => {
@@ -1436,7 +1483,7 @@ export default function SignPdfTool() {
                                   handleResizeStart(e.touches[0].clientX, e.touches[0].clientY, 'ne', elem);
                                 }
                               }}
-                              className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-nesw-resize z-30 touch-none"
+                              className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white cursor-nesw-resize z-30 touch-none shadow"
                             />
                             <div
                               onMouseDown={(e) => {
@@ -1449,7 +1496,7 @@ export default function SignPdfTool() {
                                   handleResizeStart(e.touches[0].clientX, e.touches[0].clientY, 'se', elem);
                                 }
                               }}
-                              className="absolute -bottom-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-nwse-resize z-30 touch-none"
+                              className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white cursor-nwse-resize z-30 touch-none shadow"
                             />
                             <div
                               onMouseDown={(e) => {
@@ -1462,7 +1509,7 @@ export default function SignPdfTool() {
                                   handleResizeStart(e.touches[0].clientX, e.touches[0].clientY, 'sw', elem);
                                 }
                               }}
-                              className="absolute -bottom-2 -left-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white cursor-nesw-resize z-30 touch-none"
+                              className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white cursor-nesw-resize z-30 touch-none shadow"
                             />
                           </>
                         )}

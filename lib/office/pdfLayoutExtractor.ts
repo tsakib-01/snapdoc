@@ -1,11 +1,43 @@
 import { PDFParse } from 'pdf-parse';
 import * as XLSX from 'xlsx';
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, HeadingLevel, AlignmentType } from 'docx';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, HeadingLevel } from 'docx';
+import { createWorker } from 'tesseract.js';
 
 export interface ExtractedTableData {
   pageNumber: number;
   tables: string[][][];
-  rawRows: (string | number)[][];
+  rawRows: (string | number)[][] ;
+}
+
+/**
+ * Fallback OCR using Tesseract.js when PDF contains scanned images without selectable text layer.
+ */
+async function performOcrFallback(pdfBuffer: Buffer): Promise<string[]> {
+  try {
+    const parser = new PDFParse({ data: new Uint8Array(pdfBuffer), verbosity: 0 });
+    const screenshotResult = await parser.getScreenshot({ scale: 2.0, imageDataUrl: true });
+    await parser.destroy().catch(() => {});
+
+    if (!screenshotResult?.pages || screenshotResult.pages.length === 0) {
+      return [];
+    }
+
+    const worker = await createWorker('eng');
+    const ocrPages: string[] = [];
+
+    for (const page of screenshotResult.pages) {
+      if (page.dataUrl) {
+        const ret = await worker.recognize(page.dataUrl);
+        ocrPages.push(ret.data.text || '');
+      }
+    }
+
+    await worker.terminate();
+    return ocrPages;
+  } catch (err) {
+    console.warn('OCR Fallback error:', err);
+    return [];
+  }
 }
 
 /**
@@ -29,20 +61,26 @@ export async function extractPdfStructuredContent(pdfBuffer: Buffer): Promise<{
       lineThreshold: 5,
     });
 
-    const tablesPerPage: ExtractedTableData[] = [];
-    const pagesText: string[] = [];
+    let pagesText: string[] = (textResult?.pages || []).map((p) => p.text);
 
+    // Check if the PDF has virtually no extractable text layer (scanned document)
+    const totalChars = pagesText.reduce((sum, t) => sum + t.replace(/\s+/g, '').length, 0);
+    if (totalChars < 30) {
+      const ocrResults = await performOcrFallback(pdfBuffer);
+      if (ocrResults.length > 0) {
+        pagesText = ocrResults;
+      }
+    }
+
+    const tablesPerPage: ExtractedTableData[] = [];
     const pageCount = Math.max(
       tableResult?.pages?.length || 0,
-      textResult?.pages?.length || 0,
+      pagesText.length,
       1
     );
 
     for (let p = 1; p <= pageCount; p++) {
-      const pageTextObj = textResult?.pages?.find((pt) => pt.num === p);
-      const pageText = pageTextObj?.text || '';
-      pagesText.push(pageText);
-
+      const pageText = pagesText[p - 1] || '';
       const pageTableObj = tableResult?.pages?.find((pt) => pt.num === p);
       const pageTables: string[][][] = [];
 
@@ -54,7 +92,7 @@ export async function extractPdfStructuredContent(pdfBuffer: Buffer): Promise<{
         }
       }
 
-      // If no vector tables detected on this page, parse text layout rows
+      // If no vector tables detected on this page, parse 2D text coordinate rows
       const rawRows: (string | number)[][] = [];
 
       if (pageTables.length > 0) {
@@ -160,7 +198,8 @@ export async function convertPdfToExcelBuffer(pdfBuffer: Buffer): Promise<Buffer
 }
 
 /**
- * Reconstructs an editable Microsoft Word (.docx) document from parsed PDF bounding boxes and layouts.
+ * Reconstructs an editable Microsoft Word (.docx) document from parsed PDF bounding boxes,
+ * vector tables, and OCR layers.
  */
 export async function convertPdfToWordBuffer(pdfBuffer: Buffer, title?: string): Promise<Buffer> {
   const { tablesPerPage, pagesText } = await extractPdfStructuredContent(pdfBuffer);
@@ -259,7 +298,7 @@ export async function convertPdfToWordBuffer(pdfBuffer: Buffer, title?: string):
         // Regular line / paragraph
         const trimmed = line.trim();
         const isHeading = trimmed.length < 50 && (
-          trimmed.toUpperCase() === trimmed && /[A-Z]/.test(trimmed) ||
+          (trimmed.toUpperCase() === trimmed && /[A-Z]/.test(trimmed)) ||
           trimmed.endsWith(':') ||
           /^(\d+\.|\d+\)|\b(Chapter|Section|Part)\b)/i.test(trimmed)
         );
@@ -271,7 +310,7 @@ export async function convertPdfToWordBuffer(pdfBuffer: Buffer, title?: string):
               new TextRun({
                 text: line,
                 bold: isHeading,
-                size: isHeading ? 26 : 22, // 13pt vs 11pt
+                size: isHeading ? 26 : 22,
                 font: 'Calibri',
               }),
             ],

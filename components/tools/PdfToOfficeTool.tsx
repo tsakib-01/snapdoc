@@ -51,24 +51,79 @@ export default function PdfToOfficeTool({
     if (!extractedText || !file) return;
 
     const baseName = file.name.replace(/\.[^/.]+$/, '');
-    let mime = 'text/plain';
-    let ext = 'txt';
 
     if (format === 'word') {
-      mime = 'application/msword';
-      ext = 'doc';
-    } else if (format === 'excel') {
-      mime = 'text/csv';
-      ext = 'csv';
-    }
+      const htmlDoc = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${baseName}</title>
+<style>
+  body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #111827; padding: 40px; margin: 0; }
+  p { margin: 0 0 8pt 0; white-space: pre-wrap; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+  td { border: 1px solid #e5e7eb; padding: 6px 10px; font-size: 10pt; }
+  .page-break { page-break-after: always; height: 1px; margin: 24pt 0; border-top: 1px dashed #d1d5db; }
+</style>
+</head>
+<body>
+${extractedText
+  .split('\n\n--- Page Break ---\n\n')
+  .map((pageText, pIdx, arr) => {
+    const lines = pageText.split('\n');
+    const pageHtml = lines
+      .map((line) => {
+        if (!line.trim()) return '<p style="height: 10pt;"></p>';
+        if (line.includes('\t')) {
+          const cells = line
+            .split('\t')
+            .map((c) => `<td>${c.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>`)
+            .join('');
+          return `<table><tr>${cells}</tr></table>`;
+        }
+        return `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+      })
+      .join('\n');
+    return `<div>${pageHtml}</div>${pIdx < arr.length - 1 ? '<div class="page-break"></div>' : ''}`;
+  })
+  .join('\n')}
+</body>
+</html>`;
 
-    const blob = new Blob([extractedText], { type: `${mime};charset=utf-8` });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${baseName}_extracted.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([htmlDoc], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${baseName}.doc`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'excel') {
+      const csvRows = extractedText
+        .replace(/\n\n--- Page Break ---\n\n/g, '\n')
+        .split('\n')
+        .map((line) => {
+          const cells = line.includes('\t') ? line.split('\t') : [line];
+          return cells.map((c) => `"${c.replace(/"/g, '""')}"`).join(',');
+        })
+        .join('\r\n');
+
+      const blob = new Blob(['\uFEFF' + csvRows], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${baseName}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      const cleanTxt = extractedText.replace(/\n\n--- Page Break ---\n\n/g, '\n\n');
+      const blob = new Blob([cleanTxt], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${baseName}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleCopy = () => {

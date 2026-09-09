@@ -36,12 +36,21 @@ function loadPdfJsScript(): Promise<any> {
   });
 }
 
-export default function PdfToJpgTool() {
+interface PdfToJpgToolProps {
+  outputFormat?: 'jpg' | 'png';
+}
+
+export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isRendering, setIsRendering] = useState<boolean>(false);
   const [pages, setPages] = useState<ExtractedPage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [zipProgress, setZipProgress] = useState<boolean>(false);
+
+  const isPng = outputFormat === 'png';
+  const ext = isPng ? 'png' : 'jpg';
+  const mime = isPng ? 'image/png' : 'image/jpeg';
+  const label = isPng ? 'PNG' : 'JPG';
 
   const handleConvert = async () => {
     if (files.length === 0) return;
@@ -59,7 +68,7 @@ export default function PdfToJpgTool() {
 
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 2.0 }); // High DPI 2x render
+        const viewport = page.getViewport({ scale: 2.5 }); // Crisp 2.5x retina rendering
 
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -76,7 +85,7 @@ export default function PdfToJpgTool() {
             viewport: viewport,
           }).promise;
 
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+          const dataUrl = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.95);
           const byteLength = Math.round((dataUrl.length * 3) / 4);
 
           renderedPages.push({
@@ -89,7 +98,7 @@ export default function PdfToJpgTool() {
 
       setPages(renderedPages);
     } catch (err: any) {
-      console.error('PDF to JPG conversion error:', err);
+      console.error('PDF to Image conversion error:', err);
       setError('Failed to extract pages from PDF. Please make sure the PDF is valid and not password-protected.');
     } finally {
       setIsRendering(false);
@@ -99,7 +108,7 @@ export default function PdfToJpgTool() {
   const handleDownloadSingle = (page: ExtractedPage) => {
     const link = document.createElement('a');
     link.href = page.dataUrl;
-    link.download = `${files[0].name.replace(/\.[^/.]+$/, '')}_page_${page.pageNumber}.jpg`;
+    link.download = `${files[0].name.replace(/\.[^/.]+$/, '')}_page_${page.pageNumber}.${ext}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -115,14 +124,14 @@ export default function PdfToJpgTool() {
 
       pages.forEach((p) => {
         const base64Data = p.dataUrl.split(',')[1];
-        zip.file(`${baseName}_page_${p.pageNumber}.jpg`, base64Data, { base64: true });
+        zip.file(`${baseName}_page_${p.pageNumber}.${ext}`, base64Data, { base64: true });
       });
 
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${baseName}_jpg_pages.zip`;
+      link.download = `${baseName}_${ext}_pages.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -189,7 +198,7 @@ export default function PdfToJpgTool() {
             ) : (
               <>
                 <ImageIcon className="w-5 h-5" />
-                Convert PDF to JPG
+                Convert PDF to {label}
               </>
             )}
           </button>
@@ -206,7 +215,7 @@ export default function PdfToJpgTool() {
                 Successfully Extracted {pages.length} Page{pages.length === 1 ? '' : 's'}
               </h4>
               <p className="text-xs text-base-content/60">
-                Download individual JPG images or download all in a single ZIP archive.
+                Download individual {label} images or download all in a single ZIP archive.
               </p>
             </div>
 
@@ -258,7 +267,7 @@ export default function PdfToJpgTool() {
                     className="btn btn-outline btn-primary btn-xs w-full rounded-xl gap-1.5 font-semibold"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Download JPG
+                    Download {label}
                   </button>
                 </div>
               </div>

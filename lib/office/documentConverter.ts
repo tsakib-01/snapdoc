@@ -101,7 +101,7 @@ export async function convertTextToPdf(
   const titleFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   const fontSize = options.fontSize || 11;
-  const lineHeight = fontSize * 1.45;
+  const lineHeight = fontSize * 1.42;
   const margin = 50;
 
   const pageSize = options.pageSize === 'LETTER' ? PageSizes.Letter : PageSizes.A4;
@@ -109,18 +109,18 @@ export async function convertTextToPdf(
   const usableWidth = pageWidth - margin * 2;
 
   let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-  let currentY = pageHeight - margin;
+  let currentY = pageHeight - margin - fontSize;
 
   if (options.title) {
     const safeTitle = sanitizeWinAnsiText(options.title);
     currentPage.drawText(safeTitle, {
       x: margin,
-      y: currentY - 18,
+      y: currentY,
       size: 16,
       font: titleFont,
       color: rgb(0.1, 0.1, 0.1),
     });
-    currentY -= 35;
+    currentY -= 28;
   }
 
   const paragraphs = safeText.split('\n');
@@ -130,32 +130,37 @@ export async function convertTextToPdf(
       currentY -= lineHeight;
       if (currentY < margin + lineHeight) {
         currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-        currentY = pageHeight - margin;
+        currentY = pageHeight - margin - fontSize;
       }
       continue;
     }
 
+    // Preserve leading whitespace
+    const leadingSpacesMatch = para.match(/^ +/);
+    const leadingSpaces = leadingSpacesMatch ? leadingSpacesMatch[0] : '';
+    const trimmedPara = para.slice(leadingSpaces.length);
+
     // Word wrapping
-    const words = para.split(' ');
-    let currentLine = '';
+    const words = trimmedPara.split(' ');
+    let currentLine = leadingSpaces;
 
     for (const word of words) {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testLine = currentLine.trim() ? `${currentLine} ${word}` : `${currentLine}${word}`;
       const textWidth = font.widthOfTextAtSize(testLine, fontSize);
 
-      if (textWidth > usableWidth && currentLine) {
+      if (textWidth > usableWidth && currentLine.trim()) {
         currentPage.drawText(currentLine, {
           x: margin,
           y: currentY,
           size: fontSize,
           font,
-          color: rgb(0.15, 0.15, 0.15),
+          color: rgb(0.12, 0.12, 0.12),
         });
         currentY -= lineHeight;
 
         if (currentY < margin + lineHeight) {
           currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-          currentY = pageHeight - margin;
+          currentY = pageHeight - margin - fontSize;
         }
 
         currentLine = word;
@@ -170,13 +175,13 @@ export async function convertTextToPdf(
         y: currentY,
         size: fontSize,
         font,
-        color: rgb(0.15, 0.15, 0.15),
+        color: rgb(0.12, 0.12, 0.12),
       });
       currentY -= lineHeight;
 
       if (currentY < margin + lineHeight) {
         currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-        currentY = pageHeight - margin;
+        currentY = pageHeight - margin - fontSize;
       }
     }
   }

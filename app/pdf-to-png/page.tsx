@@ -40,7 +40,7 @@ export default function PdfToPngPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <PdfToJpgTool />
+      <PdfToJpgTool outputFormat="png" />
     </ToolLayout>
   );
 }

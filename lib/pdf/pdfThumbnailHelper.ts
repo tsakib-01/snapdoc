@@ -49,6 +49,87 @@ export async function loadPdfJs(): Promise<any> {
 }
 
 /**
+ * Extracts structured text from PDF.js items, strictly preserving reading order,
+ * line positions, paragraph gaps, and horizontal column alignments.
+ */
+export function extractStructuredPageText(items: any[]): string {
+  if (!items || items.length === 0) return '';
+
+  const validItems = items.filter((it: any) => it && typeof it.str === 'string' && it.str.length > 0);
+  if (validItems.length === 0) return '';
+
+  // Sort by Y descending (top to bottom in PDF coordinates), then by X ascending (left to right)
+  const sorted = [...validItems].sort((a, b) => {
+    const yA = a.transform ? a.transform[5] : 0;
+    const yB = b.transform ? b.transform[5] : 0;
+    const yDiff = yB - yA;
+    if (Math.abs(yDiff) > 4) {
+      return yDiff; // Higher Y first
+    }
+    const xA = a.transform ? a.transform[4] : 0;
+    const xB = b.transform ? b.transform[4] : 0;
+    return xA - xB;
+  });
+
+  // Group text items into lines (within 4px vertical tolerance)
+  const lines: { y: number; items: typeof validItems }[] = [];
+  for (const item of sorted) {
+    const y = item.transform ? item.transform[5] : 0;
+    const matchingLine = lines.find((line) => Math.abs(line.y - y) <= 4);
+    if (matchingLine) {
+      matchingLine.items.push(item);
+    } else {
+      lines.push({ y, items: [item] });
+    }
+  }
+
+  const lineStrings: string[] = [];
+  let prevY: number | null = null;
+
+  for (const line of lines) {
+    // Sort items horizontally on this line
+    line.items.sort((a, b) => (a.transform ? a.transform[4] : 0) - (b.transform ? b.transform[4] : 0));
+
+    // Detect paragraph breaks between lines (gap > 18px)
+    if (prevY !== null) {
+      const verticalGap = prevY - line.y;
+      if (verticalGap > 20) {
+        lineStrings.push('');
+      }
+    }
+    prevY = line.y;
+
+    let lineStr = '';
+    let lastEndX = -1;
+
+    for (const item of line.items) {
+      const x = item.transform ? item.transform[4] : 0;
+      const str = item.str;
+
+      if (lastEndX >= 0) {
+        const gap = x - lastEndX;
+        if (gap > 24) {
+          // Column gap in tables
+          lineStr += '\t';
+        } else if (gap > 2 && !lineStr.endsWith(' ') && !str.startsWith(' ')) {
+          lineStr += ' ';
+        }
+      }
+
+      lineStr += str;
+      const itemWidth = item.width || (str.length * 5.5);
+      lastEndX = x + itemWidth;
+    }
+
+    if (lineStr.trim()) {
+      lineStrings.push(lineStr.trimEnd());
+    }
+  }
+
+  return lineStrings.join('\n');
+}
+
+/**
  * Extracts thumbnails for all pages in a PDF file with progress callback
  */
 export async function extractPdfThumbnails(
@@ -105,14 +186,11 @@ export async function extractPdfThumbnails(
       });
     }
 
-    // Also extract text content if needed for search/OCR/summaries
+    // Extract structured text preserving positions and layout
     try {
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ')
-        .trim();
-      extractedText.push(pageText);
+      const textContent = await page.getTextContent({ normalizeWhitespace: false });
+      const structuredText = extractStructuredPageText(textContent.items);
+      extractedText.push(structuredText);
     } catch {
       extractedText.push('');
     }
@@ -128,3 +206,4 @@ export async function extractPdfThumbnails(
     extractedText,
   };
 }
+

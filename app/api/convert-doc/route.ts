@@ -29,13 +29,13 @@ export async function POST(req: NextRequest) {
       if (isTable || format === 'csv' || file.name.endsWith('.csv')) {
         outputBytes = await convertCsvToPdf(extractedText);
       } else {
-        outputBytes = await convertTextToPdf(extractedText, { title: baseName });
+        outputBytes = await convertTextToPdf(extractedText);
       }
     } else {
       if (format === 'csv') {
         outputBytes = await convertCsvToPdf(textContent);
       } else {
-        outputBytes = await convertTextToPdf(textContent, { title: 'Converted Document' });
+        outputBytes = await convertTextToPdf(textContent);
       }
     }
 

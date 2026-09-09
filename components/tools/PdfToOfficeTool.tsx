@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Copy, Check, Eye, Sparkles, Layout } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
+import { createWordDocx, createExcelWorkbook } from '@/lib/office/officeExportHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 
 interface PdfToOfficeToolProps {
@@ -51,121 +52,45 @@ export default function PdfToOfficeTool({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!file) return;
 
     const baseName = file.name.replace(/\.[^/.]+$/, '');
 
-    if (format === 'word') {
-      if (wordMode === 'visual' && pages.length > 0) {
-        // High-Fidelity Word Document with Exact Vector/Retina Page Layouts
-        const htmlDoc = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>${baseName}</title>
-<style>
-  body { margin: 0; padding: 20px; background-color: #f3f4f6; font-family: Calibri, sans-serif; }
-  .page-container { max-width: 820px; margin: 0 auto 30px auto; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; page-break-after: always; }
-  .page-img { width: 100%; height: auto; display: block; }
-  @media print {
-    body { padding: 0; background: none; }
-    .page-container { max-width: 100%; box-shadow: none; margin: 0; page-break-after: always; }
-  }
-</style>
-</head>
-<body>
-${pages
-  .map(
-    (pg) => `
-<div class="page-container">
-  <img src="${pg.dataUrl}" class="page-img" alt="Page ${pg.pageNumber}" />
-</div>`
-  )
-  .join('\n')}
-</body>
-</html>`;
-
-        const blob = new Blob([htmlDoc], { type: 'application/msword;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
+    try {
+      if (format === 'word') {
+        const docxBlob = await createWordDocx(
+          extractedText.split('\n\n--- Page Break ---\n\n'),
+          pages,
+          { mode: wordMode, title: baseName }
+        );
+        const url = URL.createObjectURL(docxBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${baseName}_exact_layout.doc`;
+        a.download = `${baseName}.docx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else if (format === 'excel') {
+        const xlsxBlob = createExcelWorkbook(extractedText.split('\n\n--- Page Break ---\n\n'));
+        const url = URL.createObjectURL(xlsxBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}.xlsx`;
         a.click();
         URL.revokeObjectURL(url);
       } else {
-        // Editable Text Mode
-        const htmlDoc = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>${baseName}</title>
-<style>
-  body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #111827; padding: 40px; margin: 0; }
-  p { margin: 0 0 8pt 0; white-space: pre-wrap; }
-  table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
-  td { border: 1px solid #e5e7eb; padding: 6px 10px; font-size: 10pt; }
-  .page-break { page-break-after: always; height: 1px; margin: 24pt 0; border-top: 1px dashed #d1d5db; }
-</style>
-</head>
-<body>
-${extractedText
-  .split('\n\n--- Page Break ---\n\n')
-  .map((pageText, pIdx, arr) => {
-    const lines = pageText.split('\n');
-    const pageHtml = lines
-      .map((line) => {
-        if (!line.trim()) return '<p style="height: 10pt;"></p>';
-        if (line.includes('\t')) {
-          const cells = line
-            .split('\t')
-            .map((c) => `<td>${c.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>`)
-            .join('');
-          return `<table><tr>${cells}</tr></table>`;
-        }
-        return `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
-      })
-      .join('\n');
-    return `<div>${pageHtml}</div>${pIdx < arr.length - 1 ? '<div class="page-break"></div>' : ''}`;
-  })
-  .join('\n')}
-</body>
-</html>`;
-
-        const blob = new Blob([htmlDoc], { type: 'application/msword;charset=utf-8' });
+        const cleanTxt = extractedText.replace(/\n\n--- Page Break ---\n\n/g, '\n\n');
+        const blob = new Blob([cleanTxt], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${baseName}.doc`;
+        a.download = `${baseName}.txt`;
         a.click();
         URL.revokeObjectURL(url);
       }
-    } else if (format === 'excel') {
-      const csvRows = extractedText
-        .replace(/\n\n--- Page Break ---\n\n/g, '\n')
-        .split('\n')
-        .map((line) => {
-          const cells = line.includes('\t') ? line.split('\t') : [line];
-          return cells.map((c) => `"${c.replace(/"/g, '""')}"`).join(',');
-        })
-        .join('\r\n');
-
-      const blob = new Blob(['\uFEFF' + csvRows], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${baseName}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } else {
-      const cleanTxt = extractedText.replace(/\n\n--- Page Break ---\n\n/g, '\n\n');
-      const blob = new Blob([cleanTxt], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${baseName}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Download export error:', err);
+      setError('Error generating office document: ' + err.message);
     }
   };
 

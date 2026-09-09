@@ -33,9 +33,9 @@ export function sanitizeWinAnsiText(str: string): string {
 }
 
 /**
- * Extracts clean text content from Word (.docx), Excel (.xlsx, .xls), CSV, HTML, and TXT files.
+ * Extracts structured data or HTML from Word (.docx), Excel (.xlsx, .xls), CSV, HTML, and TXT files.
  */
-export async function extractTextFromDocument(file: File): Promise<{ text: string; isTable?: boolean }> {
+export async function extractTextFromDocument(file: File): Promise<{ text: string; isTable?: boolean; buffer?: Buffer }> {
   const fileName = file.name.toLowerCase();
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -44,7 +44,7 @@ export async function extractTextFromDocument(file: File): Promise<{ text: strin
   if (fileName.endsWith('.docx')) {
     try {
       const result = await mammoth.extractRawText({ buffer });
-      return { text: result.value || '' };
+      return { text: result.value || '', buffer };
     } catch (e) {
       console.warn('Mammoth extraction failed, falling back:', e);
     }
@@ -58,7 +58,7 @@ export async function extractTextFromDocument(file: File): Promise<{ text: strin
       if (firstSheetName) {
         const worksheet = workbook.Sheets[firstSheetName];
         const csv = XLSX.utils.sheet_to_csv(worksheet);
-        return { text: csv, isTable: true };
+        return { text: csv, isTable: true, buffer };
       }
     } catch (e) {
       console.warn('XLSX extraction failed:', e);
@@ -68,7 +68,7 @@ export async function extractTextFromDocument(file: File): Promise<{ text: strin
   // 3. CSV Tables
   if (fileName.endsWith('.csv')) {
     const text = buffer.toString('utf-8');
-    return { text, isTable: true };
+    return { text, isTable: true, buffer };
   }
 
   // 4. HTML Documents
@@ -80,12 +80,12 @@ export async function extractTextFromDocument(file: File): Promise<{ text: strin
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-    return { text: cleanText };
+    return { text: cleanText, buffer };
   }
 
   // 5. Plain Text (.txt, .rtf, .md, .log, etc.)
   const text = buffer.toString('utf-8');
-  return { text };
+  return { text, buffer };
 }
 
 /**
@@ -190,26 +190,53 @@ export async function convertTextToPdf(
 }
 
 /**
- * Converts CSV data string into a formatted PDF table document
+ * Converts Excel buffer or CSV content into a high-fidelity PDF table with dynamic column sizing,
+ * landscape auto-orientation for wide tables, and alternating row styling.
  */
-export async function convertCsvToPdf(csvContent: string): Promise<Uint8Array> {
-  const safeContent = sanitizeWinAnsiText(csvContent);
-  const rows = safeContent
-    .split('\n')
-    .map((r) => r.split(',').map((c) => c.trim().replace(/^["']|["']$/g, '')))
-    .filter((r) => r.some((c) => c.length > 0));
+export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<Uint8Array> {
+  let rows: (string | number)[][] = [];
+
+  if (typeof bufferOrCsv === 'string') {
+    const safeContent = sanitizeWinAnsiText(bufferOrCsv);
+    rows = safeContent
+      .split('\n')
+      .map((r) => r.split(',').map((c) => c.trim().replace(/^["']|["']$/g, '')))
+      .filter((r) => r.some((c) => String(c).length > 0));
+  } else {
+    try {
+      const workbook = XLSX.read(bufferOrCsv, { type: 'buffer' });
+      const firstSheetName = workbook.SheetNames[0];
+      if (firstSheetName) {
+        const worksheet = workbook.Sheets[firstSheetName];
+        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as (string | number)[][];
+      }
+    } catch {
+      const text = bufferOrCsv.toString('utf-8');
+      return convertExcelToPdf(text);
+    }
+  }
+
+  if (rows.length === 0) {
+    rows = [['No data found in spreadsheet']];
+  }
+
+  const colCount = Math.max(...rows.map((r) => r.length), 1);
+  const isWide = colCount > 5;
+
+  // Use Landscape for wide tables (> 5 columns)
+  const pageSize = isWide ? [PageSizes.A4[1], PageSizes.A4[0]] : PageSizes.A4;
+  const [pageWidth, pageHeight] = pageSize;
+  const margin = 35;
+  const usableWidth = pageWidth - margin * 2;
 
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  const [pageWidth, pageHeight] = PageSizes.A4;
-  const margin = 40;
   let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
   let currentY = pageHeight - margin;
 
-  const colCount = Math.max(...rows.map((r) => r.length), 1);
-  const colWidth = (pageWidth - margin * 2) / colCount;
+  const colWidth = usableWidth / colCount;
   const rowHeight = 22;
 
   for (let rIdx = 0; rIdx < rows.length; rIdx++) {
@@ -222,30 +249,48 @@ export async function convertCsvToPdf(csvContent: string): Promise<Uint8Array> {
       currentY = pageHeight - margin;
     }
 
-    // Row background for header
+    // Header and alternating row backgrounds
     if (isHeader) {
       currentPage.drawRectangle({
         x: margin,
         y: currentY - rowHeight + 4,
-        width: pageWidth - margin * 2,
+        width: usableWidth,
         height: rowHeight,
-        color: rgb(0.92, 0.94, 0.98),
+        color: rgb(0.18, 0.35, 0.75), // Deep navy header
+      });
+    } else if (rIdx % 2 === 1) {
+      currentPage.drawRectangle({
+        x: margin,
+        y: currentY - rowHeight + 4,
+        width: usableWidth,
+        height: rowHeight,
+        color: rgb(0.96, 0.97, 0.99), // Subtle zebra striping
       });
     }
 
+    // Draw horizontal grid line
+    currentPage.drawLine({
+      start: { x: margin, y: currentY - rowHeight + 4 },
+      end: { x: margin + usableWidth, y: currentY - rowHeight + 4 },
+      thickness: 0.5,
+      color: rgb(0.85, 0.88, 0.92),
+    });
+
     for (let cIdx = 0; cIdx < colCount; cIdx++) {
-      const cellText = row[cIdx] || '';
+      const cellVal = row[cIdx] !== undefined && row[cIdx] !== null ? String(row[cIdx]) : '';
+      const safeText = sanitizeWinAnsiText(cellVal);
       const cellX = margin + cIdx * colWidth + 6;
       const cellY = currentY - 12;
 
-      const truncated = cellText.length > 25 ? cellText.substring(0, 22) + '...' : cellText;
+      const maxChars = Math.max(8, Math.floor(colWidth / 6.5));
+      const truncated = safeText.length > maxChars ? safeText.substring(0, maxChars - 2) + '...' : safeText;
 
       currentPage.drawText(truncated, {
         x: cellX,
         y: cellY,
-        size: 9,
+        size: isWide ? 8 : 9,
         font: currentFont,
-        color: isHeader ? rgb(0.1, 0.2, 0.5) : rgb(0.2, 0.2, 0.2),
+        color: isHeader ? rgb(1, 1, 1) : rgb(0.15, 0.15, 0.15),
       });
     }
 
@@ -254,3 +299,11 @@ export async function convertCsvToPdf(csvContent: string): Promise<Uint8Array> {
 
   return await pdfDoc.save();
 }
+
+/**
+ * Backward compatible CSV to PDF converter
+ */
+export async function convertCsvToPdf(csvContent: string): Promise<Uint8Array> {
+  return convertExcelToPdf(csvContent);
+}
+

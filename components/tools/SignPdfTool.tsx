@@ -7,7 +7,6 @@ import {
   Loader2,
   CheckCircle2,
   RotateCcw,
-  ArrowRight,
   Type,
   Upload,
   Eraser,
@@ -28,13 +27,10 @@ import {
   ZoomOut,
   Undo,
   Redo,
-  Sparkles,
   ShieldCheck,
   UserCheck,
   Users,
-  Eye,
-  FileSignature,
-  FileText
+  FileSignature
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
@@ -704,7 +700,7 @@ export default function SignPdfTool() {
                     <Users className="w-4 h-4" />
                     <span>Get signatures from others</span>
                   </button>
-                  <p className="text-xs text-base-content/60 pt-1">FileMint Sign document product</p>
+                  <p className="text-xs text-base-content/60 pt-1">SnapDoc Sign document product</p>
                 </div>
               </div>
             </div>
@@ -762,7 +758,7 @@ export default function SignPdfTool() {
                     <span>Sign with digital seal</span>
                   </button>
                   <p className="text-xs text-base-content/60 pt-1">Add a digital seal with audit trail certificate.</p>
-                  <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ 100% Free with FileMint</div>
+                  <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ 100% Free with SnapDoc</div>
                 </div>
               </div>
             </div>
@@ -965,11 +961,11 @@ export default function SignPdfTool() {
         </div>
       )}
 
-      {/* 4. Main eSign Studio Workspace (Screenshots 3 & 5) */}
+      {/* 4. Main eSign Studio Workspace */}
       {file && pages.length > 0 && !resultData && (
-        <div className="w-full rounded-3xl bg-base-100 border border-base-300 shadow-xl overflow-hidden flex flex-col">
+        <div className="w-full rounded-3xl bg-base-100 border border-base-300 shadow-xl overflow-hidden flex flex-col h-[680px] sm:h-[720px] max-h-[85vh]">
           {/* Top Signature Toolbar */}
-          <div className="p-3 sm:px-5 border-b border-base-200 bg-base-200/40 flex flex-wrap items-center justify-between gap-3">
+          <div className="p-3 sm:px-5 border-b border-base-200 bg-base-200/40 flex flex-wrap items-center justify-between gap-3 shrink-0">
             {/* Left: Reset & File Title */}
             <div className="flex items-center gap-2">
               <button
@@ -1203,9 +1199,9 @@ export default function SignPdfTool() {
           </div>
 
           {/* Main Area: Sidebar Thumbnails + Center PDF Canvas */}
-          <div className="flex-1 flex overflow-hidden min-h-[550px] relative bg-base-300/30">
+          <div className="flex-1 flex overflow-hidden min-h-0 relative bg-base-300/30">
             {/* Left Page Thumbnails Sidebar */}
-            <div className="w-24 sm:w-32 border-r border-base-300 bg-base-100 overflow-y-auto p-3 space-y-3 shrink-0 flex flex-col items-center">
+            <div className="w-24 sm:w-28 border-r border-base-300 bg-base-100 overflow-y-auto p-2.5 space-y-2.5 shrink-0 flex flex-col items-center h-full">
               {pages.map((pg) => (
                 <div
                   key={pg.pageNumber}
@@ -1231,7 +1227,7 @@ export default function SignPdfTool() {
 
             {/* Center Canvas Area */}
             <div
-              className="flex-1 overflow-auto p-6 sm:p-10 flex items-center justify-center relative"
+              className="flex-1 h-full overflow-auto p-4 sm:p-6 flex items-center justify-center relative"
               onMouseMove={handlePageMouseMove}
               onMouseUp={handlePageMouseUp}
               onClick={() => setSelectedElementId(null)}
@@ -1240,11 +1236,11 @@ export default function SignPdfTool() {
                 <div
                   ref={pageContainerRef}
                   style={{
-                    width: `${pages[currentPage - 1].width * (zoomLevel / 100)}px`,
+                    width: `${Math.min(pages[currentPage - 1].width * (zoomLevel / 100), 720)}px`,
                     maxWidth: '100%',
                     aspectRatio: `${pages[currentPage - 1].aspectRatio}`,
                   }}
-                  className="relative bg-white shadow-2xl rounded-lg overflow-hidden select-none border border-base-300"
+                  className="relative bg-white shadow-xl rounded-lg overflow-hidden select-none border border-base-300 my-auto"
                 >
                   {/* Rendered PDF Page Background */}
                   <img
@@ -1399,7 +1395,7 @@ export default function SignPdfTool() {
             </div>
 
             {/* Bottom Floating Controls: Page Navigator & Zoom */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-base-100/90 backdrop-blur-md rounded-2xl shadow-xl border border-base-300 px-4 py-2 flex items-center gap-3 z-30">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-base-100/95 backdrop-blur-md rounded-2xl shadow-xl border border-base-300 px-3.5 py-1.5 flex items-center gap-2.5 z-30">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
@@ -1407,7 +1403,7 @@ export default function SignPdfTool() {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-bold text-base-content min-w-[55px] text-center">
+              <span className="text-xs font-bold text-base-content min-w-[50px] text-center">
                 {currentPage} / {pages.length}
               </span>
               <button
@@ -1425,9 +1421,9 @@ export default function SignPdfTool() {
                 className="btn btn-xs btn-ghost btn-circle"
                 title="Zoom Out"
               >
-                <ZoomOut className="w-4 h-4" />
+                <ZoomOut className="w-3.5 h-3.5" />
               </button>
-              <span className="text-xs font-semibold text-base-content/70 min-w-[40px] text-center">
+              <span className="text-[11px] font-semibold text-base-content/70 min-w-[36px] text-center">
                 {zoomLevel}%
               </span>
               <button
@@ -1435,7 +1431,7 @@ export default function SignPdfTool() {
                 className="btn btn-xs btn-ghost btn-circle"
                 title="Zoom In"
               >
-                <ZoomIn className="w-4 h-4" />
+                <ZoomIn className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

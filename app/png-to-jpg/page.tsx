@@ -11,10 +11,10 @@ export const metadata: Metadata = {
   description: tool.description,
   keywords: tool.keywords,
   alternates: {
-    canonical: `https://filemint.app/${tool.slug}`,
+    canonical: `https://snapdoc.app/${tool.slug}`,
   },
   openGraph: {
-    title: `${tool.name} - FileMint Tools`,
+    title: `${tool.name} - SnapDoc Tools`,
     description: tool.description,
   },
 };

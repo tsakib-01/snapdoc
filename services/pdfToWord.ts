@@ -33,13 +33,15 @@ interface ConvertOptions {
   ocrThresholdCharsPerPage?: number;
 }
 
+import { execFile } from "child_process";
+import { promisify } from "util";
+
+const execFileAsync = promisify(execFile);
+
 /**
  * Converts a .pdf file to .docx.
- * - If the PDF has a real text layer, extracts it directly (fast, accurate).
- * - If the PDF looks like a scan (little/no extractable text), falls back to
- *   rendering each page as an image (via poppler) and running OCR (tesseract.js).
- *
- * Returns the absolute path to the generated DOCX.
+ * - First attempts high-fidelity pdf2docx engine (exact vector/layout/table preservation).
+ * - Falls back to native Node text parser and OCR if needed.
  */
 export async function convertPdfToWord({
   inputPath,
@@ -58,8 +60,24 @@ export async function convertPdfToWord({
 
   await fs.mkdir(outputDir, { recursive: true });
 
+  const baseName = path.basename(inputPath, ".pdf");
+  const outputPath = path.join(outputDir, `${baseName}.docx`);
+  const scriptPath = path.join(process.cwd(), "scripts", "convert_engine.py");
+
+  // 1. Attempt pdf2docx via Python
+  try {
+    await execFileAsync("python", [scriptPath, "pdf2docx", inputPath, outputPath], {
+      timeout: 90000,
+    });
+    await fs.access(outputPath);
+    return outputPath;
+  } catch (pyErr: any) {
+    console.warn("pdf2docx Python execution failed or fallback triggered:", pyErr.message);
+  }
+
   const pdfBuffer = await fs.readFile(inputPath);
   let paragraphs: string[];
+
 
   try {
     const parsed = await pdfParse(pdfBuffer);
@@ -115,8 +133,6 @@ export async function convertPdfToWord({
     ],
   });
 
-  const baseName = path.basename(inputPath, ".pdf");
-  const outputPath = path.join(outputDir, `${baseName}.docx`);
   const buffer = await Packer.toBuffer(doc);
   await fs.writeFile(outputPath, buffer);
 

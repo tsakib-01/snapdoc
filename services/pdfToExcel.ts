@@ -40,9 +40,15 @@ interface MergedToken {
   y0: number;
 }
 
+import { execFile } from "child_process";
+import { promisify } from "util";
+
+const execFileAsync = promisify(execFile);
+
 /**
- * Converts a .pdf file to .xlsx by extracting text with exact coordinates
- * on each page and accurately clustering items into aligned table columns.
+ * Converts a .pdf file to .xlsx:
+ * - First attempts Tabula/pdfplumber engine (exact multi-column & bordered/stream table extraction).
+ * - Falls back to native Node coordinate clustering and XLSX generator if needed.
  */
 export async function convertPdfToExcel({
   inputPath,
@@ -62,8 +68,24 @@ export async function convertPdfToExcel({
 
   await fs.mkdir(outputDir, { recursive: true });
 
+  const baseName = path.basename(inputPath, ".pdf");
+  const outputPath = path.join(outputDir, `${baseName}.xlsx`);
+  const scriptPath = path.join(process.cwd(), "scripts", "convert_engine.py");
+
+  // 1. Attempt Tabula-style pdfplumber via Python
+  try {
+    await execFileAsync("python", [scriptPath, "pdf2excel", inputPath, outputPath], {
+      timeout: 90000,
+    });
+    await fs.access(outputPath);
+    return outputPath;
+  } catch (pyErr: any) {
+    console.warn("pdf2excel Python execution failed or fallback triggered:", pyErr.message);
+  }
+
   const data = new Uint8Array(await fs.readFile(inputPath));
   const workbook = XLSX.utils.book_new();
+
 
   let loadingTask;
   try {
@@ -172,8 +194,6 @@ export async function convertPdfToExcel({
     );
   }
 
-  const baseName = path.basename(inputPath, ".pdf");
-  const outputPath = path.join(outputDir, `${baseName}.xlsx`);
   XLSX.writeFile(workbook, outputPath);
 
   return outputPath;

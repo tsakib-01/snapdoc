@@ -5,6 +5,8 @@ import { FileCode, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, FileT
 import UploadZone from '@/components/ui/UploadZone';
 import { formatBytes } from '@/lib/utils/formatters';
 
+import { convertDocxToPdfClient } from '@/lib/office/wordToPdfHelper';
+
 interface DocToPdfToolProps {
   initialFormat?: 'txt' | 'csv' | 'html' | 'word';
   title?: string;
@@ -36,6 +38,22 @@ export default function DocToPdfTool({
     setError(null);
 
     try {
+      if (file && (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc'))) {
+        try {
+          const result = await convertDocxToPdfClient(file);
+          const baseName = file.name.replace(/\.[^/.]+$/, '');
+          setResultData({
+            dataUrl: result.dataUrl,
+            filename: `${baseName}.pdf`,
+            size: result.size,
+          });
+          setProcessing(false);
+          return;
+        } catch (docxErr: any) {
+          console.warn('Client docx conversion fallback to server:', docxErr);
+        }
+      }
+
       const formData = new FormData();
       if (file) {
         formData.append('file', file);

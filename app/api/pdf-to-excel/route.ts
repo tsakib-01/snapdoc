@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { convertPdfToExcelBuffer } from '@/lib/office/pdfLayoutExtractor';
+import { convertPdfToExcel } from '@/services/pdfToExcel';
 import { MAX_IMAGE_FILE_SIZE } from '@/lib/utils/validation';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pdf2excel-api-'));
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -20,9 +24,17 @@ export async function POST(req: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
-
-    const xlsxBuffer = await convertPdfToExcelBuffer(pdfBuffer);
     const baseName = file.name.replace(/\.[^/.]+$/, '');
+
+    const inputPath = path.join(tmpDir, `${baseName}.pdf`);
+    await fs.writeFile(inputPath, pdfBuffer);
+
+    const outputPath = await convertPdfToExcel({
+      inputPath,
+      outputDir: tmpDir,
+    });
+
+    const xlsxBuffer = await fs.readFile(outputPath);
     const base64Data = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${xlsxBuffer.toString('base64')}`;
 
     return NextResponse.json({
@@ -38,5 +50,7 @@ export async function POST(req: NextRequest) {
       { error: err.message || 'Failed to convert PDF to Excel spreadsheet.' },
       { status: 500 }
     );
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 }

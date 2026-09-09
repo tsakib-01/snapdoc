@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { convertPdfToWordBuffer } from '@/lib/office/pdfLayoutExtractor';
+import { convertPdfToWord } from '@/services/pdfToWord';
 import { MAX_IMAGE_FILE_SIZE } from '@/lib/utils/validation';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
+import crypto from 'crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pdf2word-api-'));
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -22,7 +27,15 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = Buffer.from(arrayBuffer);
     const baseName = file.name.replace(/\.[^/.]+$/, '');
 
-    const docxBuffer = await convertPdfToWordBuffer(pdfBuffer, baseName);
+    const inputPath = path.join(tmpDir, `${baseName}.pdf`);
+    await fs.writeFile(inputPath, pdfBuffer);
+
+    const outputPath = await convertPdfToWord({
+      inputPath,
+      outputDir: tmpDir,
+    });
+
+    const docxBuffer = await fs.readFile(outputPath);
     const base64Data = `data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,${docxBuffer.toString('base64')}`;
 
     return NextResponse.json({
@@ -38,5 +51,7 @@ export async function POST(req: NextRequest) {
       { error: err.message || 'Failed to convert PDF to Word document.' },
       { status: 500 }
     );
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 }

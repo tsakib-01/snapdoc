@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { convertWordToPdf } from '@/services/wordToPdf';
 import { convertTextToPdf, convertExcelToPdf, extractTextFromDocument } from '@/lib/office/documentConverter';
-import { convertWithLibreOffice } from '@/lib/office/libreofficeHelper';
 import { MAX_IMAGE_FILE_SIZE } from '@/lib/utils/validation';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'doc2pdf-api-'));
   try {
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
@@ -27,29 +31,35 @@ export async function POST(req: NextRequest) {
       baseName = file.name.replace(/\.[^/.]+$/, '');
       const arrayBuffer = await file.arrayBuffer();
       const fileBuffer = Buffer.from(arrayBuffer);
-      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      const ext = path.extname(file.name).toLowerCase();
 
-      // 1. Try LibreOffice headless conversion first for Office formats
-      if (['.docx', '.doc', '.rtf', '.odt', '.xlsx', '.xls', '.pptx', '.ppt'].includes(ext)) {
+      // 1. If Word format, convert using convertWordToPdf
+      if (ext === '.docx' || ext === '.doc') {
         try {
-          const pdfBuffer = await convertWithLibreOffice(fileBuffer, ext);
-          if (pdfBuffer && pdfBuffer.length > 0) {
-            outputBytes = new Uint8Array(pdfBuffer);
-            const base64Data = `data:application/pdf;base64,${Buffer.from(outputBytes).toString('base64')}`;
-            return NextResponse.json({
-              success: true,
-              filename: `${baseName}.pdf`,
-              size: outputBytes.length,
-              mimeType: 'application/pdf',
-              dataUrl: base64Data,
-            });
-          }
+          const inputPath = path.join(tmpDir, file.name);
+          await fs.writeFile(inputPath, fileBuffer);
+
+          const outputPath = await convertWordToPdf({
+            inputPath,
+            outputDir: tmpDir,
+          });
+
+          const pdfBuf = await fs.readFile(outputPath);
+          outputBytes = new Uint8Array(pdfBuf);
+          const base64Data = `data:application/pdf;base64,${Buffer.from(outputBytes).toString('base64')}`;
+          return NextResponse.json({
+            success: true,
+            filename: `${baseName}.pdf`,
+            size: outputBytes.length,
+            mimeType: 'application/pdf',
+            dataUrl: base64Data,
+          });
         } catch (libreErr) {
-          console.warn('LibreOffice headless conversion unavailable or failed, falling back:', libreErr);
+          console.warn('LibreOffice headless conversion failed or unavailable, using high-fidelity fallback:', libreErr);
         }
       }
 
-      // 2. Fallback to high-fidelity document converter
+      // 2. Fallback to documentConverter
       const { text: extractedText, isTable, buffer } = await extractTextFromDocument(file);
 
       if (isTable || format === 'csv' || ext === '.csv' || ext === '.xlsx' || ext === '.xls') {
@@ -80,5 +90,7 @@ export async function POST(req: NextRequest) {
       { error: err.message || 'Failed to convert document to PDF.' },
       { status: 500 }
     );
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }
 }

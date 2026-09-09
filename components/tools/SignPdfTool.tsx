@@ -31,7 +31,6 @@ import {
   UserCheck,
   Users,
   FileSignature,
-  Layers,
   LayoutGrid
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
@@ -44,7 +43,6 @@ export interface PlacedElement {
   type: 'signature' | 'initials' | 'text' | 'date' | 'check' | 'cross' | 'dot' | 'line';
   dataUrl?: string;
   text?: string;
-  fontFamily?: string;
   x: number; // percentage (0 - 100)
   y: number; // percentage (0 - 100)
   width: number; // percentage (0 - 100)
@@ -75,16 +73,16 @@ export default function SignPdfTool() {
   const [showWhoSigningModal, setShowWhoSigningModal] = useState<boolean>(false);
   const [showSealingModal, setShowSealingModal] = useState<boolean>(false);
   const [showSignatureCreator, setShowSignatureCreator] = useState<boolean>(false);
+  const [showSignaturesModal, setShowSignaturesModal] = useState<boolean>(false);
   const [creatorMode, setCreatorMode] = useState<'signature' | 'initials'>('signature');
   const [creatorTab, setCreatorTab] = useState<'draw' | 'type' | 'upload'>('draw');
 
-  // Signatures Dropdown & Saved Signatures
-  const [showSignaturesDropdown, setShowSignaturesDropdown] = useState<boolean>(false);
+  // Symbols Dropdown
   const [showSymbolsDropdown, setShowSymbolsDropdown] = useState<boolean>(false);
   const [savedSignatures, setSavedSignatures] = useState<SavedSignature[]>([]);
 
   // Signature Creator Internals
-  const [creatorColor, setCreatorColor] = useState<string>('#1e293b'); // Black, Blue, Red
+  const [creatorColor, setCreatorColor] = useState<string>('#1e293b');
   const [typedText, setTypedText] = useState<string>('');
   const [selectedFont, setSelectedFont] = useState<string>('Caveat');
   const [uploadedSignatureUrl, setUploadedSignatureUrl] = useState<string | null>(null);
@@ -99,7 +97,7 @@ export default function SignPdfTool() {
 
   // Dragging & Resizing States (Mouse & Touch)
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [isResizing, setIsResizing] = useState<string | null>(null); // handle: 'se', 'sw', 'ne', 'nw', etc.
+  const [isResizing, setIsResizing] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [elementInitialRect, setElementInitialRect] = useState<{ x: number; y: number; width: number; height: number }>({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -296,8 +294,9 @@ export default function SignPdfTool() {
 
     setSavedSignatures((prev) => [...prev, newSig]);
     setShowSignatureCreator(false);
+    setShowSignaturesModal(false);
 
-    // Place directly onto current page at default central position
+    // Place directly onto current page
     placeItemOnPage({
       id: `elem_${Date.now()}`,
       type: creatorMode,
@@ -321,7 +320,7 @@ export default function SignPdfTool() {
 
   // Quick Place Pre-saved Signature or Initials
   const handleSelectSavedSignature = (sig: SavedSignature) => {
-    setShowSignaturesDropdown(false);
+    setShowSignaturesModal(false);
     placeItemOnPage({
       id: `elem_${Date.now()}`,
       type: sig.type,
@@ -334,6 +333,16 @@ export default function SignPdfTool() {
       color: '#1e293b',
       opacity: 1.0,
     });
+  };
+
+  // Trigger Sign button action
+  const handleSignButtonClick = () => {
+    if (savedSignatures.length === 0) {
+      setCreatorMode('signature');
+      setShowSignatureCreator(true);
+    } else {
+      setShowSignaturesModal(true);
+    }
   };
 
   // Place Date Stamp
@@ -407,7 +416,7 @@ export default function SignPdfTool() {
     setSelectedElementId(duplicated.id);
   };
 
-  // Update selected element property (color, opacity, text)
+  // Update selected element property
   const updateElementProp = (id: string, updates: Partial<PlacedElement>) => {
     const newItems = placedElements.map((el) => (el.id === id ? { ...el, ...updates } : el));
     recordState(newItems);
@@ -515,14 +524,12 @@ export default function SignPdfTool() {
         const page = pdfPages[el.pageIndex];
         const { width: pageWidth, height: pageHeight } = page.getSize();
 
-        // Convert percentage coordinates to PDF points (PDF (0,0) is bottom-left)
         const pdfX = (el.x / 100) * pageWidth;
         const pdfWidth = (el.width / 100) * pageWidth;
         const pdfHeight = (el.height / 100) * pageHeight;
         const pdfY = pageHeight - (el.y / 100) * pageHeight - pdfHeight;
 
         if (el.dataUrl) {
-          // Embed PNG Signature/Initials
           const pngImage = await pdfDoc.embedPng(el.dataUrl);
           page.drawImage(pngImage, {
             x: pdfX,
@@ -532,7 +539,6 @@ export default function SignPdfTool() {
             opacity: el.opacity,
           });
         } else if (el.type === 'text' || el.type === 'date') {
-          // Render text onto offscreen canvas to guarantee exact styling and crispness
           const offCanvas = document.createElement('canvas');
           offCanvas.width = 600;
           offCanvas.height = 150;
@@ -779,7 +785,70 @@ export default function SignPdfTool() {
         </div>
       )}
 
-      {/* 3. Modal: Signature Creator */}
+      {/* 3. Modal: Saved Signatures Picker Modal (Guaranteed Visible Everywhere) */}
+      {showSignaturesModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-base-100 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-base-300 space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b border-base-200 pb-3">
+              <h2 className="text-lg font-bold text-base-content flex items-center gap-2">
+                <PenTool className="w-4 h-4 text-primary" />
+                Select Signature or Initials
+              </h2>
+              <button
+                onClick={() => setShowSignaturesModal(false)}
+                className="btn btn-sm btn-circle btn-ghost"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Signatures List */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {savedSignatures.map((sig) => (
+                <div
+                  key={sig.id}
+                  onClick={() => handleSelectSavedSignature(sig)}
+                  className="p-3 rounded-2xl bg-base-200/50 hover:bg-primary/10 border border-base-200 hover:border-primary cursor-pointer flex items-center justify-between group transition-all"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="badge badge-sm badge-ghost capitalize text-[10px]">{sig.type}</span>
+                    <img src={sig.dataUrl} alt="Signature" className="h-8 object-contain" />
+                  </div>
+                  <span className="text-xs font-bold text-primary">Place on Page</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions: Add New Signature / Add New Initials */}
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-base-200">
+              <button
+                onClick={() => {
+                  setShowSignaturesModal(false);
+                  setCreatorMode('signature');
+                  setShowSignatureCreator(true);
+                }}
+                className="btn btn-sm btn-outline rounded-xl gap-1 text-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Signature</span>
+              </button>
+              <button
+                onClick={() => {
+                  setShowSignaturesModal(false);
+                  setCreatorMode('initials');
+                  setShowSignatureCreator(true);
+                }}
+                className="btn btn-sm btn-outline rounded-xl gap-1 text-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Initials</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Modal: Signature Creator (Draw / Type / Upload) */}
       {showSignatureCreator && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-base-100 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-base-300 space-y-4 animate-in fade-in zoom-in duration-200">
@@ -974,11 +1043,11 @@ export default function SignPdfTool() {
         </div>
       )}
 
-      {/* 4. Main eSign Studio Workspace */}
+      {/* 5. Main eSign Studio Workspace */}
       {file && pages.length > 0 && !resultData && (
-        <div className="w-full rounded-3xl bg-base-100 border border-base-300 shadow-xl overflow-hidden flex flex-col h-[580px] sm:h-[680px] lg:h-[720px] max-h-[85vh]">
-          {/* Top Signature Toolbar - Fully Responsive */}
-          <div className="p-2 sm:p-3 border-b border-base-200 bg-base-200/50 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0 overflow-x-auto no-scrollbar">
+        <div className="w-full rounded-3xl bg-base-100 border border-base-300 shadow-xl flex flex-col h-[580px] sm:h-[680px] lg:h-[720px] max-h-[85vh] relative">
+          {/* Top Signature Toolbar */}
+          <div className="p-2 sm:p-3 border-b border-base-200 bg-base-200/50 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0">
             {/* Left: Reset & File Title */}
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
               <button
@@ -988,7 +1057,7 @@ export default function SignPdfTool() {
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-              <div className="max-w-[90px] sm:max-w-[140px] md:max-w-[200px] truncate">
+              <div className="max-w-[80px] sm:max-w-[140px] md:max-w-[200px] truncate">
                 <span className="font-bold text-xs sm:text-sm text-base-content truncate block">
                   {file.name}
                 </span>
@@ -1029,81 +1098,14 @@ export default function SignPdfTool() {
 
               <div className="h-4 w-px bg-base-300 mx-0.5" />
 
-              {/* Signatures Dropdown Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowSignaturesDropdown(!showSignaturesDropdown)}
-                  className="btn btn-xs sm:btn-sm rounded-xl gap-1 btn-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white px-2 sm:px-3"
-                >
-                  <PenTool className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span className="text-xs">Sign</span>
-                  <ChevronDown className="w-3 h-3" />
-                </button>
-
-                {showSignaturesDropdown && (
-                  <div className="absolute top-full left-0 sm:left-auto mt-2 w-60 sm:w-64 bg-base-100 rounded-2xl shadow-2xl border border-base-300 p-3 z-50 space-y-3">
-                    {/* Signatures Section */}
-                    <div className="space-y-1.5">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-base-content/60 px-1">
-                        Signatures
-                      </span>
-                      {savedSignatures
-                        .filter((s) => s.type === 'signature')
-                        .map((sig) => (
-                          <div
-                            key={sig.id}
-                            onClick={() => handleSelectSavedSignature(sig)}
-                            className="p-2 rounded-xl bg-base-200/50 hover:bg-primary/10 border border-base-200 cursor-pointer flex items-center justify-between group"
-                          >
-                            <img src={sig.dataUrl} alt="Signature" className="h-7 object-contain" />
-                            <span className="text-xs text-primary">Place</span>
-                          </div>
-                        ))}
-                      <button
-                        onClick={() => {
-                          setShowSignaturesDropdown(false);
-                          setCreatorMode('signature');
-                          setShowSignatureCreator(true);
-                        }}
-                        className="btn btn-xs btn-outline w-full rounded-xl gap-1.5 py-2 h-auto text-xs"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>New signature</span>
-                      </button>
-                    </div>
-
-                    {/* Initials Section */}
-                    <div className="space-y-1.5 pt-2 border-t border-base-200">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-base-content/60 px-1">
-                        Initials
-                      </span>
-                      {savedSignatures
-                        .filter((s) => s.type === 'initials')
-                        .map((sig) => (
-                          <div
-                            key={sig.id}
-                            onClick={() => handleSelectSavedSignature(sig)}
-                            className="p-2 rounded-xl bg-base-200/50 hover:bg-primary/10 border border-base-200 cursor-pointer flex items-center justify-between group"
-                          >
-                            <img src={sig.dataUrl} alt="Initials" className="h-7 object-contain" />
-                            <span className="text-xs text-primary">Place</span>
-                          </div>
-                        ))}
-                      <button
-                        onClick={() => {
-                          setShowSignaturesDropdown(false);
-                          setCreatorMode('initials');
-                          setShowSignatureCreator(true);
-                        }}
-                        className="btn btn-xs btn-outline w-full rounded-xl gap-1.5 py-2 h-auto text-xs"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>New initials</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* Direct Sign Button - Opens Signature Modal Instantly */}
+              <button
+                onClick={handleSignButtonClick}
+                className="btn btn-xs sm:btn-sm rounded-xl gap-1 btn-primary text-white font-bold shadow-md shadow-primary/20 px-2.5 sm:px-3"
+              >
+                <PenTool className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="text-xs">Sign</span>
+              </button>
 
               {/* Date Stamp */}
               <button
@@ -1210,7 +1212,7 @@ export default function SignPdfTool() {
 
           {/* Main Area: Sidebar Thumbnails + Center PDF Canvas */}
           <div className="flex-1 flex overflow-hidden min-h-0 relative bg-base-300/30">
-            {/* Left Page Thumbnails Sidebar (Visible on Desktop or when Toggled on Mobile) */}
+            {/* Left Page Thumbnails Sidebar */}
             <div
               className={`${
                 showMobileThumbnails ? 'absolute inset-y-0 left-0 z-40 shadow-2xl flex' : 'hidden md:flex'
@@ -1515,7 +1517,7 @@ export default function SignPdfTool() {
         </div>
       )}
 
-      {/* 5. Success Download Screen */}
+      {/* 6. Success Download Screen */}
       {resultData && (
         <div className="p-6 sm:p-12 rounded-3xl bg-base-100 border border-base-300 shadow-xl text-center space-y-6 max-w-2xl mx-auto">
           <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center">

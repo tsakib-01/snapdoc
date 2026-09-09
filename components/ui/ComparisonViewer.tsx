@@ -63,20 +63,20 @@ export default function ComparisonViewer({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Original Card */}
           <div className="flex flex-col rounded-2xl border border-base-300 bg-base-100 overflow-hidden shadow-sm">
-            <div className="px-4 py-2 bg-base-200/60 border-b border-base-300 flex items-center justify-between text-xs font-semibold">
+            <div className="px-3 sm:px-4 py-2 bg-base-200/60 border-b border-base-300 flex items-center justify-between text-xs font-semibold">
               <span className="text-base-content/70">Original Image</span>
               <span className="badge badge-sm badge-neutral">{formatBytes(originalSize)}</span>
             </div>
-            <div className="relative p-4 flex items-center justify-center min-h-[260px] bg-transparency-grid">
+            <div className="relative p-2 sm:p-4 flex items-center justify-center min-h-[180px] sm:min-h-[260px] bg-transparency-grid">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={originalUrl}
                 alt="Original preview"
-                className="max-h-[320px] max-w-full object-contain rounded-lg shadow-sm"
+                className="max-h-[220px] sm:max-h-[320px] max-w-full object-contain rounded-lg shadow-sm"
               />
             </div>
             {originalDimensions && (
-              <div className="px-4 py-2 bg-base-200/30 text-[11px] text-base-content/60 text-center border-t border-base-200">
+              <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-base-200/30 text-[10px] sm:text-[11px] text-base-content/60 text-center border-t border-base-200">
                 Dimensions: {originalDimensions.width} × {originalDimensions.height} px
               </div>
             )}
@@ -84,7 +84,7 @@ export default function ComparisonViewer({
 
           {/* Processed Card */}
           <div className="flex flex-col rounded-2xl border-2 border-primary/40 bg-base-100 overflow-hidden shadow-md">
-            <div className="px-4 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between text-xs font-semibold text-primary">
+            <div className="px-3 sm:px-4 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between text-xs font-semibold text-primary">
               <span className="flex items-center gap-1.5 font-bold">
                 <Eye className="w-3.5 h-3.5" />
                 Optimized Result
@@ -93,16 +93,16 @@ export default function ComparisonViewer({
                 {formatBytes(processedSize)}
               </span>
             </div>
-            <div className="relative p-4 flex items-center justify-center min-h-[260px] bg-transparency-grid">
+            <div className="relative p-2 sm:p-4 flex items-center justify-center min-h-[180px] sm:min-h-[260px] bg-transparency-grid">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={processedUrl}
                 alt="Processed preview"
-                className="max-h-[320px] max-w-full object-contain rounded-lg shadow-sm"
+                className="max-h-[220px] sm:max-h-[320px] max-w-full object-contain rounded-lg shadow-sm"
               />
             </div>
             {processedDimensions && (
-              <div className="px-4 py-2 bg-base-200/30 text-[11px] text-base-content/60 text-center border-t border-base-200 font-medium">
+              <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-base-200/30 text-[10px] sm:text-[11px] text-base-content/60 text-center border-t border-base-200 font-medium">
                 Dimensions: {processedDimensions.width} × {processedDimensions.height} px
               </div>
             )}

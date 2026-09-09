@@ -179,7 +179,7 @@ export default function PdfToJpgTool() {
             type="button"
             onClick={handleConvert}
             disabled={isRendering}
-            className="btn btn-primary btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
           >
             {isRendering ? (
               <>

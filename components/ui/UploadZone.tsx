@@ -110,7 +110,7 @@ export default function UploadZone({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !disabled && inputRef.current?.click()}
-        className={`upload-dropzone relative flex flex-col items-center justify-center p-8 sm:p-12 rounded-3xl border-2 border-dashed transition-all cursor-pointer select-none text-center ${
+        className={`upload-dropzone relative flex flex-col items-center justify-center p-5 sm:p-10 md:p-12 rounded-2xl sm:rounded-3xl border-2 border-dashed transition-all cursor-pointer select-none text-center ${
           isDragging
             ? 'border-primary bg-primary/5 scale-[1.01]'
             : 'border-base-300 bg-base-100 hover:border-primary/50 hover:bg-base-200/40'
@@ -126,22 +126,22 @@ export default function UploadZone({
           disabled={disabled}
         />
 
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 shadow-inner shadow-primary/20">
-          <UploadCloud className="w-8 h-8 sm:w-10 sm:h-10 animate-pulse" />
+        <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 sm:mb-4 shadow-inner shadow-primary/20">
+          <UploadCloud className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse" />
         </div>
 
-        <h3 className="text-base sm:text-lg font-bold text-base-content">
+        <h3 className="text-sm sm:text-lg font-bold text-base-content">
           {title}
         </h3>
-        <p className="text-xs sm:text-sm text-base-content/60 mt-1">
+        <p className="text-[11px] sm:text-sm text-base-content/60 mt-1">
           {subtitle}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-          <span className="btn btn-primary btn-sm rounded-xl px-5 shadow-sm font-semibold">
+        <div className="mt-4 sm:mt-5 flex flex-wrap items-center justify-center gap-2">
+          <span className="btn btn-primary btn-sm rounded-xl px-4 sm:px-5 shadow-sm font-semibold text-xs sm:text-sm">
             Choose File{multiple ? 's' : ''}
           </span>
-          <span className="text-[11px] text-base-content/50 px-2 py-1 bg-base-200 rounded-lg">
+          <span className="text-[10px] sm:text-[11px] text-base-content/50 px-2 py-1 bg-base-200 rounded-lg">
             {accept.includes('pdf') ? 'PDF up to 100MB' : 'JPG, PNG, WebP up to 50MB'}
           </span>
         </div>

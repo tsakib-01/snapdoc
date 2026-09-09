@@ -121,33 +121,33 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
         />
       )}
 
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+      <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
         {/* Breadcrumbs with Semantic Microdata */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-base-content/60">
-          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-base-content/40" />
-          <Link href="/tools" className="hover:text-primary transition-colors capitalize">{tool.category} Tools</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-base-content/40" />
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-base-content/60 overflow-x-auto no-scrollbar py-0.5">
+          <Link href="/" className="hover:text-primary transition-colors shrink-0">Home</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-base-content/40 shrink-0" />
+          <Link href="/tools" className="hover:text-primary transition-colors capitalize shrink-0">{tool.category} Tools</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-base-content/40 shrink-0" />
           <span className="font-semibold text-base-content truncate">{tool.name}</span>
         </nav>
 
         {/* Tool Header */}
-        <div className="text-center space-y-3 max-w-3xl mx-auto">
+        <div className="text-center space-y-2.5 max-w-3xl mx-auto px-1">
           {tool.badge && (
             <span className="badge badge-primary badge-sm font-semibold mb-1">
               {tool.badge}
             </span>
           )}
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-base-content">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-base-content">
             {tool.name}
           </h1>
-          <p className="text-sm sm:text-base text-base-content/70 leading-relaxed">
+          <p className="text-xs sm:text-base text-base-content/70 leading-relaxed">
             {tool.description}
           </p>
         </div>
 
         {/* Main Tool Interactive Sandbox */}
-        <div className="w-full bg-base-100 rounded-3xl border border-base-300 shadow-card p-4 sm:p-8 transition-all">
+        <div className="w-full bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card p-3 sm:p-6 lg:p-8 transition-all">
           {children}
         </div>
 

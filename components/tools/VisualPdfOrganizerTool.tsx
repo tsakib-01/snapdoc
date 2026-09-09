@@ -392,44 +392,44 @@ export default function VisualPdfOrganizerTool({
       {file && !loadingThumbnails && !resultData && (
         <div className="w-full space-y-5">
           {/* Top Integrated Action Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
             {/* Left: Reset & Tools */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={handleReset}
-                className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-base-content"
+                className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content"
                 title="Upload different file"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
 
-              <span className="font-extrabold text-base sm:text-lg text-base-content mr-1">
+              <span className="font-extrabold text-sm sm:text-lg text-base-content mr-1">
                 {toolTab === 'split' ? 'Split' : 'Extract Pages'}
               </span>
 
               {/* Action Pills */}
-              <div className="flex items-center gap-1 bg-base-100 p-1 rounded-xl border border-base-300">
+              <div className="flex items-center gap-1 bg-base-100 p-0.5 sm:p-1 rounded-xl border border-base-300">
                 <button
                   onClick={() => setToolTab('split')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                     toolTab === 'split'
                       ? 'bg-primary text-primary-content shadow-xs'
                       : 'text-base-content/70 hover:text-base-content'
                   }`}
                 >
-                  <Scissors className="w-3.5 h-3.5" />
+                  <Scissors className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   <span>Split</span>
                 </button>
 
                 <button
                   onClick={() => setToolTab('extract')}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                     toolTab === 'extract'
                       ? 'bg-primary text-primary-content shadow-xs'
                       : 'text-base-content/70 hover:text-base-content'
                   }`}
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <LayoutGrid className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   <span>Extract</span>
                 </button>
 

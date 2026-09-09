@@ -10,13 +10,16 @@
     "clean": "powershell -Command \"if (Test-Path .next) { Remove-Item -Recurse -Force .next }\""
   },
   "dependencies": {
+    "@types/pdf-parse": "^1.1.5",
     "clsx": "^2.1.1",
     "docx": "^9.7.1",
     "jszip": "^3.10.1",
+    "libreoffice-convert": "^1.8.2",
     "lucide-react": "^0.453.0",
     "mammoth": "^1.12.2",
     "next": "14.2.15",
     "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sharp": "^0.33.5",

@@ -56,9 +56,61 @@ export default function PdfToOfficeTool({
     if (!file) return;
 
     const baseName = file.name.replace(/\.[^/.]+$/, '');
+    setProcessing(true);
+    setError(null);
 
     try {
-      if (format === 'word') {
+      if (format === 'excel') {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/pdf-to-excel', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await res.json();
+          if (res.ok && data.dataUrl) {
+            const a = document.createElement('a');
+            a.href = data.dataUrl;
+            a.download = data.filename || `${baseName}.xlsx`;
+            a.click();
+            setProcessing(false);
+            return;
+          }
+        } catch (apiErr) {
+          console.warn('PDF to Excel API error, falling back to client engine:', apiErr);
+        }
+
+        const xlsxBlob = createExcelWorkbook(extractedText.split('\n\n--- Page Break ---\n\n'));
+        const url = URL.createObjectURL(xlsxBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else if (format === 'word') {
+        if (wordMode === 'text') {
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/pdf-to-word', {
+              method: 'POST',
+              body: formData,
+            });
+            const data = await res.json();
+            if (res.ok && data.dataUrl) {
+              const a = document.createElement('a');
+              a.href = data.dataUrl;
+              a.download = data.filename || `${baseName}.docx`;
+              a.click();
+              setProcessing(false);
+              return;
+            }
+          } catch (apiErr) {
+            console.warn('PDF to Word API error, falling back to client engine:', apiErr);
+          }
+        }
+
         const docxBlob = await createWordDocx(
           extractedText.split('\n\n--- Page Break ---\n\n'),
           pages,
@@ -68,14 +120,6 @@ export default function PdfToOfficeTool({
         const a = document.createElement('a');
         a.href = url;
         a.download = `${baseName}.docx`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else if (format === 'excel') {
-        const xlsxBlob = createExcelWorkbook(extractedText.split('\n\n--- Page Break ---\n\n'));
-        const url = URL.createObjectURL(xlsxBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${baseName}.xlsx`;
         a.click();
         URL.revokeObjectURL(url);
       } else {
@@ -91,6 +135,8 @@ export default function PdfToOfficeTool({
     } catch (err: any) {
       console.error('Download export error:', err);
       setError('Error generating office document: ' + err.message);
+    } finally {
+      setProcessing(false);
     }
   };
 

@@ -2,22 +2,35 @@ import * as mammoth from 'mammoth';
 import { PDFDocument } from 'pdf-lib';
 
 /**
- * Converts a Microsoft Word (.docx) file into a high-fidelity PDF with full Unicode,
- * Bengali, complex script, table, list, and typography preservation.
+ * Converts a Microsoft Word (.docx) file into a high-fidelity PDF with full image extraction
+ * (logos, graphics), table column preservation, centered layouts, and sharp retina rendering.
  */
 export async function convertDocxToPdfClient(file: File): Promise<{ dataUrl: string; size: number; pageCount: number }> {
   const arrayBuffer = await file.arrayBuffer();
-  const { value: rawHtml } = await mammoth.convertToHtml({ arrayBuffer });
 
-  const cleanHtml = rawHtml
+  // Extract HTML with embedded base64 images
+  const mammothOptions = {
+    convertImage: (mammoth.images as any).imgElement((image: any) => {
+      return image.read('base64').then((imageBuffer: string) => {
+        return {
+          src: `data:${image.contentType};base64,${imageBuffer}`,
+        };
+      });
+    }),
+  };
+
+  const { value: rawHtml } = await (mammoth as any).convertToHtml({ arrayBuffer }, mammothOptions);
+
+  const cleanHtml = rawHtml && rawHtml.trim().length > 0
     ? rawHtml
     : '<p>Document converted from Word.</p>';
 
   // Standard A4 dimensions at 96 DPI: 794px x 1123px
   const pageWidth = 794;
   const pageHeight = 1123;
-  const padding = 54;
-  const contentWidth = pageWidth - padding * 2;
+  const paddingX = 54;
+  const paddingY = 48;
+  const contentWidth = pageWidth - paddingX * 2;
 
   // Offscreen measurement container
   const measureDiv = document.createElement('div');
@@ -25,20 +38,20 @@ export async function convertDocxToPdfClient(file: File): Promise<{ dataUrl: str
   measureDiv.style.top = '-99999px';
   measureDiv.style.left = '-99999px';
   measureDiv.style.width = `${contentWidth}px`;
-  measureDiv.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Kalpurush', 'SolaimanLipi', Arial, sans-serif";
-  measureDiv.style.fontSize = '14px';
-  measureDiv.style.lineHeight = '1.6';
+  measureDiv.style.fontFamily = "'Times New Roman', 'Nimbus Roman No9 L', 'Liberation Serif', 'Kalpurush', 'SolaimanLipi', Cambria, Georgia, serif";
+  measureDiv.style.fontSize = '15px';
+  measureDiv.style.lineHeight = '1.5';
   measureDiv.style.color = '#111827';
   measureDiv.innerHTML = `
     <style>
-      p { margin: 0 0 12px 0; }
-      h1, h2, h3, h4 { margin: 16px 0 8px 0; font-weight: bold; color: #1e3a8a; }
-      h1 { font-size: 22px; }
-      h2 { font-size: 18px; }
-      h3 { font-size: 16px; }
+      p { margin: 0 0 10px 0; }
+      h1, h2, h3, h4 { margin: 16px 0 8px 0; font-weight: bold; color: #111827; text-align: center; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 17px; }
+      h3 { font-size: 15px; }
+      img { max-width: 180px; max-height: 180px; height: auto; display: block; margin: 18px auto; object-fit: contain; }
       table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-      td, th { border: 1px solid #d1d5db; padding: 6px 10px; font-size: 13px; }
-      th { background-color: #f3f4f6; font-weight: bold; }
+      td, th { padding: 4px 12px; vertical-align: top; border: none; }
       ul, ol { margin: 8px 0 12px 24px; padding: 0; }
       li { margin-bottom: 4px; }
     </style>
@@ -46,33 +59,33 @@ export async function convertDocxToPdfClient(file: File): Promise<{ dataUrl: str
   `;
   document.body.appendChild(measureDiv);
 
-  const totalContentHeight = Math.max(measureDiv.scrollHeight, pageHeight - padding * 2);
-  const usableHeightPerPage = pageHeight - padding * 2;
+  const totalContentHeight = Math.max(measureDiv.scrollHeight, pageHeight - paddingY * 2);
+  const usableHeightPerPage = pageHeight - paddingY * 2;
   const pageCount = Math.max(1, Math.ceil(totalContentHeight / usableHeightPerPage));
 
   document.body.removeChild(measureDiv);
 
-  // Render via SVG ForeignObject with 2x scale for crisp retina text
-  const scale = 2.0;
+  // Render via SVG ForeignObject with 2.5x scale for ultra-sharp typography
+  const scale = 2.5;
   const totalSvgHeight = pageHeight * pageCount;
 
   const svgString = `
 <svg xmlns="http://www.w3.org/2000/svg" width="${pageWidth}" height="${totalSvgHeight}">
   <foreignObject width="100%" height="100%">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="width: ${pageWidth}px; background-color: #ffffff; color: #111827; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Kalpurush', 'SolaimanLipi', 'SutonnyMJ', Arial, sans-serif; font-size: 14px; line-height: 1.6; box-sizing: border-box;">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="width: ${pageWidth}px; background-color: #ffffff; color: #111827; font-family: 'Times New Roman', 'Nimbus Roman No9 L', 'Liberation Serif', 'Kalpurush', 'SolaimanLipi', Cambria, Georgia, serif; font-size: 15px; line-height: 1.5; box-sizing: border-box;">
       <style>
-        p { margin: 0 0 12px 0; }
-        h1, h2, h3, h4 { margin: 16px 0 8px 0; font-weight: bold; color: #1e3a8a; }
-        h1 { font-size: 22px; }
-        h2 { font-size: 18px; }
-        h3 { font-size: 16px; }
+        p { margin: 0 0 10px 0; }
+        h1, h2, h3, h4 { margin: 16px 0 8px 0; font-weight: bold; color: #111827; text-align: center; }
+        h1 { font-size: 20px; }
+        h2 { font-size: 17px; }
+        h3 { font-size: 15px; }
+        img { max-width: 180px; max-height: 180px; height: auto; display: block; margin: 18px auto; object-fit: contain; }
         table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-        td, th { border: 1px solid #d1d5db; padding: 6px 10px; font-size: 13px; }
-        th { background-color: #f3f4f6; font-weight: bold; }
+        td, th { padding: 4px 12px; vertical-align: top; border: none; }
         ul, ol { margin: 8px 0 12px 24px; padding: 0; }
         li { margin-bottom: 4px; }
       </style>
-      <div style="padding: ${padding}px;">
+      <div style="padding: ${paddingY}px ${paddingX}px;">
         ${cleanHtml}
       </div>
     </div>
@@ -110,7 +123,7 @@ export async function convertDocxToPdfClient(file: File): Promise<{ dataUrl: str
         0, 0, canvas.width, canvas.height
       );
 
-      const pageJpgDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const pageJpgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
       const base64Data = pageJpgDataUrl.split(',')[1];
       const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 

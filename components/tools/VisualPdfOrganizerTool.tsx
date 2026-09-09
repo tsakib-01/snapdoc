@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
+import Link from 'next/link';
 import {
   RotateCcw,
   RotateCw,
@@ -15,15 +16,20 @@ import {
   Sparkles,
   ArrowRight,
   RefreshCw,
-  Maximize2,
   X,
   Layers,
   Scissors,
-  Eye,
   CheckCircle2,
+  Minimize2,
+  PenTool,
+  Grid,
+  ArrowUpDown,
+  List,
+  LayoutGrid,
+  ChevronDown,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
-import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
+import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 
 export interface VisualPageItem {
@@ -43,18 +49,20 @@ interface VisualPdfOrganizerToolProps {
 }
 
 export default function VisualPdfOrganizerTool({
-  initialMode = 'organize',
-  title = 'Visual PDF Page Organizer',
+  initialMode = 'extract',
+  title = 'Extract Pages',
   description = 'Organize, reorder, rotate, delete, and extract PDF pages visually with live thumbnail previews.',
 }: VisualPdfOrganizerToolProps) {
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<VisualPageItem[]>([]);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const [thumbnailProgress, setThumbnailProgress] = useState({ loaded: 0, total: 0 });
-  const [mode, setMode] = useState<'extract' | 'split' | 'delete' | 'rotate'>(
-    initialMode === 'delete' ? 'delete' : initialMode === 'rotate' ? 'rotate' : 'extract'
+  const [currentAction, setCurrentAction] = useState<'extract' | 'split'>(
+    initialMode === 'split' ? 'split' : 'extract'
   );
   const [separatePdfs, setSeparatePdfs] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [processing, setProcessing] = useState(false);
   const [resultData, setResultData] = useState<{
     dataUrl: string;
@@ -65,6 +73,7 @@ export default function VisualPdfOrganizerTool({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [zoomPage, setZoomPage] = useState<VisualPageItem | null>(null);
+  const addFileInputRef = useRef<HTMLInputElement>(null);
 
   // When a file is uploaded, extract thumbnails
   const handleFileSelected = async (selectedFile: File) => {
@@ -75,7 +84,7 @@ export default function VisualPdfOrganizerTool({
     setThumbnailProgress({ loaded: 0, total: 0 });
 
     try {
-      const { thumbnails, pageCount } = await extractPdfThumbnails(selectedFile, {
+      const { thumbnails } = await extractPdfThumbnails(selectedFile, {
         onProgress: (loaded, total) => {
           setThumbnailProgress({ loaded, total });
         },
@@ -87,7 +96,7 @@ export default function VisualPdfOrganizerTool({
         pageNumber: idx + 1,
         dataUrl: thumb.dataUrl,
         rotation: 0,
-        selected: initialMode === 'delete' ? false : true, // default select all for extract/organize
+        selected: initialMode === 'delete' ? false : true,
         aspectRatio: thumb.aspectRatio,
       }));
 
@@ -165,18 +174,47 @@ export default function VisualPdfOrganizerTool({
     setPages((prev) => prev.filter((p) => !p.selected));
   };
 
-  // Move page left/right
-  const movePage = (index: number, direction: 'left' | 'right') => {
-    const targetIndex = direction === 'left' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= pages.length) return;
+  // Insert a blank page at a specific index
+  const insertBlankPage = (insertIndex: number) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 595;
+    canvas.height = 842;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Blank Page', canvas.width / 2, canvas.height / 2);
+    }
+    const blankDataUrl = canvas.toDataURL('image/png');
+
+    const newPage: VisualPageItem = {
+      id: `blank-${Date.now()}-${Math.random()}`,
+      originalIndex: insertIndex,
+      pageNumber: insertIndex + 1,
+      dataUrl: blankDataUrl,
+      rotation: 0,
+      selected: true,
+      aspectRatio: 842 / 595,
+    };
 
     setPages((prev) => {
       const updated = [...prev];
-      const temp = updated[index];
-      updated[index] = updated[targetIndex];
-      updated[targetIndex] = temp;
-      return updated;
+      updated.splice(insertIndex, 0, newPage);
+      return updated.map((p, idx) => ({ ...p, pageNumber: idx + 1 }));
     });
+  };
+
+  // Sort pages
+  const toggleSort = () => {
+    const nextOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(nextOrder);
+    setPages((prev) => [...prev].reverse());
   };
 
   const selectedCount = pages.filter((p) => p.selected).length;
@@ -233,17 +271,24 @@ export default function VisualPdfOrganizerTool({
     }
   };
 
+  // Truncate file name for the card pill badge
+  const shortDocName = file
+    ? file.name.length > 18
+      ? `${file.name.slice(0, 15)}...`
+      : file.name
+    : 'Document.pdf';
+
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="w-full">
       {/* Upload State */}
       {!file && (
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-4">
           <UploadZone
             accept="application/pdf"
             maxFiles={1}
             maxSizeMb={50}
-            title="Upload PDF to View & Organize Pages"
-            subtitle="View real-time visual page previews, reorder, delete, rotate, or extract specific pages."
+            title={title}
+            subtitle={description}
             onFilesSelected={(files) => handleFileSelected(files[0])}
           />
         </div>
@@ -269,250 +314,475 @@ export default function VisualPdfOrganizerTool({
         </div>
       )}
 
-      {/* Interactive Visual Page Workspace (Matching Screenshot) */}
+      {/* Interactive Visual Page Workspace (Smallpdf-Inspired Layout) */}
       {file && !loadingThumbnails && !resultData && (
-        <div className="space-y-4">
-          {/* Top Control Action Bar */}
-          <div className="p-4 rounded-2xl bg-base-100 border border-base-300 shadow-sm flex flex-wrap items-center justify-between gap-4">
-            {/* Left: Back / Reset & Title */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleReset}
-                className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-base-content"
-                title="Upload different file"
+        <div className="flex flex-col lg:flex-row min-h-[750px] w-full rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl bg-[#f4f7fb] dark:bg-slate-950">
+          {/* Left Navigation Sidebar */}
+          <aside className="w-full lg:w-20 bg-[#0d1629] text-slate-400 flex lg:flex-col items-center justify-between lg:justify-start py-3 lg:py-5 px-3 lg:px-0 shrink-0 border-r border-slate-800 select-none">
+            {/* Top Logo Quadrant Icon */}
+            <div className="mb-0 lg:mb-6 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-slate-800 p-1.5 grid grid-cols-2 gap-1 shadow-inner">
+                <div className="bg-red-500 rounded-sm"></div>
+                <div className="bg-amber-400 rounded-sm"></div>
+                <div className="bg-blue-500 rounded-sm"></div>
+                <div className="bg-emerald-500 rounded-sm"></div>
+              </div>
+            </div>
+
+            {/* Navigation Tool Items */}
+            <nav className="flex lg:flex-col items-center gap-1 sm:gap-2 overflow-x-auto lg:overflow-visible w-full px-1">
+              <Link
+                href="/compress-pdf"
+                className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl hover:text-white hover:bg-slate-800/80 transition-all text-[11px] font-medium group w-full"
+                title="Compress PDF"
               >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-cyan-500 flex items-center justify-center text-white shadow-sm">
-                  <Layers className="w-4 h-4" />
+                <Minimize2 className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" />
+                <span>Compress</span>
+              </Link>
+
+              <Link
+                href="/pdf-to-word"
+                className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl hover:text-white hover:bg-slate-800/80 transition-all text-[11px] font-medium group w-full"
+                title="Convert PDF"
+              >
+                <RefreshCw className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" />
+                <span>Convert</span>
+              </Link>
+
+              {/* Active Tab: Organize */}
+              <div className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl text-white bg-blue-600/90 shadow-md shadow-blue-600/30 text-[11px] font-bold w-full">
+                <LayoutGrid className="w-5 h-5 mb-1" />
+                <span>Organize</span>
+              </div>
+
+              <Link
+                href="/watermark-pdf"
+                className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl hover:text-white hover:bg-slate-800/80 transition-all text-[11px] font-medium group w-full"
+                title="Edit PDF"
+              >
+                <PenTool className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" />
+                <span>Edit</span>
+              </Link>
+
+              <Link
+                href="/sign-pdf"
+                className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl hover:text-white hover:bg-slate-800/80 transition-all text-[11px] font-medium group w-full"
+                title="Sign PDF"
+              >
+                <PenTool className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" />
+                <span>Sign</span>
+              </Link>
+
+              <Link
+                href="/ai-pdf"
+                className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl hover:text-white hover:bg-slate-800/80 transition-all text-[11px] font-medium group w-full"
+                title="AI PDF Assistant"
+              >
+                <Sparkles className="w-5 h-5 mb-1 text-cyan-400 group-hover:scale-110 transition-transform" />
+                <span>AI PDF</span>
+              </Link>
+
+              <Link
+                href="/tools"
+                className="flex flex-col items-center justify-center py-2 px-2.5 rounded-xl hover:text-white hover:bg-slate-800/80 transition-all text-[11px] font-medium group w-full"
+                title="More Tools"
+              >
+                <Grid className="w-5 h-5 mb-1 group-hover:scale-110 transition-transform" />
+                <span>More</span>
+              </Link>
+            </nav>
+          </aside>
+
+          {/* Main Interactive Canvas Area */}
+          <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc] dark:bg-slate-900">
+            {/* Top Workspace Header Bar */}
+            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+              {/* Left Title & Undo */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleReset}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                  title="Upload another file"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </button>
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                  {title}
+                </h1>
+              </div>
+
+              {/* Center Tool Action Pills */}
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800/70 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+                <button
+                  onClick={() => setCurrentAction('split')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    currentAction === 'split'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Scissors className="w-3.5 h-3.5" />
+                  <span>Split</span>
+                </button>
+
+                <button
+                  onClick={() => setCurrentAction('extract')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    currentAction === 'extract'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Extract</span>
+                </button>
+
+                <div className="dropdown dropdown-end">
+                  <label
+                    tabIndex={0}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 cursor-pointer transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Add</span>
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </label>
+                  <ul
+                    tabIndex={0}
+                    className="dropdown-content z-30 menu p-2 shadow-xl bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 w-48 text-xs space-y-1 mt-1"
+                  >
+                    <li>
+                      <button onClick={() => insertBlankPage(pages.length)}>
+                        <Plus className="w-4 h-4 text-blue-500" />
+                        <span>Insert Blank Page</span>
+                      </button>
+                    </li>
+                    <li>
+                      <button onClick={() => addFileInputRef.current?.click()}>
+                        <FileText className="w-4 h-4 text-emerald-500" />
+                        <span>Add Document Pages</span>
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-                <div>
-                  <h2 className="font-bold text-sm text-base-content leading-none">
-                    {initialMode === 'delete'
-                      ? 'Delete PDF Pages'
-                      : initialMode === 'rotate'
-                      ? 'Rotate PDF Pages'
-                      : 'Extract & Organize Pages'}
-                  </h2>
-                  <span className="text-[11px] text-base-content/50 font-medium">
-                    {pages.length} total pages in document
-                  </span>
+
+                <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-1"></div>
+
+                <button
+                  onClick={() => rotateSelected(-90)}
+                  disabled={selectedCount === 0}
+                  className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  title="Rotate Left"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => rotateSelected(90)}
+                  disabled={selectedCount === 0}
+                  className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  title="Rotate Right"
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={deleteSelected}
+                  disabled={selectedCount === 0}
+                  className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-40 transition-colors"
+                  title="Delete Selected"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Right Action: Separate PDFs & Finish CTA */}
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    checked={separatePdfs}
+                    onChange={(e) => setSeparatePdfs(e.target.checked)}
+                    className="toggle toggle-sm toggle-primary"
+                  />
+                  <span>Separate PDFs</span>
+                </label>
+
+                <button
+                  onClick={handleProcess}
+                  disabled={processing || (initialMode !== 'delete' && selectedCount === 0)}
+                  className="btn btn-primary btn-sm px-6 font-bold shadow-lg shadow-blue-500/25 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all text-white bg-blue-600 hover:bg-blue-700 border-none"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Finish</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </header>
+
+            {/* Sub-Header Toolbar (Select All & View Toggles) */}
+            <div className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+              {/* Select All Checkbox */}
+              <div className="flex items-center gap-4">
+                <label
+                  onClick={() => selectAll(!allSelected)}
+                  className="flex items-center gap-2 cursor-pointer font-medium text-slate-800 dark:text-slate-200 select-none hover:text-blue-600 transition-colors"
+                >
+                  {allSelected ? (
+                    <CheckSquare className="w-4 h-4 text-blue-600" />
+                  ) : (
+                    <Square className="w-4 h-4 text-slate-400" />
+                  )}
+                  <span>Select all</span>
+                </label>
+
+                <div className="hidden sm:flex items-center gap-2 text-slate-400">
+                  <span>•</span>
+                  <button onClick={selectOdd} className="hover:text-blue-600">Select Odd</button>
+                  <span>•</span>
+                  <button onClick={selectEven} className="hover:text-blue-600">Select Even</button>
+                </div>
+              </div>
+
+              {/* Sort & Layout Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleSort}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium transition-colors"
+                  title="Reverse Order"
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  <span className="text-[11px]">{sortOrder === 'asc' ? 'A-Z' : 'Z-A'}</span>
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </button>
+
+                <div className="flex items-center bg-slate-200/60 dark:bg-slate-800 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-1 rounded ${
+                      viewMode === 'list'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="List View"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-1 rounded ${
+                      viewMode === 'grid'
+                        ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                    title="Grid View"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Mode / Bulk Action Tools */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                onClick={() => rotateSelected(-90)}
-                disabled={selectedCount === 0}
-                className="btn btn-ghost btn-xs sm:btn-sm gap-1 text-xs"
-                title="Rotate selected left"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Rotate Left</span>
-              </button>
+            {/* Error Message */}
+            {error && (
+              <div className="m-4 alert alert-error text-xs rounded-xl shadow-sm">
+                <span>{error}</span>
+              </div>
+            )}
 
-              <button
-                onClick={() => rotateSelected(90)}
-                disabled={selectedCount === 0}
-                className="btn btn-ghost btn-xs sm:btn-sm gap-1 text-xs"
-                title="Rotate selected right"
-              >
-                <RotateCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Rotate Right</span>
-              </button>
-
-              <button
-                onClick={deleteSelected}
-                disabled={selectedCount === 0}
-                className="btn btn-ghost btn-xs sm:btn-sm text-error gap-1 text-xs"
-                title="Delete selected pages"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Delete ({selectedCount})</span>
-              </button>
-
-              {/* Separate PDFs Toggle */}
-              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-xl bg-base-200 text-xs text-base-content/70">
-                <input
-                  type="checkbox"
-                  checked={separatePdfs}
-                  onChange={(e) => setSeparatePdfs(e.target.checked)}
-                  className="toggle toggle-xs toggle-primary"
-                />
-                <span className="hidden md:inline">Separate PDFs (ZIP)</span>
-              </label>
-
-              {/* Finish / Primary CTA Button */}
-              <button
-                onClick={handleProcess}
-                disabled={processing || (initialMode !== 'delete' && selectedCount === 0)}
-                className="btn btn-primary btn-sm gap-2 shadow-md shadow-primary/20"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Finish</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Selection Ribbon */}
-          <div className="px-4 py-2 rounded-xl bg-base-200/60 border border-base-300 flex flex-wrap items-center justify-between text-xs text-base-content/70 gap-2">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => selectAll(!allSelected)}
-                className="flex items-center gap-1.5 font-medium text-base-content hover:text-primary transition-colors"
-              >
-                {allSelected ? (
-                  <CheckSquare className="w-4 h-4 text-primary" />
-                ) : (
-                  <Square className="w-4 h-4" />
-                )}
-                <span>Select All</span>
-              </button>
-
-              <button
-                onClick={selectOdd}
-                className="hover:text-primary font-medium transition-colors"
-              >
-                Select Odd
-              </button>
-
-              <button
-                onClick={selectEven}
-                className="hover:text-primary font-medium transition-colors"
-              >
-                Select Even
-              </button>
-            </div>
-
-            <div className="font-semibold text-primary">
-              {selectedCount} of {pages.length} pages selected
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="alert alert-error text-xs rounded-2xl shadow-sm">
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Rendered Thumbnail Grid (Visual Cards) */}
-          <div className="p-6 rounded-3xl bg-base-100 border border-base-300 shadow-sm">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {pages.map((page, index) => (
-                <div
-                  key={page.id}
-                  className={`group relative flex flex-col items-center p-3 rounded-2xl border transition-all duration-200 ${
-                    page.selected
-                      ? 'border-primary bg-primary/5 shadow-md shadow-primary/10 ring-2 ring-primary/20'
-                      : 'border-base-300 bg-base-100 hover:border-base-content/30 shadow-sm'
-                  }`}
-                >
-                  {/* Card Selection Checkbox */}
-                  <div
-                    onClick={() => toggleSelectPage(page.id)}
-                    className="absolute top-2 left-2 z-10 cursor-pointer p-1 rounded-md bg-base-100/90 backdrop-blur-sm border border-base-300 shadow-sm hover:scale-110 transition-transform"
-                  >
-                    {page.selected ? (
-                      <CheckSquare className="w-4 h-4 text-primary" />
-                    ) : (
-                      <Square className="w-4 h-4 text-base-content/40" />
-                    )}
-                  </div>
-
-                  {/* Hover Action Overlay Bar */}
-                  <div className="absolute top-2 right-2 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-base-100/90 backdrop-blur-sm p-1 rounded-lg border border-base-300 shadow-sm">
-                    <button
-                      onClick={() => rotatePage(page.id, -90)}
-                      className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                      title="Rotate 90° Left"
-                    >
-                      <RotateCcw className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => rotatePage(page.id, 90)}
-                      className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                      title="Rotate 90° Right"
-                    >
-                      <RotateCw className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => setZoomPage(page)}
-                      className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                      title="Zoom Preview"
-                    >
-                      <ZoomIn className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => deletePage(page.id)}
-                      className="p-1 text-error hover:bg-error/10 rounded"
-                      title="Delete this page"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  {/* Thumbnail Image Container */}
-                  <div
-                    onClick={() => toggleSelectPage(page.id)}
-                    className="w-full aspect-[1/1.4] rounded-xl overflow-hidden bg-base-200 flex items-center justify-center cursor-pointer relative shadow-inner"
-                  >
-                    <img
-                      src={page.dataUrl}
-                      alt={`Page ${page.pageNumber}`}
-                      className="max-w-full max-h-full object-contain transition-transform duration-200"
-                      style={{
-                        transform: `rotate(${page.rotation}deg)`,
-                      }}
-                    />
-                  </div>
-
-                  {/* Page Badge & Actions Underneath */}
-                  <div className="w-full mt-2.5 flex items-center justify-between text-xs">
-                    <span className="px-2 py-0.5 rounded-md bg-base-200 text-base-content/70 font-semibold text-[11px]">
-                      Page {page.pageNumber}
-                    </span>
-
-                    {/* Left/Right Reordering Arrows */}
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {index > 0 && (
-                        <button
-                          onClick={() => movePage(index, 'left')}
-                          className="px-1 py-0.5 rounded bg-base-200 hover:bg-base-300 text-[10px] font-bold"
-                          title="Move Left"
+            {/* PDF Pages Canvas */}
+            <div className="flex-1 p-6 sm:p-8 overflow-y-auto max-h-[calc(100vh-280px)]">
+              {viewMode === 'grid' ? (
+                <div className="flex flex-wrap items-center justify-start gap-4 sm:gap-6">
+                  {pages.map((page, index) => (
+                    <React.Fragment key={page.id}>
+                      {/* Page Card */}
+                      <div className="group relative flex flex-col items-center">
+                        {/* Checkbox Floating top-left */}
+                        <div
+                          onClick={() => toggleSelectPage(page.id)}
+                          className="absolute -top-3 left-0 z-20 cursor-pointer p-1 rounded-md transition-transform hover:scale-110"
                         >
-                          ←
-                        </button>
-                      )}
+                          {page.selected ? (
+                            <CheckSquare className="w-5 h-5 text-blue-600 fill-white" />
+                          ) : (
+                            <Square className="w-5 h-5 text-slate-400 fill-white/80" />
+                          )}
+                        </div>
+
+                        {/* Page Preview Thumbnail Container */}
+                        <div
+                          onClick={() => toggleSelectPage(page.id)}
+                          className={`relative w-40 sm:w-48 aspect-[1/1.414] bg-white rounded-lg p-2 transition-all duration-150 cursor-pointer select-none flex items-center justify-center ${
+                            page.selected
+                              ? 'ring-2 ring-blue-600 shadow-lg shadow-blue-500/10'
+                              : 'border border-slate-300 dark:border-slate-700 shadow-md hover:shadow-xl hover:border-slate-400'
+                          }`}
+                        >
+                          {/* Hover action pill overlay */}
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm p-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setZoomPage(page);
+                              }}
+                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                              title="Zoom page"
+                            >
+                              <ZoomIn className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                rotatePage(page.id, -90);
+                              }}
+                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                              title="Rotate Left"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                rotatePage(page.id, 90);
+                              }}
+                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+                              title="Rotate Right"
+                            >
+                              <RotateCw className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deletePage(page.id);
+                              }}
+                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-red-500 rounded hover:bg-red-50 dark:hover:bg-red-950/40"
+                              title="Delete Page"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Rendered Canvas Image */}
+                          <div className="w-full h-full flex items-center justify-center overflow-hidden bg-white">
+                            <img
+                              src={page.dataUrl}
+                              alt={`Page ${page.pageNumber}`}
+                              className="max-w-full max-h-full object-contain transition-transform duration-200"
+                              style={{
+                                transform: `rotate(${page.rotation}deg)`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Pink / Rose Pill Badge with Document Name (Matching Screenshot) */}
+                        <div className="mt-3 flex flex-col items-center">
+                          <span className="px-2.5 py-0.5 rounded-md bg-[#fed7d7] text-[#9b2c2c] dark:bg-pink-950/60 dark:text-pink-300 font-medium text-[11px] truncate max-w-[170px] shadow-xs">
+                            {shortDocName}
+                          </span>
+                          <span className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            {page.pageNumber}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Plus Insert Button Between Pages (Matching Screenshot) */}
                       {index < pages.length - 1 && (
-                        <button
-                          onClick={() => movePage(index, 'right')}
-                          className="px-1 py-0.5 rounded bg-base-200 hover:bg-base-300 text-[10px] font-bold"
-                          title="Move Right"
-                        >
-                          →
-                        </button>
+                        <div className="flex items-center justify-center">
+                          <button
+                            onClick={() => insertBlankPage(index + 1)}
+                            className="w-7 h-7 rounded-full bg-blue-500/20 hover:bg-blue-600 text-blue-600 hover:text-white flex items-center justify-center transition-all hover:scale-125 shadow-xs"
+                            title="Insert blank page here"
+                          >
+                            <Plus className="w-4 h-4 stroke-[2.5]" />
+                          </button>
+                        </div>
                       )}
-                    </div>
-                  </div>
+                    </React.Fragment>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                /* List View */
+                <div className="space-y-3 max-w-2xl mx-auto">
+                  {pages.map((page) => (
+                    <div
+                      key={page.id}
+                      onClick={() => toggleSelectPage(page.id)}
+                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
+                        page.selected
+                          ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20'
+                          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        {page.selected ? (
+                          <CheckSquare className="w-5 h-5 text-blue-600" />
+                        ) : (
+                          <Square className="w-5 h-5 text-slate-400" />
+                        )}
+                        <div className="w-12 h-16 bg-white border rounded overflow-hidden flex items-center justify-center p-1">
+                          <img
+                            src={page.dataUrl}
+                            alt={`Page ${page.pageNumber}`}
+                            className="max-h-full object-contain"
+                            style={{ transform: `rotate(${page.rotation}deg)` }}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                            Page {page.pageNumber}
+                          </p>
+                          <span className="px-2 py-0.5 rounded bg-pink-100 text-pink-700 text-[10px] font-medium">
+                            {shortDocName}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => rotatePage(page.id, 90)}
+                          className="btn btn-ghost btn-xs btn-circle"
+                          title="Rotate"
+                        >
+                          <RotateCw className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deletePage(page.id)}
+                          className="btn btn-ghost btn-xs btn-circle text-red-500"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Hidden File Input for Add Document */}
+      <input
+        ref={addFileInputRef}
+        type="file"
+        accept="application/pdf"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files && e.target.files[0]) {
+            handleFileSelected(e.target.files[0]);
+          }
+        }}
+      />
 
       {/* Success Result View */}
       {resultData && (
@@ -554,11 +824,11 @@ export default function VisualPdfOrganizerTool({
       {zoomPage && (
         <div
           onClick={() => setZoomPage(null)}
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-2xl max-h-[90vh] bg-base-100 rounded-3xl p-4 shadow-2xl flex flex-col items-center"
+            className="relative max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-2xl flex flex-col items-center border border-slate-200 dark:border-slate-800"
           >
             <button
               onClick={() => setZoomPage(null)}
@@ -567,9 +837,11 @@ export default function VisualPdfOrganizerTool({
               <X className="w-5 h-5" />
             </button>
 
-            <h4 className="font-bold text-sm mb-3">Page {zoomPage.pageNumber} Preview</h4>
+            <h4 className="font-bold text-sm mb-3 text-slate-800 dark:text-slate-200">
+              Page {zoomPage.pageNumber} Preview
+            </h4>
 
-            <div className="overflow-auto max-h-[75vh] rounded-xl flex items-center justify-center bg-base-200 p-2">
+            <div className="overflow-auto max-h-[75vh] rounded-xl flex items-center justify-center bg-slate-100 dark:bg-slate-800 p-3">
               <img
                 src={zoomPage.dataUrl}
                 alt={`Page ${zoomPage.pageNumber}`}

@@ -88,10 +88,27 @@ export async function convertPdfToWord({
   const doc = new Document({
     sections: [
       {
+        properties: {
+          page: {
+            margin: {
+              top: 540,
+              right: 540,
+              bottom: 540,
+              left: 540,
+            },
+          },
+        },
         children: paragraphs.map(
           (text) =>
             new Paragraph({
-              children: [new TextRun(text)],
+              spacing: { before: 40, after: 40 },
+              children: [
+                new TextRun({
+                  text,
+                  size: 22,
+                  font: "Calibri",
+                }),
+              ],
             })
         ),
       },

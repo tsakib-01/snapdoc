@@ -26,27 +26,29 @@ interface ConvertOptions {
 
 interface PositionedItem {
   text: string;
-  x: number;
-  y: number;
+  x0: number;
+  x1: number;
+  y0: number;
+  width: number;
+  height: number;
+}
+
+interface MergedToken {
+  text: string;
+  x0: number;
+  x1: number;
+  y0: number;
 }
 
 /**
- * Converts a .pdf file to .xlsx by extracting text with its (x, y) position
- * on each page and clustering items into rows/columns.
- *
- * IMPORTANT: table detection from raw PDF coordinates is inherently
- * heuristic. This works well for PDFs with clean grid-like tables
- * (consistent column x-positions) and less well for freeform layouts.
- * For complex/nested tables, consider a dedicated table-extraction service
- * (e.g. a Python microservice using `camelot` or `tabula`) instead.
- *
- * Returns the absolute path to the generated XLSX.
+ * Converts a .pdf file to .xlsx by extracting text with exact coordinates
+ * on each page and accurately clustering items into aligned table columns.
  */
 export async function convertPdfToExcel({
   inputPath,
   outputDir,
   rowToleranceY = 4,
-  columnToleranceX = 10,
+  columnToleranceX = 6,
 }: ConvertOptions): Promise<string> {
   try {
     await fs.access(inputPath);
@@ -80,29 +82,93 @@ export async function convertPdfToExcel({
     const page = await pdfDoc.getPage(pageNum);
     const content = await page.getTextContent();
 
-    const items: PositionedItem[] = content.items
-      .filter((item: any) => "str" in item && item.str.trim().length > 0)
-      .map((item: any) => ({
-        text: item.str,
-        x: item.transform[4],
-        y: item.transform[5],
-      }));
+    const rawItems: PositionedItem[] = [];
 
-    if (items.length === 0) {
-      continue; // blank page or image-only page — nothing to tabulate
+    for (const item of content.items) {
+      if (!("str" in item) || typeof item.str !== "string") continue;
+      const str = item.str;
+      if (!str) continue;
+
+      const x = item.transform[4];
+      const y = item.transform[5];
+      const width = item.width > 0 ? item.width : str.length * 6;
+      const height = item.height > 0 ? item.height : Math.abs(item.transform[0]) || 10;
+
+      rawItems.push({
+        text: str,
+        x0: x,
+        x1: x + width,
+        y0: y,
+        width,
+        height,
+      });
     }
 
-    const rows = groupIntoRows(items, rowToleranceY);
-    const grid = rows.map((row) => groupIntoColumns(row, columnToleranceX));
+    if (rawItems.length === 0) {
+      continue;
+    }
+
+    // 1. Group items into rows by Y coordinate
+    const rows = groupItemsIntoRows(rawItems, rowToleranceY);
+
+    // 2. Within each row, merge close text fragments into tokens (e.g., words/phrases in same cell)
+    const tokenRows: MergedToken[][] = rows.map((row) => mergeRowTokens(row, columnToleranceX));
+
+    // 3. Detect global column boundaries across all rows on this page
+    const columnAnchors = detectColumnAnchors(tokenRows);
+
+    // 4. Map each token row into aligned column grid
+    const grid: (string | number)[][] = [];
+
+    for (const rowTokens of tokenRows) {
+      if (columnAnchors.length === 0) {
+        grid.push(rowTokens.map((t) => parseCellValue(t.text)));
+        continue;
+      }
+
+      const gridRow: (string | number)[] = new Array(columnAnchors.length).fill("");
+
+      for (const token of rowTokens) {
+        const colIdx = findBestColumnIndex(token, columnAnchors);
+        if (colIdx >= 0 && colIdx < columnAnchors.length) {
+          if (gridRow[colIdx] === "") {
+            gridRow[colIdx] = parseCellValue(token.text);
+          } else {
+            // Append if multiple tokens land in the same column
+            gridRow[colIdx] = `${gridRow[colIdx]} ${token.text.trim()}`;
+          }
+        }
+      }
+
+      // Filter out completely empty rows
+      if (gridRow.some((val) => val !== "")) {
+        grid.push(gridRow);
+      }
+    }
+
+    if (grid.length === 0) continue;
 
     const sheet = XLSX.utils.aoa_to_sheet(grid);
+
+    // Auto calculate column widths
+    const colWidths: { wch: number }[] = [];
+    grid.forEach((row) => {
+      row.forEach((cell, colIdx) => {
+        const cellLen = String(cell ?? "").length;
+        colWidths[colIdx] = {
+          wch: Math.max(colWidths[colIdx]?.wch || 12, Math.min(cellLen + 4, 60)),
+        };
+      });
+    });
+    sheet["!cols"] = colWidths;
+
     const sheetName = pdfDoc.numPages > 1 ? `Page ${pageNum}` : "Sheet1";
     XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
   }
 
   if (workbook.SheetNames.length === 0) {
     throw new PdfToExcelError(
-      "No extractable text found on any page (this PDF may be a scanned image — OCR is not yet supported for PDF-to-Excel)."
+      "No extractable text found on any page (this PDF may be a scanned image)."
     );
   }
 
@@ -114,53 +180,169 @@ export async function convertPdfToExcel({
 }
 
 /**
- * Groups positioned text items into rows based on y-coordinate proximity.
- * PDF coordinates have origin at bottom-left, so we sort descending by y
- * (top of page first).
+ * Groups items into rows based on vertical Y coordinates (PDF y is descending).
  */
-function groupIntoRows(items: PositionedItem[], tolerance: number): PositionedItem[][] {
-  const sorted = [...items].sort((a, b) => b.y - a.y);
+function groupItemsIntoRows(items: PositionedItem[], tolerance: number): PositionedItem[][] {
+  const sorted = [...items].sort((a, b) => b.y0 - a.y0);
   const rows: PositionedItem[][] = [];
 
   for (const item of sorted) {
-    const lastRow = rows[rows.length - 1];
-    if (lastRow && Math.abs(lastRow[0].y - item.y) <= tolerance) {
-      lastRow.push(item);
-    } else {
+    let placed = false;
+    for (const row of rows) {
+      const avgY = row.reduce((sum, i) => sum + i.y0, 0) / row.length;
+      if (Math.abs(avgY - item.y0) <= tolerance) {
+        row.push(item);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
       rows.push([item]);
     }
   }
+
+  // Sort each row left to right
+  for (const row of rows) {
+    row.sort((a, b) => a.x0 - b.x0);
+  }
+
+  // Sort rows top to bottom
+  rows.sort((a, b) => {
+    const avgYA = a.reduce((sum, i) => sum + i.y0, 0) / a.length;
+    const avgYB = b.reduce((sum, i) => sum + i.y0, 0) / b.length;
+    return avgYB - avgYA;
+  });
 
   return rows;
 }
 
 /**
- * Within a single row, groups items into columns based on x-coordinate
- * proximity, then returns their text content left-to-right.
- * Items closer together than `tolerance` are merged into one cell
- * (handles multi-word cell values that PDF text extraction splits up).
+ * Merges text fragments within a row that belong to the same cell/token.
  */
-function groupIntoColumns(row: PositionedItem[], tolerance: number): string[] {
-  const sorted = [...row].sort((a, b) => a.x - b.x);
-  const cells: string[] = [];
-  let currentCellText = sorted[0].text;
-  let currentCellEndX = sorted[0].x;
+function mergeRowTokens(row: PositionedItem[], columnToleranceX: number): MergedToken[] {
+  if (row.length === 0) return [];
 
-  for (let i = 1; i < sorted.length; i++) {
-    const item = sorted[i];
-    const gap = item.x - currentCellEndX;
+  const tokens: MergedToken[] = [];
+  let current: MergedToken = {
+    text: row[0].text,
+    x0: row[0].x0,
+    x1: row[0].x1,
+    y0: row[0].y0,
+  };
 
-    if (gap <= tolerance) {
-      // Same cell — likely a continuation of the same word/phrase
-      currentCellText += item.text;
+  for (let i = 1; i < row.length; i++) {
+    const item = row[i];
+    const gap = item.x0 - current.x1;
+
+    // If gap is small (less than threshold), merge as part of the same cell content
+    if (gap <= columnToleranceX) {
+      const needsSpace =
+        !current.text.endsWith(" ") &&
+        !item.text.startsWith(" ") &&
+        gap > 1.5;
+      current.text += (needsSpace ? " " : "") + item.text;
+      current.x1 = Math.max(current.x1, item.x1);
     } else {
-      // New cell/column
-      cells.push(currentCellText.trim());
-      currentCellText = item.text;
+      tokens.push({
+        ...current,
+        text: current.text.trim(),
+      });
+      current = {
+        text: item.text,
+        x0: item.x0,
+        x1: item.x1,
+        y0: item.y0,
+      };
     }
-    currentCellEndX = item.x + item.text.length; // rough estimate of item width
   }
-  cells.push(currentCellText.trim());
 
-  return cells;
+  tokens.push({
+    ...current,
+    text: current.text.trim(),
+  });
+
+  return tokens.filter((t) => t.text.length > 0);
+}
+
+/**
+ * Discovers distinct column start coordinates across the document rows.
+ */
+function detectColumnAnchors(rows: MergedToken[][]): number[] {
+  // Collect all token start X positions
+  const xPositions: number[] = [];
+  for (const row of rows) {
+    for (const token of row) {
+      xPositions.push(token.x0);
+    }
+  }
+
+  if (xPositions.length === 0) return [];
+
+  xPositions.sort((a, b) => a - b);
+
+  // Cluster X positions within 15pt into single column anchors
+  const anchors: number[] = [];
+  let currentCluster: number[] = [xPositions[0]];
+
+  for (let i = 1; i < xPositions.length; i++) {
+    const x = xPositions[i];
+    const clusterAvg = currentCluster.reduce((s, v) => s + v, 0) / currentCluster.length;
+    if (Math.abs(x - clusterAvg) <= 18) {
+      currentCluster.push(x);
+    } else {
+      anchors.push(clusterAvg);
+      currentCluster = [x];
+    }
+  }
+
+  if (currentCluster.length > 0) {
+    anchors.push(currentCluster.reduce((s, v) => s + v, 0) / currentCluster.length);
+  }
+
+  return anchors.sort((a, b) => a - b);
+}
+
+/**
+ * Finds the closest column index for a given token.
+ */
+function findBestColumnIndex(token: MergedToken, anchors: number[]): number {
+  if (anchors.length === 0) return 0;
+
+  let bestIdx = 0;
+  let minDiff = Infinity;
+
+  for (let i = 0; i < anchors.length; i++) {
+    const diff = Math.abs(token.x0 - anchors[i]);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestIdx = i;
+    }
+  }
+
+  return bestIdx;
+}
+
+/**
+ * Parses raw text into numeric or clean value if applicable.
+ */
+function parseCellValue(text: string): string | number {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+
+  // Check for plain integers or decimals (e.g. "15", "1200", "1200.50")
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    const num = Number(trimmed);
+    if (!isNaN(num)) return num;
+  }
+
+  // Check for currency formatted numbers (e.g. "$1,200.00" or "$18,000")
+  const currencyMatch = trimmed.match(/^\$\s*([0-9,]+(\.[0-9]+)?)$/);
+  if (currencyMatch) {
+    const cleanNum = Number(currencyMatch[1].replace(/,/g, ""));
+    if (!isNaN(cleanNum)) {
+      return `$${cleanNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+  }
+
+  return trimmed;
 }

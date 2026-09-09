@@ -4,8 +4,8 @@ import { PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 
 /**
  * Creates a native Microsoft Word (.docx) file from extracted PDF pages and structured content.
- * Uses smart hybrid layout: for complex scripts (Bengali, math, multi-column) embeds crisp retina
- * page layouts and editable text paragraphs so it opens with 100% precision in Word and Google Docs.
+ * Uses smart hybrid layout: embeds crisp full-bleed page layouts with 0 margins so there are
+ * no unwanted white border gaps on top, bottom, left, and right.
  */
 export async function createWordDocx(
   pagesText: string[],
@@ -20,7 +20,6 @@ export async function createWordDocx(
     const pageText = pagesText[i] || '';
     const children: any[] = [];
 
-    // Check if page contains complex script or table layout or if visual mode requested
     const hasComplexScript = /[\u0980-\u09FF\u0600-\u06FF\u0900-\u097F\uFFFD]/.test(pageText) || pageText.includes('fooi');
     const shouldUseVisual = mode === 'visual' || (mode === 'smart' && (hasComplexScript || thumb.dataUrl));
 
@@ -29,19 +28,20 @@ export async function createWordDocx(
         const base64Data = thumb.dataUrl.split(',')[1];
         const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 
-        // 595 x 842 points standard A4 in Word (approx 560px width in docx)
-        const targetWidth = 560;
+        // Full A4 page width in docx units (595 pt = 794 px)
+        const targetWidth = 595;
         const targetHeight = Math.round(targetWidth / (thumb.aspectRatio || (595 / 842)));
 
         children.push(
           new Paragraph({
             alignment: AlignmentType.CENTER,
+            spacing: { before: 0, after: 0, line: 240 },
             children: [
               new ImageRun({
                 data: imageBytes,
                 transformation: {
-                  width: Math.min(targetWidth, 560),
-                  height: Math.min(targetHeight, 780),
+                  width: targetWidth,
+                  height: targetHeight,
                 },
                 type: 'png',
               }),
@@ -59,7 +59,7 @@ export async function createWordDocx(
 
       for (const line of lines) {
         if (!line.trim()) {
-          children.push(new Paragraph({ text: '' }));
+          children.push(new Paragraph({ text: '', spacing: { before: 0, after: 0 } }));
           continue;
         }
 
@@ -85,6 +85,7 @@ export async function createWordDocx(
         } else {
           children.push(
             new Paragraph({
+              spacing: { before: 40, after: 40 },
               children: [
                 new TextRun({
                   text: line,
@@ -101,12 +102,19 @@ export async function createWordDocx(
     sections.push({
       properties: {
         page: {
-          margin: {
-            top: 720, // 0.5 inch
-            right: 720,
-            bottom: 720,
-            left: 720,
-          },
+          margin: shouldUseVisual
+            ? {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+              }
+            : {
+                top: 540,
+                right: 540,
+                bottom: 540,
+                left: 540,
+              },
         },
       },
       children: children.length > 0 ? children : [new Paragraph({ text: '' })],
@@ -130,32 +138,22 @@ export function createExcelWorkbook(pagesText: string[]): Blob {
   for (const pageText of pagesText) {
     const lines = pageText.split('\n');
     for (const line of lines) {
-      if (!line.trim()) continue;
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
 
       let cells: (string | number)[];
       if (line.includes('\t')) {
-        cells = line.split('\t').map((c) => {
-          const trimmed = c.trim();
-          const num = Number(trimmed);
-          return !isNaN(num) && trimmed !== '' ? num : trimmed;
-        });
-      } else if (line.includes(',')) {
+        cells = line.split('\t').map((c) => parseCellString(c));
+      } else if (line.includes(',') && !line.includes('  ')) {
         // CSV comma separated
-        cells = line.split(',').map((c) => {
-          const trimmed = c.trim().replace(/^["']|["']$/g, '');
-          const num = Number(trimmed);
-          return !isNaN(num) && trimmed !== '' ? num : trimmed;
-        });
+        cells = line.split(',').map((c) => parseCellString(c.replace(/^["']|["']$/g, '')));
       } else {
-        // Space separated columns if large gaps exist
-        const columns = line.split(/ {2,}/).map((c) => c.trim());
-        cells = columns.map((c) => {
-          const num = Number(c);
-          return !isNaN(num) && c !== '' ? num : c;
-        });
+        // Space separated columns (separated by 2 or more spaces)
+        const columns = line.split(/ {2,}/).map((c) => c.trim()).filter(Boolean);
+        cells = columns.map((c) => parseCellString(c));
       }
 
-      if (cells.some((c) => c !== '')) {
+      if (cells.length > 0 && cells.some((c) => c !== '')) {
         allRows.push(cells);
       }
     }
@@ -172,8 +170,8 @@ export function createExcelWorkbook(pagesText: string[]): Blob {
   const colWidths: { wch: number }[] = [];
   allRows.forEach((row) => {
     row.forEach((cell, colIdx) => {
-      const cellLen = String(cell || '').length;
-      colWidths[colIdx] = { wch: Math.max(colWidths[colIdx]?.wch || 10, Math.min(cellLen + 3, 50)) };
+      const cellLen = String(cell ?? '').length;
+      colWidths[colIdx] = { wch: Math.max(colWidths[colIdx]?.wch || 12, Math.min(cellLen + 4, 60)) };
     });
   });
   worksheet['!cols'] = colWidths;
@@ -185,4 +183,24 @@ export function createExcelWorkbook(pagesText: string[]): Blob {
   return new Blob([excelBuffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
+}
+
+function parseCellString(val: string): string | number {
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    const num = Number(trimmed);
+    if (!isNaN(num)) return num;
+  }
+
+  const currencyMatch = trimmed.match(/^\$\s*([0-9,]+(\.[0-9]+)?)$/);
+  if (currencyMatch) {
+    const num = Number(currencyMatch[1].replace(/,/g, ''));
+    if (!isNaN(num)) {
+      return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+  }
+
+  return trimmed;
 }

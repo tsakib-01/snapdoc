@@ -21,9 +21,20 @@ export const metadata: Metadata = {
     'pdf to jpg',
     'merge pdf',
     'split pdf',
+    'organize pdf',
+    'sign pdf',
     'free image tools',
     'online pdf editor',
+    'pdf converter',
   ],
+  authors: [{ name: 'SnapDoc Team' }, { name: 'Tasnim Sakib' }],
+  creator: 'Tasnim Sakib',
+  publisher: 'SnapDoc',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -31,15 +42,31 @@ export const metadata: Metadata = {
     siteName: 'SnapDoc',
     title: 'SnapDoc - Free Online Image & PDF Utilities',
     description: 'Compress, resize, convert, and optimize images & PDFs in memory with zero permanent storage.',
+    images: [
+      {
+        url: '/logo.png',
+        width: 512,
+        height: 512,
+        alt: 'SnapDoc Logo',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SnapDoc - Free Online Image & PDF Utilities',
     description: 'Compress, resize, convert, and optimize images & PDFs in memory with zero permanent storage.',
+    images: ['/logo.png'],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   icons: {
     icon: [
@@ -52,6 +79,27 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'SnapDoc',
+  url: 'https://snapdoc.app',
+  logo: 'https://snapdoc.app/logo.png',
+  description: 'Ultra-fast, privacy-first online tools for image and PDF compression, conversion, and organization.',
+};
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'SnapDoc',
+  url: 'https://snapdoc.app',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://snapdoc.app/tools?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -59,6 +107,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+      </head>
       <body className="bg-base-200/30 text-base-content antialiased flex flex-col min-h-screen selection:bg-primary selection:text-white">
         <Header />
         <main className="flex-1">

@@ -123,9 +123,9 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
         />
       )}
 
-      <div className={`w-full ${isWide ? 'max-w-7xl px-2 sm:px-4 md:px-6 py-4 sm:py-10 space-y-4 sm:space-y-6' : 'max-w-5xl px-3 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8'} mx-auto`}>
+      <div className={`w-full ${isWide ? 'max-w-[1500px] px-1 sm:px-4 md:px-6 py-2 sm:py-6 space-y-2.5 sm:space-y-6' : 'max-w-5xl px-3 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8'} mx-auto`}>
         {/* Breadcrumbs with Semantic Microdata */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-base-content/60 overflow-x-auto no-scrollbar py-0.5">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-base-content/60 overflow-x-auto no-scrollbar py-0.5 px-1">
           <Link href="/" className="hover:text-primary transition-colors shrink-0">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-base-content/40 shrink-0" />
           <Link href="/tools" className="hover:text-primary transition-colors capitalize shrink-0">{tool.category} Tools</Link>
@@ -134,16 +134,16 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
         </nav>
 
         {/* Tool Header */}
-        <div className={`text-center ${isWide ? 'space-y-1.5 max-w-2xl' : 'space-y-2.5 max-w-3xl'} mx-auto px-1`}>
+        <div className={`text-center ${isWide ? 'space-y-1 max-w-3xl' : 'space-y-2.5 max-w-3xl'} mx-auto px-1`}>
           {tool.badge && (
             <span className="badge badge-primary badge-sm font-semibold mb-1">
               {tool.badge}
             </span>
           )}
-          <h1 className={`${isWide ? 'text-xl sm:text-3xl lg:text-4xl' : 'text-2xl sm:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-base-content`}>
+          <h1 className={`${isWide ? 'text-lg sm:text-2xl md:text-3xl lg:text-4xl' : 'text-2xl sm:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-base-content`}>
             {tool.name}
           </h1>
-          <p className="text-xs sm:text-sm md:text-base text-base-content/70 leading-relaxed">
+          <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed">
             {tool.description}
           </p>
         </div>

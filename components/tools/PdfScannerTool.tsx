@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
 
 export default function PdfScannerTool() {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [processing, setProcessing] = useState<boolean>(false);
+  const [flash, setFlash] = useState<boolean>(false);
   const [resultData, setResultData] = useState<{
     dataUrl: string;
     filename: string;
@@ -18,22 +20,72 @@ export default function PdfScannerTool() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const startCamera = async () => {
+  // Safely attach stream to video element whenever camera is active
+  useEffect(() => {
+    if (isCameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.muted = true;
+      videoRef.current.playsInline = true;
+      videoRef.current.play().catch((err) => {
+        console.warn('Video autoPlay deferred:', err);
+      });
+    }
+  }, [isCameraActive]);
+
+  // Clean up media tracks on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  const startCamera = async (mode: 'environment' | 'user' = facingMode) => {
     setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-      });
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+      } catch (fallbackErr) {
+        // Fallback for desktop webcams that don't support facingMode constraints
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
+
       streamRef.current = stream;
+      setIsCameraActive(true);
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        videoRef.current.muted = true;
+        videoRef.current.playsInline = true;
+        videoRef.current.play().catch(() => {});
       }
-      setIsCameraActive(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Could not access camera. Please allow camera permissions or upload images directly.');
+      setError('Could not access camera. Please allow camera permissions in your browser or upload images directly.');
+      setIsCameraActive(false);
     }
+  };
+
+  const toggleFacingMode = () => {
+    const nextMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(nextMode);
+    startCamera(nextMode);
   };
 
   const stopCamera = () => {
@@ -45,19 +97,41 @@ export default function PdfScannerTool() {
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current) return;
-
     const video = videoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setError('Camera is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    // Trigger visual shutter flash
+    setFlash(true);
+    setTimeout(() => setFlash(false), 200);
+
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
 
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setCapturedImages((prev) => [...prev, dataUrl]);
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setCapturedImages((prev) => [...prev, event.target!.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const removePhoto = (index: number) => {
@@ -131,38 +205,97 @@ export default function PdfScannerTool() {
             )}
           </div>
 
-          {/* Camera Viewfinder */}
+          {/* Camera Viewfinder & Upload Options */}
           {!isCameraActive ? (
-            <div className="text-center py-10 space-y-4 rounded-2xl border-2 border-dashed border-base-300 bg-base-200/40">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                <Camera className="w-7 h-7" />
+            <div className="text-center py-10 px-4 space-y-5 rounded-2xl border-2 border-dashed border-base-300 bg-base-200/40">
+              <div className="w-16 h-16 mx-auto rounded-3xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
+                <Camera className="w-8 h-8" />
               </div>
-              <div className="space-y-1">
-                <h4 className="font-bold text-base">Ready to Scan Documents</h4>
-                <p className="text-xs text-base-content/60">Use your device camera to scan pages in high resolution</p>
+              <div className="space-y-1.5 max-w-sm mx-auto">
+                <h4 className="font-bold text-base sm:text-lg text-base-content">Ready to Scan Documents</h4>
+                <p className="text-xs sm:text-sm text-base-content/60">Use your camera to capture pages, or select photos from your device library.</p>
               </div>
-              <button onClick={startCamera} className="btn btn-primary btn-sm rounded-xl gap-2">
-                <Camera className="w-4 h-4" />
-                <span>Open Camera</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => startCamera('environment')}
+                  className="btn btn-primary rounded-xl gap-2 shadow-lg shadow-primary/25 px-5"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Open Camera</span>
+                </button>
+                <label className="btn btn-outline rounded-xl gap-2 cursor-pointer px-4">
+                  <Upload className="w-4 h-4" />
+                  <span>Upload Photos</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center shadow-lg">
-                <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline />
-                <div className="absolute inset-4 border-2 border-white/40 rounded-xl pointer-events-none flex items-center justify-center">
-                  <span className="text-white/70 text-xs font-semibold bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">
+              <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center shadow-xl border border-base-300">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  autoPlay
+                  playsInline
+                  muted
+                />
+
+                {/* Document Alignment Frame */}
+                <div className="absolute inset-4 sm:inset-8 border-2 border-dashed border-white/60 rounded-2xl pointer-events-none flex items-center justify-center">
+                  <span className="text-white text-xs font-bold bg-black/60 px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-md">
                     Align document inside frame
                   </span>
                 </div>
+
+                {/* Flip Camera Button */}
+                <button
+                  type="button"
+                  onClick={toggleFacingMode}
+                  title="Switch Front/Back Camera"
+                  className="absolute top-3 right-3 btn btn-circle btn-sm bg-black/60 hover:bg-black/80 text-white border-none backdrop-blur-md"
+                >
+                  <SwitchCamera className="w-4 h-4" />
+                </button>
+
+                {/* Visual Camera Shutter Flash */}
+                {flash && (
+                  <div className="absolute inset-0 bg-white z-30 animate-out fade-out duration-200 pointer-events-none" />
+                )}
               </div>
 
-              <div className="flex items-center justify-center gap-4">
-                <button onClick={capturePhoto} className="btn btn-primary rounded-full px-6 gap-2 shadow-lg shadow-primary/25">
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="btn btn-primary rounded-full px-6 sm:px-8 gap-2 shadow-xl shadow-primary/30 font-bold"
+                >
                   <Camera className="w-4 h-4" />
                   <span>Capture Page ({capturedImages.length + 1})</span>
                 </button>
-                <button onClick={stopCamera} className="btn btn-ghost btn-sm">
+                <label className="btn btn-ghost btn-sm gap-1.5 cursor-pointer">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Add from gallery</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="btn btn-ghost btn-sm text-base-content/70"
+                >
                   Stop Camera
                 </button>
               </div>

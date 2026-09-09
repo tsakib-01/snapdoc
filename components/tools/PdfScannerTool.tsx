@@ -187,7 +187,7 @@ export default function PdfScannerTool() {
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {!resultData && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 shadow-sm space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-base-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -356,7 +356,7 @@ export default function PdfScannerTool() {
       )}
 
       {resultData && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 shadow-xl text-center space-y-6">
+        <div className="py-6 text-center space-y-6">
           <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center">
             <CheckCircle2 className="w-8 h-8" />
           </div>

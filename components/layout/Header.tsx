@@ -32,79 +32,84 @@ export default function Header() {
 
             {/* Desktop Navigation Links */}
             <nav className="hidden md:flex items-center gap-1">
-              {/* Image Tools */}
+              {/* Image Tools Dropdown */}
               <div className="dropdown dropdown-hover">
                 <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
                   <Image className="w-4 h-4 text-blue-500" />
                   <span>Image Tools</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </label>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-60 border border-base-300">
-                  <li><Link href="/compress-jpg" className="text-xs font-medium py-2">Compress JPG / JPEG</Link></li>
-                  <li><Link href="/compress-jpg-to-10kb" className="text-xs font-medium py-2 text-primary font-semibold">Compress JPG to 10KB</Link></li>
-                  <li><Link href="/compress-image" className="text-xs font-medium py-2">General Image Compressor</Link></li>
-                  <li><Link href="/resize-image" className="text-xs font-medium py-2">Resize Image</Link></li>
-                  <li><Link href="/crop-image" className="text-xs font-medium py-2">Crop Image</Link></li>
-                  <li><Link href="/jpg-to-png" className="text-xs font-medium py-2">JPG to PNG</Link></li>
-                  <li><Link href="/png-to-jpg" className="text-xs font-medium py-2">PNG to JPG (White BG)</Link></li>
-                  <li><Link href="/jpg-to-webp" className="text-xs font-medium py-2">JPG to WebP</Link></li>
-                  <li><Link href="/image-to-pdf" className="text-xs font-medium py-2 text-primary font-semibold">Image to PDF</Link></li>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-3 shadow-xl bg-base-100 rounded-2xl w-60 border border-base-300">
+                  <li><Link href="/compress-jpg" className="text-xs font-medium py-1.5">Compress JPG / JPEG</Link></li>
+                  <li><Link href="/compress-jpg-to-10kb" className="text-xs font-medium py-1.5 text-primary font-semibold">Compress JPG to 10KB</Link></li>
+                  <li><Link href="/compress-image" className="text-xs font-medium py-1.5">General Image Compressor</Link></li>
+                  <li><Link href="/resize-image" className="text-xs font-medium py-1.5">Resize Image</Link></li>
+                  <li><Link href="/crop-image" className="text-xs font-medium py-1.5">Crop Image</Link></li>
+                  <li><Link href="/jpg-to-png" className="text-xs font-medium py-1.5">JPG to PNG</Link></li>
+                  <li><Link href="/png-to-jpg" className="text-xs font-medium py-1.5">PNG to JPG</Link></li>
+                  <li><Link href="/jpg-to-webp" className="text-xs font-medium py-1.5">JPG to WebP</Link></li>
+                  <li><Link href="/image-to-pdf" className="text-xs font-medium py-1.5 text-primary font-semibold">Image to PDF</Link></li>
                 </ul>
               </div>
 
-              {/* PDF Organize */}
+              {/* Merged PDF Tools Dropdown (Organize + Convert) */}
               <div className="dropdown dropdown-hover">
                 <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
                   <FileText className="w-4 h-4 text-purple-500" />
-                  <span>Organize PDF</span>
+                  <span>PDF Tools</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </label>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-300">
-                  <li><Link href="/organize-pdf" className="text-xs font-semibold py-2 text-primary">Visual Page Organizer</Link></li>
-                  <li><Link href="/extract-pdf-pages" className="text-xs font-medium py-2">Extract PDF Pages</Link></li>
-                  <li><Link href="/delete-pdf-pages" className="text-xs font-medium py-2">Delete PDF Pages</Link></li>
-                  <li><Link href="/rotate-pdf" className="text-xs font-medium py-2">Rotate PDF Pages</Link></li>
-                  <li><Link href="/merge-pdf" className="text-xs font-medium py-2">Merge PDF</Link></li>
-                  <li><Link href="/split-pdf" className="text-xs font-medium py-2">Split PDF</Link></li>
-                </ul>
+                <div tabIndex={0} className="dropdown-content z-[1] p-4 shadow-2xl bg-base-100 rounded-2xl w-[480px] border border-base-300 grid grid-cols-2 gap-4">
+                  {/* Column 1: Organize & Manage */}
+                  <div>
+                    <span className="text-[11px] font-bold text-base-content/50 uppercase tracking-wider px-2 block mb-1.5">
+                      Organize & Edit
+                    </span>
+                    <ul className="menu menu-compact p-0 text-xs space-y-0.5">
+                      <li><Link href="/organize-pdf" className="font-semibold text-primary py-1.5">Visual Page Organizer</Link></li>
+                      <li><Link href="/split-pdf" className="py-1.5">Split PDF</Link></li>
+                      <li><Link href="/merge-pdf" className="py-1.5">Merge PDF</Link></li>
+                      <li><Link href="/extract-pdf-pages" className="py-1.5">Extract PDF Pages</Link></li>
+                      <li><Link href="/delete-pdf-pages" className="py-1.5">Delete PDF Pages</Link></li>
+                      <li><Link href="/rotate-pdf" className="py-1.5">Rotate PDF</Link></li>
+                      <li><Link href="/compress-pdf" className="py-1.5 text-emerald-600 font-medium">Compress PDF</Link></li>
+                    </ul>
+                  </div>
+
+                  {/* Column 2: Convert */}
+                  <div className="border-l border-base-200 pl-4">
+                    <span className="text-[11px] font-bold text-base-content/50 uppercase tracking-wider px-2 block mb-1.5">
+                      Convert PDF
+                    </span>
+                    <ul className="menu menu-compact p-0 text-xs space-y-0.5">
+                      <li><Link href="/pdf-to-word" className="py-1.5 font-medium text-primary">PDF to Word</Link></li>
+                      <li><Link href="/pdf-to-excel" className="py-1.5">PDF to Excel / CSV</Link></li>
+                      <li><Link href="/pdf-to-png" className="py-1.5">PDF to PNG</Link></li>
+                      <li><Link href="/pdf-to-jpg" className="py-1.5">PDF to JPG</Link></li>
+                      <li><Link href="/word-to-pdf" className="py-1.5">Word to PDF</Link></li>
+                      <li><Link href="/excel-to-pdf" className="py-1.5">Excel to PDF</Link></li>
+                      <li><Link href="/pdf-ocr" className="py-1.5">OCR Text Extractor</Link></li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
-              {/* PDF Convert */}
-              <div className="dropdown dropdown-hover">
-                <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
-                  <FileText className="w-4 h-4 text-emerald-500" />
-                  <span>Convert PDF</span>
-                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                </label>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-300">
-                  <li><Link href="/pdf-to-word" className="text-xs font-medium py-2 text-primary font-semibold">PDF to Word</Link></li>
-                  <li><Link href="/pdf-to-excel" className="text-xs font-medium py-2">PDF to Excel / CSV</Link></li>
-                  <li><Link href="/pdf-to-jpg" className="text-xs font-medium py-2">PDF to JPG</Link></li>
-                  <li><Link href="/pdf-to-png" className="text-xs font-medium py-2">PDF to PNG</Link></li>
-                  <li><Link href="/word-to-pdf" className="text-xs font-medium py-2">Word to PDF</Link></li>
-                  <li><Link href="/excel-to-pdf" className="text-xs font-medium py-2">Excel to PDF</Link></li>
-                  <li><Link href="/txt-to-pdf" className="text-xs font-medium py-2">TXT to PDF</Link></li>
-                  <li><Link href="/pdf-ocr" className="text-xs font-medium py-2">PDF OCR Text Extractor</Link></li>
-                </ul>
-              </div>
-
-              {/* Edit, Sign & AI */}
+              {/* Edit & AI Dropdown */}
               <div className="dropdown dropdown-hover">
                 <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>Edit & AI</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </label>
-                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-base-100 rounded-2xl w-64 border border-base-300">
-                  <li><Link href="/sign-pdf" className="text-xs font-semibold py-2 text-primary">Sign PDF (eSign)</Link></li>
-                  <li><Link href="/add-page-numbers-to-pdf" className="text-xs font-medium py-2">Add Page Numbers</Link></li>
-                  <li><Link href="/watermark-pdf" className="text-xs font-medium py-2">Watermark PDF</Link></li>
-                  <li><Link href="/compress-pdf" className="text-xs font-medium py-2">Compress PDF</Link></li>
-                  <li><Link href="/crop-pdf" className="text-xs font-medium py-2">Crop PDF</Link></li>
-                  <li><Link href="/flatten-pdf" className="text-xs font-medium py-2">Flatten PDF</Link></li>
-                  <li><Link href="/ai-pdf" className="text-xs font-semibold py-2 text-violet-600">AI PDF Summarizer</Link></li>
-                  <li><Link href="/chat-with-pdf" className="text-xs font-medium py-2">Chat with PDF</Link></li>
-                  <li><Link href="/pdf-scanner" className="text-xs font-medium py-2 text-teal-600">Camera Scanner</Link></li>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-3 shadow-xl bg-base-100 rounded-2xl w-60 border border-base-300">
+                  <li><Link href="/sign-pdf" className="text-xs font-semibold py-1.5 text-primary">Sign PDF (eSign)</Link></li>
+                  <li><Link href="/add-page-numbers-to-pdf" className="text-xs font-medium py-1.5">Add Page Numbers</Link></li>
+                  <li><Link href="/watermark-pdf" className="text-xs font-medium py-1.5">Watermark PDF</Link></li>
+                  <li><Link href="/crop-pdf" className="text-xs font-medium py-1.5">Crop PDF</Link></li>
+                  <li><Link href="/flatten-pdf" className="text-xs font-medium py-1.5">Flatten PDF</Link></li>
+                  <li><Link href="/ai-pdf" className="text-xs font-semibold py-1.5 text-violet-600">AI PDF Summarizer</Link></li>
+                  <li><Link href="/chat-with-pdf" className="text-xs font-medium py-1.5">Chat with PDF</Link></li>
+                  <li><Link href="/pdf-scanner" className="text-xs font-medium py-1.5 text-teal-600">Camera Scanner</Link></li>
                 </ul>
               </div>
 
@@ -171,10 +176,12 @@ export default function Header() {
                 PDF Tools
               </div>
               <div className="grid grid-cols-2 gap-1">
+                <Link href="/organize-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Organize PDF</Link>
                 <Link href="/merge-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Merge PDF</Link>
                 <Link href="/split-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Split PDF</Link>
-                <Link href="/pdf-to-jpg" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">PDF to JPG</Link>
+                <Link href="/pdf-to-word" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">PDF to Word</Link>
                 <Link href="/compress-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Compress PDF</Link>
+                <Link href="/sign-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Sign PDF</Link>
               </div>
             </div>
 

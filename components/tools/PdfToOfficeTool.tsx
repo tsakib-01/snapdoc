@@ -97,7 +97,7 @@ export default function PdfToOfficeTool({
       )}
 
       {processing && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 text-center space-y-4 shadow-sm">
+        <div className="py-8 text-center space-y-4">
           <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
           <h3 className="font-bold text-base">Extracting Document Text & Layout...</h3>
           <p className="text-xs text-base-content/60">Parsing PDF streams in memory</p>
@@ -105,7 +105,7 @@ export default function PdfToOfficeTool({
       )}
 
       {file && !processing && extractedText && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 shadow-sm space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-base-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">

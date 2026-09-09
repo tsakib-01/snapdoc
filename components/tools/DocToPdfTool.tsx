@@ -77,18 +77,18 @@ export default function DocToPdfTool({
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {!file && !textContent && (
+      {!file && !resultData && (
         <div className="space-y-6">
           <UploadZone
             accept=".txt,.csv,.doc,.docx,.html,.rtf"
             maxFiles={1}
-            maxSizeMb={30}
+            maxSizeMb={50}
             title={title}
             subtitle={subtitle}
             onFilesSelected={(files) => setFile(files[0])}
           />
 
-          <div className="p-6 rounded-3xl bg-base-100 border border-base-300 shadow-sm space-y-3">
+          <div className="p-5 sm:p-6 rounded-2xl bg-base-200/40 border border-base-300 space-y-3">
             <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-base-content/70">
               <FileCode className="w-4 h-4 text-primary" />
               <span>Or Paste Raw Text / CSV directly:</span>
@@ -98,16 +98,31 @@ export default function DocToPdfTool({
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
               placeholder="Paste plain text or comma-separated CSV rows here to instantly generate a PDF..."
-              className="textarea textarea-bordered w-full rounded-2xl text-xs font-mono"
+              className="textarea textarea-bordered w-full rounded-2xl text-xs font-mono bg-base-100"
             />
+            {error && (
+              <div className="alert alert-error text-xs rounded-2xl">
+                <span>{error}</span>
+              </div>
+            )}
             <div className="flex justify-end">
               <button
+                type="button"
                 onClick={handleProcess}
                 disabled={!textContent.trim() || processing}
-                className="btn btn-primary btn-sm rounded-xl gap-2"
+                className="btn btn-primary btn-sm rounded-xl gap-2 shadow-md shadow-primary/20"
               >
-                <span>Convert Pasted Text to PDF</span>
-                <ArrowRight className="w-4 h-4" />
+                {processing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Converting...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Convert Pasted Text to PDF</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -115,7 +130,7 @@ export default function DocToPdfTool({
       )}
 
       {file && !resultData && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 shadow-sm space-y-6">
+        <div className="space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-base-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -160,7 +175,7 @@ export default function DocToPdfTool({
       )}
 
       {resultData && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 shadow-xl text-center space-y-6">
+        <div className="py-6 text-center space-y-6">
           <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center">
             <CheckCircle2 className="w-8 h-8" />
           </div>

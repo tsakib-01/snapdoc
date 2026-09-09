@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { convertTextToPdf, convertCsvToPdf } from '@/lib/office/documentConverter';
+import { convertTextToPdf, convertCsvToPdf, extractTextFromDocument } from '@/lib/office/documentConverter';
 import { MAX_IMAGE_FILE_SIZE } from '@/lib/utils/validation';
 
 export const runtime = 'nodejs';
@@ -21,15 +21,15 @@ export async function POST(req: NextRequest) {
 
     if (file) {
       if (file.size > MAX_IMAGE_FILE_SIZE) {
-        return NextResponse.json({ error: 'File exceeds maximum size limit.' }, { status: 400 });
+        return NextResponse.json({ error: 'File exceeds maximum size limit (50MB).' }, { status: 400 });
       }
       baseName = file.name.replace(/\.[^/.]+$/, '');
-      const rawText = await file.text();
+      const { text: extractedText, isTable } = await extractTextFromDocument(file);
 
-      if (format === 'csv' || file.name.endsWith('.csv')) {
-        outputBytes = await convertCsvToPdf(rawText);
+      if (isTable || format === 'csv' || file.name.endsWith('.csv')) {
+        outputBytes = await convertCsvToPdf(extractedText);
       } else {
-        outputBytes = await convertTextToPdf(rawText, { title: baseName });
+        outputBytes = await convertTextToPdf(extractedText, { title: baseName });
       }
     } else {
       if (format === 'csv') {

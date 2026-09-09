@@ -9,9 +9,11 @@ import ToolCard from './ToolCard';
 interface ToolLayoutProps {
   tool: ToolMeta;
   children: React.ReactNode;
+  isWide?: boolean;
+  noCardWrapper?: boolean;
 }
 
-export default function ToolLayout({ tool, children }: ToolLayoutProps) {
+export default function ToolLayout({ tool, children, isWide = false, noCardWrapper = false }: ToolLayoutProps) {
   const relatedTools = TOOLS.filter(
     (t) => t.id !== tool.id && (t.category === tool.category || t.popular)
   ).slice(0, 3);
@@ -121,7 +123,7 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
         />
       )}
 
-      <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8">
+      <div className={`w-full ${isWide ? 'max-w-7xl px-2 sm:px-4 md:px-6 py-4 sm:py-10 space-y-4 sm:space-y-6' : 'max-w-5xl px-3 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8'} mx-auto`}>
         {/* Breadcrumbs with Semantic Microdata */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-base-content/60 overflow-x-auto no-scrollbar py-0.5">
           <Link href="/" className="hover:text-primary transition-colors shrink-0">Home</Link>
@@ -132,24 +134,30 @@ export default function ToolLayout({ tool, children }: ToolLayoutProps) {
         </nav>
 
         {/* Tool Header */}
-        <div className="text-center space-y-2.5 max-w-3xl mx-auto px-1">
+        <div className={`text-center ${isWide ? 'space-y-1.5 max-w-2xl' : 'space-y-2.5 max-w-3xl'} mx-auto px-1`}>
           {tool.badge && (
             <span className="badge badge-primary badge-sm font-semibold mb-1">
               {tool.badge}
             </span>
           )}
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-base-content">
+          <h1 className={`${isWide ? 'text-xl sm:text-3xl lg:text-4xl' : 'text-2xl sm:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-base-content`}>
             {tool.name}
           </h1>
-          <p className="text-xs sm:text-base text-base-content/70 leading-relaxed">
+          <p className="text-xs sm:text-sm md:text-base text-base-content/70 leading-relaxed">
             {tool.description}
           </p>
         </div>
 
         {/* Main Tool Interactive Sandbox */}
-        <div className="w-full bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card p-3 sm:p-6 lg:p-8 transition-all">
-          {children}
-        </div>
+        {noCardWrapper ? (
+          <div className="w-full">
+            {children}
+          </div>
+        ) : (
+          <div className={`w-full bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card ${isWide ? 'p-1.5 sm:p-4 lg:p-6' : 'p-3 sm:p-6 lg:p-8'} transition-all`}>
+            {children}
+          </div>
+        )}
 
         {/* Top Banner Ad Placeholder */}
         <AdSlot slot="tool-page-middle" format="horizontal" />

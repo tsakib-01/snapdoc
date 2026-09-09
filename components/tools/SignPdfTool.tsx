@@ -1045,7 +1045,7 @@ export default function SignPdfTool() {
 
       {/* 5. Main eSign Studio Workspace */}
       {file && pages.length > 0 && !resultData && (
-        <div className="w-full rounded-3xl bg-base-100 border border-base-300 shadow-xl flex flex-col h-[580px] sm:h-[680px] lg:h-[720px] max-h-[85vh] relative">
+        <div className="w-full rounded-2xl sm:rounded-3xl bg-base-100 border border-base-300 shadow-xl flex flex-col h-[620px] sm:h-[720px] lg:h-[780px] max-h-[88vh] relative">
           {/* Top Signature Toolbar */}
           <div className="p-2 sm:p-3 border-b border-base-200 bg-base-200/50 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0">
             {/* Left: Reset & File Title */}
@@ -1255,7 +1255,7 @@ export default function SignPdfTool() {
 
             {/* Center Canvas Area with Full Touch & Mouse Dragging */}
             <div
-              className="flex-1 h-full overflow-auto p-2 sm:p-4 md:p-6 flex items-center justify-center relative"
+              className="flex-1 h-full overflow-auto p-1 sm:p-4 md:p-6 flex items-center justify-center relative"
               onMouseMove={handlePageMouseMove}
               onMouseUp={handleEnd}
               onTouchMove={handlePageTouchMove}
@@ -1266,7 +1266,7 @@ export default function SignPdfTool() {
                 <div
                   ref={pageContainerRef}
                   style={{
-                    width: `${Math.min(pages[currentPage - 1].width * (zoomLevel / 100), 720)}px`,
+                    width: `${Math.min(pages[currentPage - 1].width * (zoomLevel / 100), 850)}px`,
                     maxWidth: '100%',
                     aspectRatio: `${pages[currentPage - 1].aspectRatio}`,
                     touchAction: isDragging || isResizing ? 'none' : 'auto',

@@ -59,7 +59,7 @@ export default function VisualPdfOrganizerTool({
   
   // Split settings
   const [splitEveryN, setSplitEveryN] = useState(1);
-  const [splitCustomCuts, setSplitCustomCuts] = useState<Set<number>>(new Set()); // indices after which a cut occurs
+  const [splitCustomCuts, setSplitCustomCuts] = useState<Set<number>>(new Set());
   const [splitAfterEveryEnabled, setSplitAfterEveryEnabled] = useState(true);
 
   // Extract settings
@@ -130,9 +130,8 @@ export default function VisualPdfOrganizerTool({
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
-    // set small drag preview ghost opacity
     if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = '0.5';
+      e.currentTarget.style.opacity = '0.4';
     }
   };
 
@@ -164,7 +163,6 @@ export default function VisualPdfOrganizerTool({
       const updated = [...prev];
       const [movedItem] = updated.splice(draggedIndex, 1);
       updated.splice(dropIndex, 0, movedItem);
-      // Renumber display pageNumbers
       return updated.map((item, idx) => ({
         ...item,
         pageNumber: idx + 1,
@@ -191,7 +189,8 @@ export default function VisualPdfOrganizerTool({
     setPages((prev) =>
       prev.map((p) => {
         if (p.id === id) {
-          return { ...p, rotation: (p.rotation + angleDelta + 360) % 360 };
+          const nextRot = (p.rotation + angleDelta + 360) % 360;
+          return { ...p, rotation: nextRot };
         }
         return p;
       })
@@ -318,7 +317,6 @@ export default function VisualPdfOrganizerTool({
       formData.append('file', file);
       formData.append('pages', JSON.stringify(pagesToInclude));
 
-      // In split mode or separate PDFs toggle, generate ZIP of separate files
       const isSeparate = toolTab === 'split' || separatePdfs;
       formData.append('separateFiles', isSeparate ? 'true' : 'false');
 
@@ -348,7 +346,6 @@ export default function VisualPdfOrganizerTool({
     }
   };
 
-  // Truncate document name for bottom card pill
   const shortDocName = file
     ? file.name.length > 18
       ? `${file.name.slice(0, 15)}...`
@@ -356,10 +353,10 @@ export default function VisualPdfOrganizerTool({
     : 'Document.pdf';
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
       {/* Upload State */}
       {!file && (
-        <div className="max-w-2xl mx-auto space-y-4">
+        <div className="max-w-2xl mx-auto">
           <UploadZone
             accept="application/pdf"
             maxFiles={1}
@@ -371,14 +368,14 @@ export default function VisualPdfOrganizerTool({
         </div>
       )}
 
-      {/* Loading Thumbnails Progress Bar */}
+      {/* Loading Thumbnails Progress */}
       {loadingThumbnails && (
-        <div className="max-w-xl mx-auto p-8 rounded-3xl bg-base-100 border border-base-300 text-center space-y-4 shadow-sm">
+        <div className="max-w-xl mx-auto p-8 rounded-3xl bg-base-200/50 text-center space-y-4">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center animate-spin">
             <RefreshCw className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-base text-base-content">Generating Visual Page Previews...</h3>
+            <h3 className="font-bold text-base text-base-content">Generating Page Previews...</h3>
             <p className="text-xs text-base-content/60">
               Rendering page {thumbnailProgress.loaded} of {thumbnailProgress.total}
             </p>
@@ -391,33 +388,33 @@ export default function VisualPdfOrganizerTool({
         </div>
       )}
 
-      {/* Simplified Clean Smallpdf-Style Workspace (Matching Screenshot) */}
+      {/* Seamless, Natural Workspace - No Hardcoded Outer Boxes */}
       {file && !loadingThumbnails && !resultData && (
-        <div className="w-full bg-[#f0f4f9] dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col min-h-[720px]">
-          {/* Top Control Bar */}
-          <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 select-none">
-            {/* Left: Reset & Action Pills */}
-            <div className="flex items-center gap-3">
+        <div className="w-full space-y-5">
+          {/* Top Integrated Action Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+            {/* Left: Reset & Tools */}
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={handleReset}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-base-content"
                 title="Upload different file"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4" />
               </button>
 
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mr-2">
+              <span className="font-extrabold text-base sm:text-lg text-base-content mr-1">
                 {toolTab === 'split' ? 'Split' : 'Extract Pages'}
-              </h2>
+              </span>
 
-              {/* Mode Pills: Split / Extract / Add / Rotations */}
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              {/* Action Pills */}
+              <div className="flex items-center gap-1 bg-base-100 p-1 rounded-xl border border-base-300">
                 <button
                   onClick={() => setToolTab('split')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                     toolTab === 'split'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                      ? 'bg-primary text-primary-content shadow-xs'
+                      : 'text-base-content/70 hover:text-base-content'
                   }`}
                 >
                   <Scissors className="w-3.5 h-3.5" />
@@ -426,10 +423,10 @@ export default function VisualPdfOrganizerTool({
 
                 <button
                   onClick={() => setToolTab('extract')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                     toolTab === 'extract'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
+                      ? 'bg-primary text-primary-content shadow-xs'
+                      : 'text-base-content/70 hover:text-base-content'
                   }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
@@ -439,58 +436,58 @@ export default function VisualPdfOrganizerTool({
                 <div className="dropdown dropdown-end">
                   <label
                     tabIndex={0}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-base-content/70 hover:bg-base-200 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5 text-blue-600" />
+                    <Plus className="w-3.5 h-3.5 text-primary" />
                     <span>Add</span>
                     <ChevronDown className="w-3 h-3 opacity-60" />
                   </label>
                   <ul
                     tabIndex={0}
-                    className="dropdown-content z-30 menu p-2 shadow-xl bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 w-48 text-xs space-y-1 mt-1"
+                    className="dropdown-content z-30 menu p-2 shadow-xl bg-base-100 rounded-2xl border border-base-300 w-48 text-xs space-y-1 mt-1"
                   >
                     <li>
                       <button onClick={() => insertBlankPage(pages.length)}>
-                        <Plus className="w-4 h-4 text-blue-500" />
+                        <Plus className="w-4 h-4 text-primary" />
                         <span>Insert Blank Page</span>
                       </button>
                     </li>
                     <li>
                       <button onClick={() => addFileInputRef.current?.click()}>
-                        <FileText className="w-4 h-4 text-emerald-500" />
+                        <FileText className="w-4 h-4 text-success" />
                         <span>Add Document Pages</span>
                       </button>
                     </li>
                   </ul>
                 </div>
 
-                <div className="w-px h-5 bg-slate-300 dark:bg-slate-700 mx-1"></div>
+                <div className="w-px h-4 bg-base-300 mx-1"></div>
 
                 <button
                   onClick={() => rotateSelected(-90)}
                   disabled={selectedCount === 0}
-                  className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  className="p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-40"
                   title="Rotate Left"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={() => rotateSelected(90)}
                   disabled={selectedCount === 0}
-                  className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-40 transition-colors"
+                  className="p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-40"
                   title="Rotate Right"
                 >
-                  <RotateCw className="w-4 h-4" />
+                  <RotateCw className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={deleteSelected}
                   disabled={selectedCount === 0}
-                  className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-40 transition-colors"
+                  className="p-1.5 rounded-lg text-error hover:bg-error/10 disabled:opacity-40"
                   title="Delete Selected"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -498,8 +495,7 @@ export default function VisualPdfOrganizerTool({
             {/* Right: Dynamic Split Controls / Separate PDFs & Finish Button */}
             <div className="flex items-center gap-3">
               {toolTab === 'split' ? (
-                /* Split Settings Controls (Matching Screenshot) */
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-2 text-xs font-medium text-base-content/80">
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input
                       type="checkbox"
@@ -510,10 +506,10 @@ export default function VisualPdfOrganizerTool({
                     <span>Split after every</span>
                   </label>
 
-                  <div className="flex items-center border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 overflow-hidden">
+                  <div className="flex items-center border border-base-300 rounded-lg bg-base-100 overflow-hidden">
                     <button
                       onClick={() => setSplitEveryN((n) => Math.max(1, n - 1))}
-                      className="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600"
+                      className="px-2 py-1 hover:bg-base-200 text-base-content/70"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
@@ -522,7 +518,7 @@ export default function VisualPdfOrganizerTool({
                     </span>
                     <button
                       onClick={() => setSplitEveryN((n) => Math.min(pages.length, n + 1))}
-                      className="px-2 py-1 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600"
+                      className="px-2 py-1 hover:bg-base-200 text-base-content/70"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -531,13 +527,12 @@ export default function VisualPdfOrganizerTool({
                   <span>pages</span>
                 </div>
               ) : (
-                /* Extract Settings: Separate PDFs Toggle */
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600 dark:text-slate-300">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-base-content/80">
                   <input
                     type="checkbox"
                     checked={separatePdfs}
                     onChange={(e) => setSeparatePdfs(e.target.checked)}
-                    className="toggle toggle-sm toggle-primary"
+                    className="toggle toggle-xs toggle-primary"
                   />
                   <span>Separate PDFs</span>
                 </label>
@@ -547,7 +542,7 @@ export default function VisualPdfOrganizerTool({
               <button
                 onClick={handleProcess}
                 disabled={processing || pages.length === 0}
-                className="btn btn-primary btn-sm px-6 font-bold shadow-md shadow-blue-500/20 rounded-xl gap-2 text-white bg-blue-600 hover:bg-blue-700 border-none transition-all hover:scale-[1.02] active:scale-95"
+                className="btn btn-primary btn-sm px-6 font-bold shadow-md shadow-primary/20 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all"
               >
                 {processing ? (
                   <>
@@ -569,28 +564,28 @@ export default function VisualPdfOrganizerTool({
           </div>
 
           {/* Sub-Header: Select All & Sort View Controls */}
-          <div className="px-6 py-2 flex items-center justify-between text-xs text-slate-500 border-b border-slate-200/60 dark:border-slate-800">
-            <div className="flex items-center gap-4">
+          <div className="px-2 flex items-center justify-between text-xs text-base-content/60">
+            <div className="flex items-center gap-3">
               <label
                 onClick={() => selectAll(!allSelected)}
-                className="flex items-center gap-2 cursor-pointer font-medium text-slate-800 dark:text-slate-200 select-none hover:text-blue-600 transition-colors"
+                className="flex items-center gap-2 cursor-pointer font-semibold text-base-content select-none hover:text-primary transition-colors"
               >
                 {allSelected ? (
-                  <CheckSquare className="w-4 h-4 text-blue-600" />
+                  <CheckSquare className="w-4 h-4 text-primary" />
                 ) : (
-                  <Square className="w-4 h-4 text-slate-400" />
+                  <Square className="w-4 h-4 text-base-content/40" />
                 )}
                 <span>Select all</span>
               </label>
-              <span className="text-[11px] text-slate-400">
-                💡 Tip: Drag & drop any page to rearrange order
+              <span className="text-[11px] text-base-content/40 hidden sm:inline">
+                • Drag & drop any page to rearrange order
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={toggleSort}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-slate-200/60 text-slate-700 dark:text-slate-300 font-medium"
+                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-base-200 text-base-content/70 font-medium"
                 title="Reverse Order"
               >
                 <ArrowUpDown className="w-3.5 h-3.5" />
@@ -598,13 +593,13 @@ export default function VisualPdfOrganizerTool({
                 <ChevronDown className="w-3 h-3 opacity-60" />
               </button>
 
-              <div className="flex items-center bg-slate-200/60 dark:bg-slate-800 rounded-lg p-0.5">
+              <div className="flex items-center bg-base-200 rounded-lg p-0.5">
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-1 rounded ${
                     viewMode === 'list'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-base-100 text-primary shadow-xs'
+                      : 'text-base-content/60 hover:text-base-content'
                   }`}
                   title="List View"
                 >
@@ -614,8 +609,8 @@ export default function VisualPdfOrganizerTool({
                   onClick={() => setViewMode('grid')}
                   className={`p-1 rounded ${
                     viewMode === 'grid'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
+                      ? 'bg-base-100 text-primary shadow-xs'
+                      : 'text-base-content/60 hover:text-base-content'
                   }`}
                   title="Grid View"
                 >
@@ -627,13 +622,13 @@ export default function VisualPdfOrganizerTool({
 
           {/* Error Notice */}
           {error && (
-            <div className="m-4 alert alert-error text-xs rounded-xl shadow-sm">
+            <div className="alert alert-error text-xs rounded-2xl shadow-sm">
               <span>{error}</span>
             </div>
           )}
 
-          {/* Interactive PDF Page Canvas */}
-          <div className="flex-1 p-6 sm:p-8 overflow-y-auto max-h-[calc(100vh-250px)]">
+          {/* Interactive PDF Page Canvas - Fully Natural Flow */}
+          <div className="py-2">
             {viewMode === 'grid' ? (
               <div className="flex flex-wrap items-center justify-start gap-4 sm:gap-6">
                 {pages.map((page, index) => {
@@ -648,7 +643,7 @@ export default function VisualPdfOrganizerTool({
 
                   return (
                     <React.Fragment key={page.id}>
-                      {/* Drag & Drop Page Card Container */}
+                      {/* Drag & Drop Page Card */}
                       <div
                         draggable
                         onDragStart={(e) => handleDragStart(e, index)}
@@ -656,40 +651,38 @@ export default function VisualPdfOrganizerTool({
                         onDragOver={(e) => handleDragOver(e, index)}
                         onDrop={(e) => handleDrop(e, index)}
                         className={`group relative flex flex-col items-center cursor-grab active:cursor-grabbing transition-transform duration-150 ${
-                          isDraggingThis ? 'opacity-40 scale-95' : ''
-                        } ${isDragOverThis ? 'scale-105 ring-2 ring-blue-500 ring-offset-2 rounded-xl' : ''}`}
+                          isDraggingThis ? 'opacity-30 scale-95' : ''
+                        } ${isDragOverThis ? 'scale-105 ring-2 ring-primary ring-offset-2 rounded-2xl' : ''}`}
                       >
-                        {/* Soft Blue Card Plate (Matching Screenshot) */}
+                        {/* Checkbox Floating top-left */}
                         <div
-                          className={`relative w-44 sm:w-52 aspect-[1/1.42] bg-[#e9f0fa] dark:bg-slate-800/80 rounded-xl p-3 flex flex-col items-center justify-center transition-all duration-200 border ${
+                          onClick={() => toggleSelectPage(page.id)}
+                          className="absolute -top-3 left-0 z-20 cursor-pointer p-0.5 rounded transition-transform hover:scale-110"
+                        >
+                          {page.selected ? (
+                            <CheckSquare className="w-5 h-5 text-primary fill-base-100" />
+                          ) : (
+                            <Square className="w-5 h-5 text-base-content/40 fill-base-100" />
+                          )}
+                        </div>
+
+                        {/* Page Preview Thumbnail Container */}
+                        <div
+                          onClick={() => toggleSelectPage(page.id)}
+                          className={`relative w-40 sm:w-48 aspect-[1/1.414] bg-white rounded-xl p-2 transition-all duration-200 cursor-pointer select-none flex items-center justify-center ${
                             page.selected
-                              ? 'border-blue-400 dark:border-blue-600 shadow-md'
-                              : 'border-slate-200/80 dark:border-slate-700 shadow-sm'
+                              ? 'ring-2 ring-primary shadow-lg shadow-primary/10'
+                              : 'border border-base-300 shadow-md hover:shadow-xl hover:border-primary/50'
                           }`}
                         >
-                          {/* Top-left Drag Handle / Checkbox */}
-                          <div className="absolute top-2 left-2 z-20 flex items-center gap-1">
-                            <div
-                              onClick={() => toggleSelectPage(page.id)}
-                              className="cursor-pointer p-0.5 rounded transition-transform hover:scale-110"
-                            >
-                              {page.selected ? (
-                                <CheckSquare className="w-5 h-5 text-blue-600 fill-white" />
-                              ) : (
-                                <Square className="w-5 h-5 text-slate-400 fill-white/80" />
-                              )}
-                            </div>
-                            <GripVertical className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-
-                          {/* Hover action overlay pills */}
-                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm p-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-md">
+                          {/* Hover action pill overlay */}
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-base-100/95 backdrop-blur-sm p-1 rounded-lg border border-base-300 shadow-md">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setZoomPage(page);
                               }}
-                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 rounded hover:bg-slate-100"
+                              className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
                               title="Zoom page"
                             >
                               <ZoomIn className="w-3.5 h-3.5" />
@@ -699,7 +692,7 @@ export default function VisualPdfOrganizerTool({
                                 e.stopPropagation();
                                 rotatePage(page.id, -90);
                               }}
-                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 rounded hover:bg-slate-100"
+                              className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
                               title="Rotate Left"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
@@ -709,7 +702,7 @@ export default function VisualPdfOrganizerTool({
                                 e.stopPropagation();
                                 rotatePage(page.id, 90);
                               }}
-                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 rounded hover:bg-slate-100"
+                              className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
                               title="Rotate Right"
                             >
                               <RotateCw className="w-3.5 h-3.5" />
@@ -719,18 +712,15 @@ export default function VisualPdfOrganizerTool({
                                 e.stopPropagation();
                                 deletePage(page.id);
                               }}
-                              className="p-1 text-slate-600 dark:text-slate-300 hover:text-red-500 rounded hover:bg-red-50"
+                              className="p-1 text-error hover:bg-error/10 rounded"
                               title="Delete Page"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
 
-                          {/* White Inner Paper Sheet */}
-                          <div
-                            onClick={() => toggleSelectPage(page.id)}
-                            className="w-full h-full bg-white dark:bg-slate-900 rounded shadow-sm overflow-hidden flex items-center justify-center p-1.5"
-                          >
+                          {/* Rendered Canvas Image */}
+                          <div className="w-full h-full flex items-center justify-center overflow-hidden bg-white">
                             <img
                               src={page.dataUrl}
                               alt={`Page ${page.pageNumber}`}
@@ -742,12 +732,12 @@ export default function VisualPdfOrganizerTool({
                           </div>
                         </div>
 
-                        {/* Pink / Rose Pill Badge with Document Name (Matching Screenshot) */}
+                        {/* Pink / Rose Pill Badge with Document Name */}
                         <div className="mt-2.5 flex flex-col items-center">
-                          <span className="px-3 py-0.5 rounded-md bg-[#fed7d7] text-[#9b2c2c] dark:bg-pink-950/60 dark:text-pink-300 font-medium text-[11px] truncate max-w-[180px] shadow-xs">
+                          <span className="px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 font-medium text-[11px] truncate max-w-[170px] shadow-xs">
                             {shortDocName}
                           </span>
-                          <span className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          <span className="mt-1 text-xs font-semibold text-base-content/80">
                             {page.pageNumber}
                           </span>
                         </div>
@@ -757,39 +747,33 @@ export default function VisualPdfOrganizerTool({
                       {index < pages.length - 1 && (
                         <div className="flex flex-col items-center justify-center self-stretch px-1">
                           {toolTab === 'split' ? (
-                            /* Split Line with Scissor Icon (Matching Screenshot) */
                             <div className="relative flex flex-col items-center justify-center h-full group">
                               <div
-                                className={`w-0.5 h-48 transition-colors ${
-                                  isCutPoint
-                                    ? 'bg-blue-600 dark:bg-blue-500'
-                                    : 'bg-transparent group-hover:bg-blue-300'
+                                className={`w-0.5 h-36 transition-colors ${
+                                  isCutPoint ? 'bg-primary' : 'bg-transparent group-hover:bg-primary/40'
                                 }`}
                               ></div>
                               <button
                                 onClick={() => toggleCutPoint(index)}
-                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-sm ${
+                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-xs ${
                                   isCutPoint
-                                    ? 'bg-blue-600 text-white scale-110 shadow-blue-500/40'
-                                    : 'bg-blue-100 text-blue-600 opacity-60 hover:opacity-100 hover:scale-110'
+                                    ? 'bg-primary text-primary-content scale-110 shadow-primary/30'
+                                    : 'bg-base-200 text-primary opacity-60 hover:opacity-100 hover:scale-110'
                                 }`}
                                 title="Click to toggle split cut point"
                               >
                                 <Scissors className="w-3.5 h-3.5" />
                               </button>
                               <div
-                                className={`w-0.5 h-48 transition-colors ${
-                                  isCutPoint
-                                    ? 'bg-blue-600 dark:bg-blue-500'
-                                    : 'bg-transparent group-hover:bg-blue-300'
+                                className={`w-0.5 h-36 transition-colors ${
+                                  isCutPoint ? 'bg-primary' : 'bg-transparent group-hover:bg-primary/40'
                                 }`}
                               ></div>
                             </div>
                           ) : (
-                            /* Organize / Extract Mode Insert (+) Button */
                             <button
                               onClick={() => insertBlankPage(index + 1)}
-                              className="w-7 h-7 rounded-full bg-blue-500/20 hover:bg-blue-600 text-blue-600 hover:text-white flex items-center justify-center transition-all hover:scale-125 shadow-xs"
+                              className="w-7 h-7 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-primary-content flex items-center justify-center transition-all hover:scale-125 shadow-xs"
                               title="Insert blank page here"
                             >
                               <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -802,7 +786,7 @@ export default function VisualPdfOrganizerTool({
                 })}
               </div>
             ) : (
-              /* List View with Drag Handles */
+              /* List View */
               <div className="space-y-3 max-w-2xl mx-auto">
                 {pages.map((page, index) => (
                   <div
@@ -815,16 +799,16 @@ export default function VisualPdfOrganizerTool({
                     onClick={() => toggleSelectPage(page.id)}
                     className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-grab active:cursor-grabbing ${
                       page.selected
-                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-base-300 bg-base-100'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <GripVertical className="w-4 h-4 text-slate-400" />
+                      <GripVertical className="w-4 h-4 text-base-content/40" />
                       {page.selected ? (
-                        <CheckSquare className="w-5 h-5 text-blue-600" />
+                        <CheckSquare className="w-5 h-5 text-primary" />
                       ) : (
-                        <Square className="w-5 h-5 text-slate-400" />
+                        <Square className="w-5 h-5 text-base-content/40" />
                       )}
                       <div className="w-12 h-16 bg-white border rounded overflow-hidden flex items-center justify-center p-1">
                         <img
@@ -835,10 +819,10 @@ export default function VisualPdfOrganizerTool({
                         />
                       </div>
                       <div>
-                        <p className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                        <p className="font-bold text-sm text-base-content">
                           Page {page.pageNumber}
                         </p>
-                        <span className="px-2 py-0.5 rounded bg-pink-100 text-pink-700 text-[10px] font-medium">
+                        <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-medium">
                           {shortDocName}
                         </span>
                       </div>
@@ -854,7 +838,7 @@ export default function VisualPdfOrganizerTool({
                       </button>
                       <button
                         onClick={() => deletePage(page.id)}
-                        className="btn btn-ghost btn-xs btn-circle text-red-500"
+                        className="btn btn-ghost btn-xs btn-circle text-error"
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -925,7 +909,7 @@ export default function VisualPdfOrganizerTool({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-3xl p-5 shadow-2xl flex flex-col items-center border border-slate-200 dark:border-slate-800"
+            className="relative max-w-2xl max-h-[90vh] bg-base-100 rounded-3xl p-5 shadow-2xl flex flex-col items-center border border-base-300"
           >
             <button
               onClick={() => setZoomPage(null)}
@@ -934,11 +918,11 @@ export default function VisualPdfOrganizerTool({
               <X className="w-5 h-5" />
             </button>
 
-            <h4 className="font-bold text-sm mb-3 text-slate-800 dark:text-slate-200">
+            <h4 className="font-bold text-sm mb-3 text-base-content">
               Page {zoomPage.pageNumber} Preview
             </h4>
 
-            <div className="overflow-auto max-h-[75vh] rounded-xl flex items-center justify-center bg-slate-100 dark:bg-slate-800 p-3">
+            <div className="overflow-auto max-h-[75vh] rounded-xl flex items-center justify-center bg-base-200 p-3">
               <img
                 src={zoomPage.dataUrl}
                 alt={`Page ${zoomPage.pageNumber}`}

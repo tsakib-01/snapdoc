@@ -5,6 +5,7 @@ import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, 
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { createWordDocx, createExcelWorkbook } from '@/lib/office/officeExportHelper';
+import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { formatBytes } from '@/lib/utils/formatters';
 
 interface PdfToOfficeToolProps {
@@ -61,61 +62,21 @@ export default function PdfToOfficeTool({
 
     try {
       if (format === 'excel') {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/pdf-to-excel', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        if (res.ok && data.dataUrl) {
-          const a = document.createElement('a');
-          a.href = data.dataUrl;
-          a.download = data.filename || `${baseName}.xlsx`;
-          a.click();
-          setProcessing(false);
-          return;
-        } else if (data.error) {
-          throw new Error(data.error);
-        }
-
-        const xlsxBlob = createExcelWorkbook(extractedText.split('\n\n--- Page Break ---\n\n'));
-        const url = URL.createObjectURL(xlsxBlob);
+        const result = await convertDocumentDirect('pdf-to-excel', file);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `${baseName}.xlsx`;
+        a.href = result.url;
+        a.download = result.filename;
         a.click();
-        URL.revokeObjectURL(url);
+        setProcessing(false);
+        return;
       } else if (format === 'word') {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/pdf-to-word', {
-          method: 'POST',
-          body: formData,
-        });
-        const data = await res.json();
-        if (res.ok && data.dataUrl) {
-          const a = document.createElement('a');
-          a.href = data.dataUrl;
-          a.download = data.filename || `${baseName}.docx`;
-          a.click();
-          setProcessing(false);
-          return;
-        } else if (data.error) {
-          throw new Error(data.error);
-        }
-
-        const docxBlob = await createWordDocx(
-          extractedText.split('\n\n--- Page Break ---\n\n'),
-          pages,
-          { mode: wordMode, title: baseName }
-        );
-        const url = URL.createObjectURL(docxBlob);
+        const result = await convertDocumentDirect('pdf-to-word', file);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `${baseName}.docx`;
+        a.href = result.url;
+        a.download = result.filename;
         a.click();
-        URL.revokeObjectURL(url);
+        setProcessing(false);
+        return;
       } else {
         const cleanTxt = extractedText.replace(/\n\n--- Page Break ---\n\n/g, '\n\n');
         const blob = new Blob([cleanTxt], { type: 'text/plain;charset=utf-8' });

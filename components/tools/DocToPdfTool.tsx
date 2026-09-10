@@ -5,7 +5,7 @@ import { FileCode, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, FileT
 import UploadZone from '@/components/ui/UploadZone';
 import { formatBytes } from '@/lib/utils/formatters';
 
-import { convertDocxToPdfClient } from '@/lib/office/wordToPdfHelper';
+import { convertDocumentDirect } from '@/lib/conversionEngine';
 
 interface DocToPdfToolProps {
   initialFormat?: 'txt' | 'csv' | 'html' | 'word' | 'excel';
@@ -45,38 +45,14 @@ export default function DocToPdfTool({
           file.name.toLowerCase().endsWith('.doc') ||
           initialFormat === 'word')
       ) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/word-to-pdf', {
-          method: 'POST',
-          body: formData,
+        const result = await convertDocumentDirect('word-to-pdf', file);
+        setResultData({
+          dataUrl: result.url,
+          filename: result.filename,
+          size: result.size,
         });
-        const data = await res.json();
-        if (res.ok && data.dataUrl) {
-          setResultData({
-            dataUrl: data.dataUrl,
-            filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
-            size: data.size,
-          });
-          setProcessing(false);
-          return;
-        } else if (data.error) {
-          throw new Error(data.error);
-        }
-
-        try {
-          const result = await convertDocxToPdfClient(file);
-          const baseName = file.name.replace(/\.[^/.]+$/, '');
-          setResultData({
-            dataUrl: result.dataUrl,
-            filename: `${baseName}.pdf`,
-            size: result.size,
-          });
-          setProcessing(false);
-          return;
-        } catch (docxErr: any) {
-          throw new Error('Word to PDF conversion failed: ' + docxErr.message);
-        }
+        setProcessing(false);
+        return;
       }
 
       // 2. Excel / CSV to PDF (.xlsx / .xls / .csv)
@@ -87,24 +63,14 @@ export default function DocToPdfTool({
           file.name.toLowerCase().endsWith('.csv') ||
           initialFormat === 'excel')
       ) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/excel-to-pdf', {
-          method: 'POST',
-          body: formData,
+        const result = await convertDocumentDirect('excel-to-pdf', file);
+        setResultData({
+          dataUrl: result.url,
+          filename: result.filename,
+          size: result.size,
         });
-        const data = await res.json();
-        if (res.ok && data.dataUrl) {
-          setResultData({
-            dataUrl: data.dataUrl,
-            filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
-            size: data.size,
-          });
-          setProcessing(false);
-          return;
-        } else if (data.error) {
-          throw new Error(data.error);
-        }
+        setProcessing(false);
+        return;
       }
 
       // 3. General Document / Text to PDF

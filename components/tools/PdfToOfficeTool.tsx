@@ -61,24 +61,22 @@ export default function PdfToOfficeTool({
 
     try {
       if (format === 'excel') {
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch('/api/pdf-to-excel', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await res.json();
-          if (res.ok && data.dataUrl) {
-            const a = document.createElement('a');
-            a.href = data.dataUrl;
-            a.download = data.filename || `${baseName}.xlsx`;
-            a.click();
-            setProcessing(false);
-            return;
-          }
-        } catch (apiErr) {
-          console.warn('PDF to Excel API error, falling back to client engine:', apiErr);
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/pdf-to-excel', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.dataUrl) {
+          const a = document.createElement('a');
+          a.href = data.dataUrl;
+          a.download = data.filename || `${baseName}.xlsx`;
+          a.click();
+          setProcessing(false);
+          return;
+        } else if (data.error) {
+          throw new Error(data.error);
         }
 
         const xlsxBlob = createExcelWorkbook(extractedText.split('\n\n--- Page Break ---\n\n'));
@@ -89,24 +87,22 @@ export default function PdfToOfficeTool({
         a.click();
         URL.revokeObjectURL(url);
       } else if (format === 'word') {
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch('/api/pdf-to-word', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await res.json();
-          if (res.ok && data.dataUrl) {
-            const a = document.createElement('a');
-            a.href = data.dataUrl;
-            a.download = data.filename || `${baseName}.docx`;
-            a.click();
-            setProcessing(false);
-            return;
-          }
-        } catch (apiErr) {
-          console.warn('PDF to Word API error, falling back to client engine:', apiErr);
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/pdf-to-word', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.dataUrl) {
+          const a = document.createElement('a');
+          a.href = data.dataUrl;
+          a.download = data.filename || `${baseName}.docx`;
+          a.click();
+          setProcessing(false);
+          return;
+        } else if (data.error) {
+          throw new Error(data.error);
         }
 
         const docxBlob = await createWordDocx(

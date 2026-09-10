@@ -29,15 +29,18 @@ const MIME_MAP: Record<ConversionMode, { ext: string; mime: string }> = {
   },
 };
 
+const DEFAULT_API_URL = 'https://snapdoc-rj5w.onrender.com';
+const DEFAULT_API_KEY = 'snapdoc_sec_9f83a7b42e61c58d04e7';
+
 /**
  * Checks if a remote Python Conversion API URL is configured.
  */
 export function getRemoteApiConfig() {
-  const apiUrl = (process.env.CONVERSION_API_URL || '').replace(/\/+$/, '');
-  const apiKey = (process.env.CONVERSION_API_KEY || '').trim();
+  const apiUrl = (process.env.CONVERSION_API_URL || DEFAULT_API_URL).replace(/\/+$/, '');
+  const apiKey = (process.env.CONVERSION_API_KEY || DEFAULT_API_KEY).trim();
   return {
-    apiUrl: apiUrl || null,
-    apiKey: apiKey || null,
+    apiUrl: apiUrl || DEFAULT_API_URL,
+    apiKey: apiKey || DEFAULT_API_KEY,
   };
 }
 
@@ -70,11 +73,17 @@ export async function convertWithRemoteApi(
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s for Render spin-up
+
     const response = await fetch(endpoint, {
       method: 'POST',
       body: formData,
       headers,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       let errorDetail = `Remote Python API returned HTTP ${response.status}`;

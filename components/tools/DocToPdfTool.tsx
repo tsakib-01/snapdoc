@@ -45,25 +45,23 @@ export default function DocToPdfTool({
           file.name.toLowerCase().endsWith('.doc') ||
           initialFormat === 'word')
       ) {
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch('/api/word-to-pdf', {
-            method: 'POST',
-            body: formData,
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/word-to-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.dataUrl) {
+          setResultData({
+            dataUrl: data.dataUrl,
+            filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
+            size: data.size,
           });
-          const data = await res.json();
-          if (res.ok && data.dataUrl) {
-            setResultData({
-              dataUrl: data.dataUrl,
-              filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
-              size: data.size,
-            });
-            setProcessing(false);
-            return;
-          }
-        } catch (serverErr) {
-          console.warn('Word to PDF server endpoint error, trying client parser fallback:', serverErr);
+          setProcessing(false);
+          return;
+        } else if (data.error) {
+          throw new Error(data.error);
         }
 
         try {
@@ -77,7 +75,7 @@ export default function DocToPdfTool({
           setProcessing(false);
           return;
         } catch (docxErr: any) {
-          console.warn('Client docx conversion fallback error:', docxErr);
+          throw new Error('Word to PDF conversion failed: ' + docxErr.message);
         }
       }
 
@@ -89,25 +87,23 @@ export default function DocToPdfTool({
           file.name.toLowerCase().endsWith('.csv') ||
           initialFormat === 'excel')
       ) {
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          const res = await fetch('/api/excel-to-pdf', {
-            method: 'POST',
-            body: formData,
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/excel-to-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok && data.dataUrl) {
+          setResultData({
+            dataUrl: data.dataUrl,
+            filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
+            size: data.size,
           });
-          const data = await res.json();
-          if (res.ok && data.dataUrl) {
-            setResultData({
-              dataUrl: data.dataUrl,
-              filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
-              size: data.size,
-            });
-            setProcessing(false);
-            return;
-          }
-        } catch (serverErr) {
-          console.warn('Excel to PDF server endpoint error, trying general convert-doc:', serverErr);
+          setProcessing(false);
+          return;
+        } else if (data.error) {
+          throw new Error(data.error);
         }
       }
 

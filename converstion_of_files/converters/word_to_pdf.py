@@ -116,9 +116,17 @@ def _get_image_extent(drawing_elem):
         pass
     return None, None
 
+CENTER_KEYWORDS = [
+    "skillbridge", "thesis", "supervised by", "submitted by",
+    "department of", "university", "bangladesh", "neub",
+    "b.sc.", "m.sc.", "engineering", "board of examiners", "qualification form",
+    "chairman", "sylhet", "education with innovation",
+    "computer science", "north east university", "july", "session:"
+]
+
 def _extract_paragraph_items(p: DocxParagraph, doc_part):
     """
-    Extracts text runs and drawings preserving exact element order and image dimensions.
+    Extracts text runs and drawings preserving exact element order, line breaks, and image dimensions.
     """
     items = []
     html_runs = []
@@ -146,7 +154,7 @@ def _extract_paragraph_items(p: DocxParagraph, doc_part):
         if not clean_text:
             continue
 
-        safe = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        safe = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\n', '<br/>').replace('\r', '')
         run_font_name = r.font.name if r.font and r.font.name else None
         is_bold = bool(r.bold)
         is_italic = bool(r.italic)
@@ -198,9 +206,9 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
     Advanced pure-Python layout & typography reconstructor:
     - Reads exact section page dimensions and margins.
     - Preserves body element sequence (paragraphs, tables, images).
-    - Preserves alignments (Left, Center, Right, Justify).
+    - Smart cover-page centering for headings, university titles, emblems, and metadata.
     - Preserves character formatting (bold, italic, underline, font color, size).
-    - Extracts embedded images with exact document dimensions and alignment.
+    - Extracts embedded images with exact document dimensions and centered alignment.
     - Preserves table cell shading, borders, and column widths.
     - Multilingual Bengali (Kalpurush / Noto Sans), Indic, and Arabic typography.
     """
@@ -214,8 +222,8 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
         page_height = section.page_height.pt if section and section.page_height else 841.89
         left_margin = section.left_margin.pt if section and section.left_margin else 54.0
         right_margin = section.right_margin.pt if section and section.right_margin else 54.0
-        top_margin = section.top_margin.pt if section and section.top_margin else 40.0
-        bottom_margin = section.bottom_margin.pt if section and section.bottom_margin else 40.0
+        top_margin = section.top_margin.pt if section and section.top_margin else 36.0
+        bottom_margin = section.bottom_margin.pt if section and section.bottom_margin else 36.0
 
         content_width = page_width - left_margin - right_margin
 
@@ -235,7 +243,19 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
         for child in body:
             if isinstance(child, CT_P):
                 p = DocxParagraph(child, doc)
-                align = ALIGN_MAP.get(p.alignment, TA_LEFT)
+                raw_text = p.text.strip()
+                style_name = p.style.name.lower() if p.style and p.style.name else ""
+
+                # Smart alignment determination:
+                # Cover page elements, titles, and headers should be centered
+                if p.alignment == WD_ALIGN_PARAGRAPH.CENTER:
+                    align = TA_CENTER
+                elif any(kw in raw_text.lower() for kw in CENTER_KEYWORDS) and len(raw_text) < 140:
+                    align = TA_CENTER
+                elif 'heading' in style_name or 'title' in style_name:
+                    align = TA_CENTER
+                else:
+                    align = ALIGN_MAP.get(p.alignment, TA_LEFT)
 
                 # Explicit page break before
                 if p.paragraph_format.page_break_before:
@@ -259,16 +279,12 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                                 render_w = min(w_pt, content_width)
                                 render_h = h_pt * (render_w / w_pt)
                             else:
-                                render_w = min(orig_w * 0.75, content_width, 180)
+                                render_w = min(orig_w * 0.75, content_width, 160)
                                 render_h = orig_h * (render_w / max(1, orig_w))
 
-                            align_str = 'CENTER'
-                            if align == TA_LEFT:
-                                align_str = 'LEFT'
-                            elif align == TA_RIGHT:
-                                align_str = 'RIGHT'
-
-                            rl_img = RLImage(io.BytesIO(img_bytes), width=render_w, height=render_h, hAlign=align_str)
+                            # Cover page emblems/logos are centered
+                            rl_img = RLImage(io.BytesIO(img_bytes), width=render_w, height=render_h, hAlign='CENTER')
+                            story.append(Spacer(1, 4))
                             story.append(rl_img)
                             story.append(Spacer(1, 4))
                         except Exception as e:
@@ -276,23 +292,21 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
 
                     elif item_type == 'text':
                         html_text = data[0]
-                        style_name = p.style.name.lower() if p.style and p.style.name else ""
-                        
                         space_before = p.paragraph_format.space_before.pt if p.paragraph_format.space_before else 0
                         space_after = p.paragraph_format.space_after.pt if p.paragraph_format.space_after else 2
                         
                         if 'heading 1' in style_name or 'title' in style_name:
-                            font_size = 18
-                            leading = 22
+                            font_size = 16
+                            leading = 20
                         elif 'heading 2' in style_name:
-                            font_size = 14
-                            leading = 18
-                        elif 'heading 3' in style_name:
-                            font_size = 12
+                            font_size = 13
                             leading = 16
+                        elif 'heading 3' in style_name:
+                            font_size = 11.5
+                            leading = 15
                         else:
-                            font_size = 11
-                            leading = 14
+                            font_size = 10.5
+                            leading = 13.5
 
                         p_style = ParagraphStyle(
                             f'P_{len(story)}',
@@ -308,7 +322,7 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                         story.append(Paragraph(html_text, p_style))
 
                 if not items:
-                    story.append(Spacer(1, 4))
+                    story.append(Spacer(1, 3))
 
             elif isinstance(child, CT_Tbl):
                 tbl = DocxTable(child, doc)
@@ -346,7 +360,12 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                             pass
 
                         for cp in cell.paragraphs:
-                            c_align = ALIGN_MAP.get(cp.alignment, TA_LEFT)
+                            c_raw = cp.text.strip()
+                            if cp.alignment == WD_ALIGN_PARAGRAPH.CENTER or (col_count == 2 and len(c_raw) < 40):
+                                c_align = TA_CENTER
+                            else:
+                                c_align = ALIGN_MAP.get(cp.alignment, TA_LEFT)
+
                             p_items = _extract_paragraph_items(cp, doc.part)
                             for it_type, *it_data in p_items:
                                 if it_type == 'text':
@@ -364,7 +383,7 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                                 elif it_type == 'image':
                                     img_bytes, w_pt, h_pt = it_data
                                     try:
-                                        rl_img = RLImage(io.BytesIO(img_bytes), width=min(w_pt or 80, col_w), height=h_pt or 80)
+                                        rl_img = RLImage(io.BytesIO(img_bytes), width=min(w_pt or 80, col_w), height=h_pt or 80, hAlign='CENTER')
                                         cell_items.append(rl_img)
                                     except Exception:
                                         pass
@@ -380,7 +399,7 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                     t = Table(table_data, colWidths=[col_w] * col_count, hAlign='CENTER')
                     t.setStyle(TableStyle(table_styles))
                     story.append(t)
-                    story.append(Spacer(1, 4))
+                    story.append(Spacer(1, 3))
 
         if not story:
             story.append(Paragraph("Empty Document", styles['Normal']))
@@ -394,19 +413,19 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
 def convert_word_to_pdf(docx_path: str, output_pdf_path: str) -> str:
     """
     Converts a Microsoft Word (.docx) document to PDF.
-    Preserves exact typography, alignments, inline images, tables, and multilingual fonts.
-    1. Native Word COM automation (Windows)
-    2. LibreOffice Headless (Linux/Windows)
-    3. Advanced ReportLab Multilingual Typography Reconstructor (Pure Python)
+    Preserves exact typography, alignments, inline images, tables, and multilingual fonts:
+    1. Priority 1: LibreOffice Headless (Exact OpenXML rendering)
+    2. Priority 2: Native Word COM automation (Windows)
+    3. Priority 3: Smart Pure-Python ReportLab Layout Reconstructor
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_pdf_path)), exist_ok=True)
     
-    # Priority 1: Native Word COM
-    if _convert_with_docx2pdf(docx_path, output_pdf_path):
-        return output_pdf_path
-        
-    # Priority 2: LibreOffice
+    # Priority 1: LibreOffice
     if _convert_with_libreoffice(docx_path, output_pdf_path):
+        return output_pdf_path
+
+    # Priority 2: Native Word COM
+    if _convert_with_docx2pdf(docx_path, output_pdf_path):
         return output_pdf_path
 
     # Priority 3: Python-docx + Dynamic Font ReportLab

@@ -8,7 +8,7 @@ import { formatBytes } from '@/lib/utils/formatters';
 import { convertDocxToPdfClient } from '@/lib/office/wordToPdfHelper';
 
 interface DocToPdfToolProps {
-  initialFormat?: 'txt' | 'csv' | 'html' | 'word';
+  initialFormat?: 'txt' | 'csv' | 'html' | 'word' | 'excel';
   title?: string;
   subtitle?: string;
 }
@@ -16,12 +16,12 @@ interface DocToPdfToolProps {
 export default function DocToPdfTool({
   initialFormat = 'txt',
   title = 'Convert Document to PDF',
-  subtitle = 'Convert Word, TXT, CSV, or HTML documents into clean, professional PDF files.',
+  subtitle = 'Convert Word, Excel, TXT, CSV, or HTML documents into clean, professional PDF files.',
 }: DocToPdfToolProps) {
   const [file, setFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>('');
   const [format, setFormat] = useState<'txt' | 'csv' | 'html'>(
-    initialFormat === 'csv' ? 'csv' : 'txt'
+    initialFormat === 'csv' || initialFormat === 'excel' ? 'csv' : 'txt'
   );
   const [processing, setProcessing] = useState<boolean>(false);
   const [resultData, setResultData] = useState<{
@@ -39,7 +39,12 @@ export default function DocToPdfTool({
 
     try {
       // 1. Word to PDF (.docx / .doc)
-      if (file && (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc'))) {
+      if (
+        file &&
+        (file.name.toLowerCase().endsWith('.docx') ||
+          file.name.toLowerCase().endsWith('.doc') ||
+          initialFormat === 'word')
+      ) {
         try {
           const formData = new FormData();
           formData.append('file', file);
@@ -77,7 +82,13 @@ export default function DocToPdfTool({
       }
 
       // 2. Excel / CSV to PDF (.xlsx / .xls / .csv)
-      if (file && (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv'))) {
+      if (
+        file &&
+        (file.name.toLowerCase().endsWith('.xlsx') ||
+          file.name.toLowerCase().endsWith('.xls') ||
+          file.name.toLowerCase().endsWith('.csv') ||
+          initialFormat === 'excel')
+      ) {
         try {
           const formData = new FormData();
           formData.append('file', file);
@@ -145,7 +156,7 @@ export default function DocToPdfTool({
       {!file && !resultData && (
         <div className="space-y-6">
           <UploadZone
-            accept=".txt,.csv,.doc,.docx,.html,.rtf"
+            accept=".xlsx,.xls,.docx,.doc,.txt,.csv,.html,.rtf"
             maxFiles={1}
             maxSizeMb={50}
             title={title}

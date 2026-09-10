@@ -255,11 +255,13 @@ def register_reportlab_multilingual_fonts() -> dict:
 
 def resolve_reportlab_font(font_name: str, is_bold: bool = False, is_italic: bool = False) -> str:
     """
-    Maps any requested Word font to registered TrueType font for PDF generation.
+    Maps any requested font to a valid registered TrueType font or standard ReportLab PostScript font.
+    Guarantees no FontNotFound / ValueError crashes during PDF generation on Linux/Docker.
     """
     registered = register_reportlab_multilingual_fonts()
     clean = clean_pdf_font_name(font_name)
 
+    # 1. Complex scripts / Bengali
     if "bengali" in clean.lower() or "bangla" in clean.lower() or "noto" in clean.lower():
         if is_bold and 'Noto Sans Bengali-Bold' in registered:
             return 'Noto Sans Bengali-Bold'
@@ -268,22 +270,45 @@ def resolve_reportlab_font(font_name: str, is_bold: bool = False, is_italic: boo
         if 'Kalpurush' in registered:
             return 'Kalpurush'
 
+    if "kalpurush" in clean.lower() or "solaiman" in clean.lower():
+        if 'Kalpurush' in registered:
+            return 'Kalpurush'
+        if 'Noto Sans Bengali' in registered:
+            return 'Noto Sans Bengali'
+
+    # 2. Check if explicitly registered TrueType font
     if is_bold:
         bold_candidate = f"{clean}-Bold"
         if bold_candidate in registered:
             return bold_candidate
-
     if clean in registered:
         return clean
 
-    if "kalpurush" in clean.lower() or "solaiman" in clean.lower():
-        return "Kalpurush" if "Kalpurush" in registered else "Noto Sans Bengali"
+    # 3. Standard built-in ReportLab PostScript 14 Fonts (always available without TTF files)
+    if "times" in clean.lower() or "nimbusrom" in clean.lower() or "serif" in clean.lower() or "roman" in clean.lower() or "georgia" in clean.lower():
+        if is_bold and is_italic:
+            return "Times-BoldItalic"
+        if is_bold:
+            return "Times-Bold"
+        if is_italic:
+            return "Times-Italic"
+        return "Times-Roman"
 
-    if "nimbus" in clean.lower() or "times" in clean.lower():
-        return "Times New Roman-Bold" if (is_bold and "Times New Roman-Bold" in registered) else "Times New Roman"
-    if "arial" in clean.lower() or "sans" in clean.lower() or "helvetica" in clean.lower():
-        return "Arial-Bold" if (is_bold and "Arial-Bold" in registered) else "Arial"
-    if "calibri" in clean.lower():
-        return "Calibri-Bold" if (is_bold and "Calibri-Bold" in registered) else "Calibri"
+    if "courier" in clean.lower() or "mono" in clean.lower() or "code" in clean.lower():
+        if is_bold and is_italic:
+            return "Courier-BoldOblique"
+        if is_bold:
+            return "Courier-Bold"
+        if is_italic:
+            return "Courier-Oblique"
+        return "Courier"
 
-    return "Noto Sans Bengali" if "Noto Sans Bengali" in registered else ("Segoe UI" if "Segoe UI" in registered else "Helvetica")
+    # 4. Default to standard ReportLab Helvetica family (built-in)
+    if is_bold and is_italic:
+        return "Helvetica-BoldOblique"
+    if is_bold:
+        return "Helvetica-Bold"
+    if is_italic:
+        return "Helvetica-Oblique"
+    return "Helvetica"
+

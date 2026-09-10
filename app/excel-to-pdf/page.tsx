@@ -58,7 +58,7 @@ export default function ExcelToPdfPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <DocToPdfTool initialFormat="csv" title="Convert Excel to PDF" subtitle="Convert Excel spreadsheets & workbooks into crisp, publication-ready PDF documents." />
+      <DocToPdfTool initialFormat="excel" title="Convert Excel to PDF" subtitle="Convert Excel spreadsheets & workbooks into crisp, publication-ready PDF documents." />
     </ToolLayout>
   );
 }

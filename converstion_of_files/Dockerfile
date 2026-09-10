@@ -2,12 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies & LibreOffice for exact Word/Excel/PDF rendering
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libreoffice-writer \
+    libreoffice-calc \
+    default-jre-headless \
+    fonts-kalpurush \
     fonts-noto-core \
     fonts-noto-extra \
+    fonts-noto-cjk \
     fonts-freefont-ttf \
+    fonts-dejavu \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

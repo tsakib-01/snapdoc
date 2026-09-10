@@ -32,6 +32,61 @@ ALIGN_MAP = {
     None: TA_LEFT,
 }
 
+def _convert_with_libreoffice(docx_path: str, output_pdf_path: str) -> bool:
+    """
+    Attempts conversion using LibreOffice headless command line with isolated profile.
+    This provides 100% exact, pixel-perfect Word to PDF fidelity.
+    """
+    import shutil
+    import tempfile
+    
+    soffice_paths = [
+        "soffice",
+        "libreoffice",
+        "/usr/bin/soffice",
+        "/usr/bin/libreoffice",
+        "/usr/local/bin/soffice",
+        "/usr/local/bin/libreoffice",
+        r"C:\Program Files\LibreOffice\program\soffice.exe",
+        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+    ]
+    out_dir = os.path.dirname(os.path.abspath(output_pdf_path))
+    profile_dir = tempfile.mkdtemp(prefix="lo_profile_")
+    
+    try:
+        profile_url = "file:///" + profile_dir.replace("\\", "/").lstrip("/")
+        for soffice in soffice_paths:
+            try:
+                cmd = [
+                    soffice,
+                    "--headless",
+                    "--invisible",
+                    "--nologo",
+                    "--nodefault",
+                    "--nofirststartwizard",
+                    f"-env:UserInstallation={profile_url}",
+                    "--convert-to",
+                    "pdf",
+                    "--outdir",
+                    out_dir,
+                    docx_path
+                ]
+                res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45)
+                if res.returncode == 0:
+                    base_name = os.path.splitext(os.path.basename(docx_path))[0] + ".pdf"
+                    generated_pdf = os.path.join(out_dir, base_name)
+                    if os.path.exists(generated_pdf):
+                        if os.path.abspath(generated_pdf) != os.path.abspath(output_pdf_path):
+                            if os.path.exists(output_pdf_path):
+                                os.remove(output_pdf_path)
+                            os.rename(generated_pdf, output_pdf_path)
+                        return True
+            except Exception:
+                continue
+    finally:
+        shutil.rmtree(profile_dir, ignore_errors=True)
+    return False
+
 def _convert_with_docx2pdf(docx_path: str, output_pdf_path: str) -> bool:
     """
     Attempts conversion using Microsoft Word COM automation (highest fidelity on Windows with Word installed).
@@ -43,34 +98,6 @@ def _convert_with_docx2pdf(docx_path: str, output_pdf_path: str) -> bool:
             return True
     except Exception as e:
         print(f"[docx2pdf notice] Word COM conversion not available: {e}")
-    return False
-
-def _convert_with_libreoffice(docx_path: str, output_pdf_path: str) -> bool:
-    """
-    Attempts conversion using LibreOffice headless command line.
-    """
-    soffice_paths = [
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-        "libreoffice",
-        "soffice"
-    ]
-    out_dir = os.path.dirname(os.path.abspath(output_pdf_path))
-    for soffice in soffice_paths:
-        try:
-            res = subprocess.run([soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, docx_path],
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45)
-            if res.returncode == 0:
-                base_name = os.path.splitext(os.path.basename(docx_path))[0] + ".pdf"
-                generated_pdf = os.path.join(out_dir, base_name)
-                if os.path.exists(generated_pdf):
-                    if os.path.abspath(generated_pdf) != os.path.abspath(output_pdf_path):
-                        if os.path.exists(output_pdf_path):
-                            os.remove(output_pdf_path)
-                        os.rename(generated_pdf, output_pdf_path)
-                    return True
-        except Exception:
-            continue
     return False
 
 def _get_image_extent(drawing_elem):

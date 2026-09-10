@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import DocToPdfTool from '@/components/tools/DocToPdfTool';
+import WordToPdfTool from '@/components/tools/WordToPdfTool';
 import ToolLayout from '@/components/ui/ToolLayout';
 
 export const metadata: Metadata = {
@@ -58,7 +58,7 @@ export default function WordToPdfPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <DocToPdfTool initialFormat="word" title="Convert Word to PDF" subtitle="Convert Word (.docx/.doc) documents into publication-ready PDF with 100% typography fidelity." />
+      <WordToPdfTool title="Convert Word to PDF" subtitle="Convert Word (.docx/.doc) documents into publication-ready PDF with 100% typography fidelity." />
     </ToolLayout>
   );
 }

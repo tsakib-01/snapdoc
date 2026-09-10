@@ -1,0 +1,232 @@
+import os
+import uuid
+import shutil
+import mimetypes
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from converters import (
+    convert_pdf_to_excel,
+    convert_pdf_to_word,
+    convert_word_to_pdf,
+    convert_excel_to_pdf
+)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+OUTPUT_DIR = os.path.join(BASE_DIR, "converted")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(STATIC_DIR, exist_ok=True)
+
+app = FastAPI(
+    title="Document Conversion Studio",
+    description="Localhost Multilingual Converter: PDF to Excel, PDF to Word, Word to PDF, Excel to PDF",
+    version="1.1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "supported_conversions": [
+            {"from": "pdf", "to": "xlsx", "name": "PDF to Excel (.xlsx)"},
+            {"from": "pdf", "to": "docx", "name": "PDF to Word (.docx)"},
+            {"from": "docx", "to": "pdf", "name": "Word (.docx) to PDF"},
+            {"from": "xlsx", "to": "pdf", "name": "Excel (.xlsx) to PDF"}
+        ],
+        "multilingual_support": True
+    }
+
+@app.post("/api/convert/pdf-to-excel")
+async def api_pdf_to_excel(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Expected .pdf file.")
+    
+    file_id = str(uuid.uuid4())
+    base_name = os.path.splitext(os.path.basename(file.filename))[0]
+    input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
+    output_filename = f"{base_name}.xlsx"
+    output_path = os.path.join(OUTPUT_DIR, f"{file_id}_{output_filename}")
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        convert_pdf_to_excel(input_path, output_path)
+
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            raise RuntimeError("Generated Excel file is empty.")
+
+        return FileResponse(
+            path=output_path,
+            filename=output_filename,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+    finally:
+        if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except Exception:
+                pass
+
+@app.post("/api/convert/pdf-to-word")
+async def api_pdf_to_word(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Expected .pdf file.")
+    
+    file_id = str(uuid.uuid4())
+    base_name = os.path.splitext(os.path.basename(file.filename))[0]
+    input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
+    output_filename = f"{base_name}.docx"
+    output_path = os.path.join(OUTPUT_DIR, f"{file_id}_{output_filename}")
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        convert_pdf_to_word(input_path, output_path)
+
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            raise RuntimeError("Generated Word document is empty.")
+
+        return FileResponse(
+            path=output_path,
+            filename=output_filename,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+    finally:
+        if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except Exception:
+                pass
+
+@app.post("/api/convert/word-to-pdf")
+async def api_word_to_pdf(file: UploadFile = File(...)):
+    if not (file.filename.lower().endswith(".docx") or file.filename.lower().endswith(".doc")):
+        raise HTTPException(status_code=400, detail="Invalid file type. Expected .docx or .doc file.")
+    
+    file_id = str(uuid.uuid4())
+    base_name = os.path.splitext(os.path.basename(file.filename))[0]
+    input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
+    output_filename = f"{base_name}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, f"{file_id}_{output_filename}")
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        convert_word_to_pdf(input_path, output_path)
+
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            raise RuntimeError("Generated PDF file is empty.")
+
+        return FileResponse(
+            path=output_path,
+            filename=output_filename,
+            media_type="application/pdf"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+    finally:
+        if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except Exception:
+                pass
+
+@app.post("/api/convert/excel-to-pdf")
+async def api_excel_to_pdf(file: UploadFile = File(...)):
+    if not (file.filename.lower().endswith(".xlsx") or file.filename.lower().endswith(".xls")):
+        raise HTTPException(status_code=400, detail="Invalid file type. Expected .xlsx or .xls file.")
+    
+    file_id = str(uuid.uuid4())
+    base_name = os.path.splitext(os.path.basename(file.filename))[0]
+    input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
+    output_filename = f"{base_name}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, f"{file_id}_{output_filename}")
+
+    try:
+        with open(input_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        convert_excel_to_pdf(input_path, output_path)
+
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            raise RuntimeError("Generated PDF file is empty.")
+
+        return FileResponse(
+            path=output_path,
+            filename=output_filename,
+            media_type="application/pdf"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
+    finally:
+        if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except Exception:
+                pass
+
+@app.post("/api/convert/auto")
+async def api_convert_auto(file: UploadFile = File(...), target_format: str = Form(...)):
+    ext = os.path.splitext(file.filename)[1].lower()
+    tgt = target_format.lower().replace(".", "")
+
+    if ext == ".pdf":
+        if tgt in ["xlsx", "excel", "xls"]:
+            return await api_pdf_to_excel(file)
+        elif tgt in ["docx", "word", "doc"]:
+            return await api_pdf_to_word(file)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported target format '{target_format}' for PDF.")
+    elif ext in [".docx", ".doc"]:
+        if tgt in ["pdf"]:
+            return await api_word_to_pdf(file)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported target format '{target_format}' for Word.")
+    elif ext in [".xlsx", ".xls"]:
+        if tgt in ["pdf"]:
+            return await api_excel_to_pdf(file)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported target format '{target_format}' for Excel.")
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported input file type '{ext}'.")
+
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+
+if __name__ == "__main__":
+    import uvicorn
+    import webbrowser
+    port = 5000
+    print(f"\n=======================================================")
+    print(f"  Document Conversion Studio Running on http://localhost:{port}")
+    print(f"  Supported conversions (100% Multilingual):")
+    print(f"   [1] PDF -> Excel (.xlsx)")
+    print(f"   [2] PDF -> Word (.docx)")
+    print(f"   [3] Word (.docx) -> PDF")
+    print(f"   [4] Excel (.xlsx) -> PDF")
+    print(f"=======================================================\n")
+    try:
+        webbrowser.open(f"http://localhost:{port}")
+    except Exception:
+        pass
+    uvicorn.run(app, host="127.0.0.1", port=port)

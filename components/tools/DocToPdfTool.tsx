@@ -38,7 +38,29 @@ export default function DocToPdfTool({
     setError(null);
 
     try {
+      // 1. Word to PDF (.docx / .doc)
       if (file && (file.name.toLowerCase().endsWith('.docx') || file.name.toLowerCase().endsWith('.doc'))) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/word-to-pdf', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await res.json();
+          if (res.ok && data.dataUrl) {
+            setResultData({
+              dataUrl: data.dataUrl,
+              filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
+              size: data.size,
+            });
+            setProcessing(false);
+            return;
+          }
+        } catch (serverErr) {
+          console.warn('Word to PDF server endpoint error, trying client parser fallback:', serverErr);
+        }
+
         try {
           const result = await convertDocxToPdfClient(file);
           const baseName = file.name.replace(/\.[^/.]+$/, '');
@@ -50,10 +72,35 @@ export default function DocToPdfTool({
           setProcessing(false);
           return;
         } catch (docxErr: any) {
-          console.warn('Client docx conversion fallback to server:', docxErr);
+          console.warn('Client docx conversion fallback error:', docxErr);
         }
       }
 
+      // 2. Excel / CSV to PDF (.xlsx / .xls / .csv)
+      if (file && (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls') || file.name.toLowerCase().endsWith('.csv'))) {
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/excel-to-pdf', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await res.json();
+          if (res.ok && data.dataUrl) {
+            setResultData({
+              dataUrl: data.dataUrl,
+              filename: data.filename || `${file.name.replace(/\.[^/.]+$/, '')}.pdf`,
+              size: data.size,
+            });
+            setProcessing(false);
+            return;
+          }
+        } catch (serverErr) {
+          console.warn('Excel to PDF server endpoint error, trying general convert-doc:', serverErr);
+        }
+      }
+
+      // 3. General Document / Text to PDF
       const formData = new FormData();
       if (file) {
         formData.append('file', file);

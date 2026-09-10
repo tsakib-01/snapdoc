@@ -4,43 +4,62 @@ import DocToPdfTool from '@/components/tools/DocToPdfTool';
 import ToolLayout from '@/components/ui/ToolLayout';
 
 export const metadata: Metadata = {
-  title: 'Excel & CSV to PDF Converter - Convert Spreadsheets to PDF',
-  description: 'Convert Excel spreadsheets and CSV data tables into beautifully formatted PDF documents online.',
+  title: 'Excel to PDF Converter - High-Precision Spreadsheets to PDF',
+  description: 'Convert Excel spreadsheets (.xlsx, .xls) and CSV data tables into crisp, publication-grade PDF documents with auto-fit layout, colors, and orientation.',
 };
 
 export default function ExcelToPdfPage() {
   const tool = {
     id: 'excel-to-pdf',
-    name: 'Excel / CSV to PDF',
+    name: 'Excel to PDF',
     slug: 'excel-to-pdf',
-    description: 'Convert Excel sheets and CSV tabular data into structured, readable PDF tables.',
-    longDescription: 'Turn raw spreadsheet data, receipts, and table reports into clean, multi-page PDF documents with styled headers and organized columns.',
+    description: 'Convert Excel spreadsheets, multi-sheet workbooks, and financial tables to publication-quality PDF.',
+    longDescription: 'Converts .xlsx, .xls, and .csv spreadsheets to print-ready PDF files with smart page orientation (portrait/landscape), auto-fit column widths, exact cell background fills, bold typography, borders, and full multilingual font support.',
     category: 'convert' as const,
     icon: 'FileSpreadsheet',
-    acceptedTypes: '.csv,.xlsx,.xls,.txt',
-    keywords: ['excel to pdf', 'csv to pdf', 'spreadsheet to pdf', 'convert table to pdf'],
+    acceptedTypes: '.xlsx,.xls,.csv',
+    keywords: [
+      'excel to pdf',
+      'xlsx to pdf',
+      'convert excel to pdf',
+      'spreadsheet to pdf',
+      'fit excel to pdf page',
+      'preserve colors excel to pdf',
+      'bangla excel to pdf'
+    ],
     features: [
-      'Automatic column width and row height calculation',
-      'Highlighted table header row and clean borders',
-      'Supports pasted CSV rows or uploaded files',
-      'Zero storage guarantee with instant download'
+      'Auto-fit layout with intelligent landscape / portrait orientation selection',
+      'Preserves exact cell colors, theme fills, bold typography, and custom borders',
+      'Multi-sheet workbook support with seamless page breaks',
+      'Preserves merged cells and document titles without synthetic headers',
+      '100% Multilingual TrueType font rendering (Bangla, Hindi, Arabic, Chinese, Latin)',
+      'Zero permanent storage with instantaneous local conversion'
     ],
     howTo: [
-      { step: '1', text: 'Upload your CSV or Excel file, or paste table data directly.' },
-      { step: '2', text: 'Click "Convert to PDF" to generate the table layout.' },
-      { step: '3', text: 'Download your PDF report.' }
+      { step: '1', text: 'Upload your Excel (.xlsx / .xls) spreadsheet or CSV file.' },
+      { step: '2', text: 'The engine calculates column widths, cell fills, and optimal page orientation.' },
+      { step: '3', text: 'Click "Convert to PDF" to download your print-ready document.' }
     ],
     faqs: [
       {
-        q: 'Will multi-page tables automatically format properly?',
-        a: 'Yes, long tables are split cleanly across multiple PDF pages with consistent margins.'
+        q: 'Will wide tables get cut off?',
+        a: 'No, wide tables (>6 columns) automatically switch to Landscape orientation with auto-balanced column widths to ensure complete data visibility.'
+      },
+      {
+        q: 'Are custom cell background colors and styling preserved?',
+        a: 'Yes, theme colors, tints, explicit hex fills, borders, and font weights are accurately translated into the final PDF.'
+      },
+      {
+        q: 'Can I convert multi-sheet workbooks?',
+        a: 'Yes, all sheets containing data are converted with clean page breaks between them.'
       }
     ]
   };
 
   return (
     <ToolLayout tool={tool}>
-      <DocToPdfTool initialFormat="csv" title="Convert Excel / CSV to PDF" />
+      <DocToPdfTool initialFormat="csv" title="Convert Excel to PDF" subtitle="Convert Excel spreadsheets & workbooks into crisp, publication-ready PDF documents." />
     </ToolLayout>
   );
 }
+

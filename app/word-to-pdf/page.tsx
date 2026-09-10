@@ -4,8 +4,8 @@ import DocToPdfTool from '@/components/tools/DocToPdfTool';
 import ToolLayout from '@/components/ui/ToolLayout';
 
 export const metadata: Metadata = {
-  title: 'Word / DOCX to PDF Converter - Free Online Tool',
-  description: 'Convert Microsoft Word documents (.docx, .doc, .rtf) into professional PDF files online for free.',
+  title: 'Word to PDF Converter - Publication-Quality PDF (.docx to .pdf)',
+  description: 'Convert Microsoft Word (.docx, .doc) documents into high-resolution, print-ready PDF files with exact typography, layouts, tables, and multilingual font rendering.',
 };
 
 export default function WordToPdfPage() {
@@ -13,34 +13,53 @@ export default function WordToPdfPage() {
     id: 'word-to-pdf',
     name: 'Word to PDF',
     slug: 'word-to-pdf',
-    description: 'Convert Microsoft Word (.doc, .docx) and text documents into print-ready PDF files.',
-    longDescription: 'Turn your Word documents into universally compatible, secure PDF files with preserved formatting, clean margins, and crisp text typography.',
+    description: 'Convert Microsoft Word (.docx, .doc) documents into publication-ready PDF with 100% typography fidelity.',
+    longDescription: 'Converts Word (.docx / .doc) documents to crisp, high-resolution PDF files with exact font preservation (Calibri, Arial, Times New Roman, Segoe UI, Kalpurush, etc.), complex Indic & Bengali (বাংলা) ligature rendering, paragraph spacing, and embedded table borders.',
     category: 'convert' as const,
     icon: 'FileText',
     acceptedTypes: '.doc,.docx,.rtf,.txt',
-    keywords: ['word to pdf', 'convert word to pdf', 'docx to pdf', 'doc to pdf online'],
+    keywords: [
+      'word to pdf',
+      'docx to pdf',
+      'convert word to pdf',
+      'bangla word to pdf',
+      'exact font word to pdf',
+      'high quality word to pdf',
+      'doc to pdf converter'
+    ],
     features: [
-      'Standard A4 and Letter layout rendering',
-      'Clean typography and margin wrapping',
-      'Zero formatting shift across devices',
-      '100% In-memory processing with no account required'
+      'Native Word COM engine & TrueType ReportLab multilingual fallback',
+      '100% typography and font family fidelity (Calibri, Arial, Times, Kalpurush, etc.)',
+      'Preserves complex Indic & Bengali (বাংলা) ligatures and right-to-left scripts',
+      'Preserves headers, footers, paragraph spacing, headings, and tables',
+      'Zero layout shift across different operating systems and mobile devices',
+      'Private on-device processing with zero data retention'
     ],
     howTo: [
-      { step: '1', text: 'Upload your Word document or text file.' },
-      { step: '2', text: 'Click "Convert to PDF" to start processing.' },
-      { step: '3', text: 'Download your finalized PDF document.' }
+      { step: '1', text: 'Upload your Word document (.docx, .doc) or RTF file.' },
+      { step: '2', text: 'Click "Convert to PDF" to initiate high-precision typography rendering.' },
+      { step: '3', text: 'Download your finalized, publication-ready PDF document.' }
     ],
     faqs: [
       {
-        q: 'Can anyone else see or store my uploaded Word document?',
-        a: 'No, all conversions are executed in volatile memory buffers with zero permanent disk storage.'
+        q: 'How does it guarantee font fidelity and prevent font substitution?',
+        a: 'We utilize localized TrueType font matching and OpenXML typography parsing so font sizes, weights, and families match the original Word document.'
+      },
+      {
+        q: 'Is there any watermark added to converted PDFs?',
+        a: 'No, your PDFs are clean and unwatermarked with 100% original formatting.'
+      },
+      {
+        q: 'Are my uploaded documents secure and private?',
+        a: 'Yes, all conversions run locally in temporary memory buffers and are immediately removed after download.'
       }
     ]
   };
 
   return (
     <ToolLayout tool={tool}>
-      <DocToPdfTool initialFormat="word" title="Convert Word to PDF" />
+      <DocToPdfTool initialFormat="word" title="Convert Word to PDF" subtitle="Convert Word (.docx/.doc) documents into publication-ready PDF with 100% typography fidelity." />
     </ToolLayout>
   );
 }
+

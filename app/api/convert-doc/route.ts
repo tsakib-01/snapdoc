@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { convertWordToPdf } from '@/services/wordToPdf';
+import { convertExcelToPdf as convertExcelToPdfService } from '@/services/excelToPdf';
 import { convertTextToPdf, convertExcelToPdf, extractTextFromDocument } from '@/lib/office/documentConverter';
 import { MAX_IMAGE_FILE_SIZE } from '@/lib/utils/validation';
 import * as fs from 'fs/promises';
@@ -54,12 +55,38 @@ export async function POST(req: NextRequest) {
             mimeType: 'application/pdf',
             dataUrl: base64Data,
           });
-        } catch (libreErr) {
-          console.warn('LibreOffice headless conversion failed or unavailable, using high-fidelity fallback:', libreErr);
+        } catch (wordErr) {
+          console.warn('Word to PDF high-fidelity service error, falling back:', wordErr);
         }
       }
 
-      // 2. Fallback to documentConverter
+      // 2. If Excel / Spreadsheet format, convert using convertExcelToPdfService
+      if (ext === '.xlsx' || ext === '.xls' || ext === '.csv') {
+        try {
+          const inputPath = path.join(tmpDir, file.name);
+          await fs.writeFile(inputPath, fileBuffer);
+
+          const outputPath = await convertExcelToPdfService({
+            inputPath,
+            outputDir: tmpDir,
+          });
+
+          const pdfBuf = await fs.readFile(outputPath);
+          outputBytes = new Uint8Array(pdfBuf);
+          const base64Data = `data:application/pdf;base64,${Buffer.from(outputBytes).toString('base64')}`;
+          return NextResponse.json({
+            success: true,
+            filename: `${baseName}.pdf`,
+            size: outputBytes.length,
+            mimeType: 'application/pdf',
+            dataUrl: base64Data,
+          });
+        } catch (excelErr) {
+          console.warn('Excel to PDF high-fidelity service error, falling back:', excelErr);
+        }
+      }
+
+      // 3. Fallback to documentConverter
       const { text: extractedText, isTable, buffer } = await extractTextFromDocument(file);
 
       if (isTable || format === 'csv' || ext === '.csv' || ext === '.xlsx' || ext === '.xls') {

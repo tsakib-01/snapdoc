@@ -89,26 +89,24 @@ export default function PdfToOfficeTool({
         a.click();
         URL.revokeObjectURL(url);
       } else if (format === 'word') {
-        if (wordMode === 'text') {
-          try {
-            const formData = new FormData();
-            formData.append('file', file);
-            const res = await fetch('/api/pdf-to-word', {
-              method: 'POST',
-              body: formData,
-            });
-            const data = await res.json();
-            if (res.ok && data.dataUrl) {
-              const a = document.createElement('a');
-              a.href = data.dataUrl;
-              a.download = data.filename || `${baseName}.docx`;
-              a.click();
-              setProcessing(false);
-              return;
-            }
-          } catch (apiErr) {
-            console.warn('PDF to Word API error, falling back to client engine:', apiErr);
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          const res = await fetch('/api/pdf-to-word', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await res.json();
+          if (res.ok && data.dataUrl) {
+            const a = document.createElement('a');
+            a.href = data.dataUrl;
+            a.download = data.filename || `${baseName}.docx`;
+            a.click();
+            setProcessing(false);
+            return;
           }
+        } catch (apiErr) {
+          console.warn('PDF to Word API error, falling back to client engine:', apiErr);
         }
 
         const docxBlob = await createWordDocx(

@@ -4,43 +4,62 @@ import PdfToOfficeTool from '@/components/tools/PdfToOfficeTool';
 import ToolLayout from '@/components/ui/ToolLayout';
 
 export const metadata: Metadata = {
-  title: 'PDF to Excel / CSV Converter - Extract Tables from PDF',
-  description: 'Extract tables, data, and rows from PDF documents into spreadsheet CSV and Excel format.',
+  title: 'PDF to Excel Converter - High-Fidelity Table Extraction (.xlsx)',
+  description: 'Convert PDF tables, invoices, statements, and spreadsheets into structured Excel (.xlsx) workbooks with exact cell background colors, borders, numbers, and multilingual text.',
 };
 
 export default function PdfToExcelPage() {
   const tool = {
     id: 'pdf-to-excel',
-    name: 'PDF to Excel / CSV',
+    name: 'PDF to Excel (.xlsx)',
     slug: 'pdf-to-excel',
-    description: 'Extract tabular data and text from PDF documents into spreadsheet-compatible CSV/Excel files.',
-    longDescription: 'Extract tables, records, and text lines from your PDF documents into structured CSV files that open immediately in Microsoft Excel, Google Sheets, or Apple Numbers.',
+    description: 'Extract tables, data matrices, and multilingual text into structured Excel (.xlsx) spreadsheets.',
+    longDescription: 'Extracts multi-page tables, financial reports, and data grids into beautifully styled Microsoft Excel (.xlsx) workbooks with preserved cell background fills, bold headers, numeric formatting, borders, and automatic column widths.',
     category: 'convert' as const,
     icon: 'FileSpreadsheet',
     acceptedTypes: 'application/pdf',
-    keywords: ['pdf to excel', 'pdf to csv', 'extract table from pdf', 'pdf data extractor'],
+    keywords: [
+      'pdf to excel',
+      'pdf to xlsx',
+      'extract table from pdf',
+      'preserve table colors pdf to excel',
+      'bangla pdf to excel',
+      'pdf spreadsheet converter',
+      'financial statement pdf to excel'
+    ],
     features: [
-      'Extracts structured rows and columns from PDF',
-      'Download as CSV compatible with Excel and Google Sheets',
-      'Live text preview before downloading',
-      'Zero permanent storage or data tracking'
+      'Smart multi-page table detection (lattice & stream algorithms)',
+      'Preserves cell background fill colors, fonts, boldness, and alignments',
+      'Extracts real numbers, currency amounts, and percentages into Excel formats',
+      'Detects vector table borders and centers document titles without synthetic headers',
+      'Auto-fits column widths for immediate readability',
+      'Full Unicode, Bengali (বাংলা), and multilingual character support'
     ],
     howTo: [
-      { step: '1', text: 'Upload your PDF document containing tabular data.' },
-      { step: '2', text: 'Review the extracted data in the preview box.' },
-      { step: '3', text: 'Click "Download Extracted EXCEL" to save your spreadsheet.' }
+      { step: '1', text: 'Upload your PDF containing tables, spreadsheets, or financial reports.' },
+      { step: '2', text: 'The engine extracts structured grids, cell colors, font styles, and numbers.' },
+      { step: '3', text: 'Click "Download Extracted Excel (.xlsx)" to save your clean spreadsheet.' }
     ],
     faqs: [
       {
-        q: 'Does it work with Excel and Google Sheets?',
-        a: 'Yes, the exported CSV spreadsheet imports directly into Excel, Sheets, and Numbers without formatting issues.'
+        q: 'Are cell colors, borders, and headers preserved in Excel?',
+        a: 'Yes! The converter samples exact cell colors from the PDF, detects table border strokes, and sets bold header typography in the generated Excel (.xlsx) sheet.'
+      },
+      {
+        q: 'Does it format numbers as editable numbers instead of strings?',
+        a: 'Yes, numeric values, prices, and currencies are converted to real numbers so you can immediately run formulas, sums, and pivot tables.'
+      },
+      {
+        q: 'Does it handle multi-page PDF documents?',
+        a: 'Yes, multi-page PDFs are neatly converted into organized sheets with auto-balanced column widths.'
       }
     ]
   };
 
   return (
     <ToolLayout tool={tool}>
-      <PdfToOfficeTool targetFormat="excel" title="Convert PDF to Excel / CSV" />
+      <PdfToOfficeTool targetFormat="excel" title="Convert PDF to Excel (.xlsx)" subtitle="Extract tables, cell colors, borders, numbers, and multilingual text into structured Excel spreadsheets." />
     </ToolLayout>
   );
 }
+

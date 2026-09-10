@@ -2,10 +2,11 @@ import os
 import uuid
 import shutil
 import mimetypes
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Header, Depends, Security
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security.api_key import APIKeyHeader
 from converters import (
     convert_pdf_to_excel,
     convert_pdf_to_word,
@@ -17,6 +18,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 OUTPUT_DIR = os.path.join(BASE_DIR, "converted")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+EXPECTED_API_KEY = os.environ.get("CONVERSION_API_KEY", "").strip()
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -24,8 +26,8 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 
 app = FastAPI(
     title="Document Conversion Studio",
-    description="Localhost Multilingual Converter: PDF to Excel, PDF to Word, Word to PDF, Excel to PDF",
-    version="1.1.0"
+    description="Localhost & Remote Multilingual Converter: PDF to Excel, PDF to Word, Word to PDF, Excel to PDF",
+    version="1.2.0"
 )
 
 app.add_middleware(
@@ -35,6 +37,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
+
+async def verify_api_key(x_api_key: str = Security(api_key_header)):
+    if EXPECTED_API_KEY:
+        if not x_api_key or x_api_key != EXPECTED_API_KEY:
+            raise HTTPException(status_code=401, detail="Invalid or missing x-api-key header.")
+    return True
 
 @app.get("/api/health")
 async def health_check():
@@ -46,10 +56,12 @@ async def health_check():
             {"from": "docx", "to": "pdf", "name": "Word (.docx) to PDF"},
             {"from": "xlsx", "to": "pdf", "name": "Excel (.xlsx) to PDF"}
         ],
+        "auth_required": bool(EXPECTED_API_KEY),
         "multilingual_support": True
     }
 
-@app.post("/api/convert/pdf-to-excel")
+
+@app.post("/api/convert/pdf-to-excel", dependencies=[Depends(verify_api_key)])
 async def api_pdf_to_excel(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Invalid file type. Expected .pdf file.")
@@ -83,7 +95,7 @@ async def api_pdf_to_excel(file: UploadFile = File(...)):
             except Exception:
                 pass
 
-@app.post("/api/convert/pdf-to-word")
+@app.post("/api/convert/pdf-to-word", dependencies=[Depends(verify_api_key)])
 async def api_pdf_to_word(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Invalid file type. Expected .pdf file.")
@@ -117,7 +129,7 @@ async def api_pdf_to_word(file: UploadFile = File(...)):
             except Exception:
                 pass
 
-@app.post("/api/convert/word-to-pdf")
+@app.post("/api/convert/word-to-pdf", dependencies=[Depends(verify_api_key)])
 async def api_word_to_pdf(file: UploadFile = File(...)):
     if not (file.filename.lower().endswith(".docx") or file.filename.lower().endswith(".doc")):
         raise HTTPException(status_code=400, detail="Invalid file type. Expected .docx or .doc file.")
@@ -151,7 +163,7 @@ async def api_word_to_pdf(file: UploadFile = File(...)):
             except Exception:
                 pass
 
-@app.post("/api/convert/excel-to-pdf")
+@app.post("/api/convert/excel-to-pdf", dependencies=[Depends(verify_api_key)])
 async def api_excel_to_pdf(file: UploadFile = File(...)):
     if not (file.filename.lower().endswith(".xlsx") or file.filename.lower().endswith(".xls")):
         raise HTTPException(status_code=400, detail="Invalid file type. Expected .xlsx or .xls file.")
@@ -185,7 +197,7 @@ async def api_excel_to_pdf(file: UploadFile = File(...)):
             except Exception:
                 pass
 
-@app.post("/api/convert/auto")
+@app.post("/api/convert/auto", dependencies=[Depends(verify_api_key)])
 async def api_convert_auto(file: UploadFile = File(...), target_format: str = Form(...)):
     ext = os.path.splitext(file.filename)[1].lower()
     tgt = target_format.lower().replace(".", "")
@@ -216,17 +228,14 @@ if os.path.exists(STATIC_DIR):
 if __name__ == "__main__":
     import uvicorn
     import webbrowser
-    port = 5000
+    port = int(os.environ.get("PORT", 5000))
     print(f"\n=======================================================")
-    print(f"  Document Conversion Studio Running on http://localhost:{port}")
+    print(f"  Document Conversion Studio Running on port {port}")
     print(f"  Supported conversions (100% Multilingual):")
     print(f"   [1] PDF -> Excel (.xlsx)")
     print(f"   [2] PDF -> Word (.docx)")
     print(f"   [3] Word (.docx) -> PDF")
     print(f"   [4] Excel (.xlsx) -> PDF")
     print(f"=======================================================\n")
-    try:
-        webbrowser.open(f"http://localhost:{port}")
-    except Exception:
-        pass
-    uvicorn.run(app, host="127.0.0.1", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
+

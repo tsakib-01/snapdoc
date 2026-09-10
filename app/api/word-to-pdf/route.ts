@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { convertWordToPdf } from '@/services/wordToPdf';
+import { convertWithRemoteApi } from '@/services/remoteConversionService';
 import { MAX_IMAGE_FILE_SIZE } from '@/lib/utils/validation';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -27,6 +28,24 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(file.name).toLowerCase() || '.docx';
     const baseName = file.name.replace(/\.[^/.]+$/, '');
 
+    // 1. Check if remote Python FastAPI backend is configured
+    try {
+      const remoteRes = await convertWithRemoteApi('word-to-pdf', fileBuffer, file.name);
+      if (remoteRes) {
+        const base64Data = `data:${remoteRes.mimeType};base64,${remoteRes.buffer.toString('base64')}`;
+        return NextResponse.json({
+          success: true,
+          filename: remoteRes.filename,
+          size: remoteRes.buffer.length,
+          mimeType: remoteRes.mimeType,
+          dataUrl: base64Data,
+        });
+      }
+    } catch (remoteErr: any) {
+      console.warn('Remote Python API conversion failed, attempting local fallback:', remoteErr.message);
+    }
+
+    // 2. Local Python Engine
     const inputPath = path.join(tmpDir, `${baseName}${ext}`);
     await fs.writeFile(inputPath, fileBuffer);
 

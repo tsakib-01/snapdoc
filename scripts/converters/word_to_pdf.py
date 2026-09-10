@@ -124,9 +124,9 @@ CENTER_KEYWORDS = [
     "computer science", "north east university", "july", "session:"
 ]
 
-def _extract_paragraph_items(p: DocxParagraph, doc_part):
+def _extract_paragraph_items(p: DocxParagraph, doc_part, is_centered_block: bool = False):
     """
-    Extracts text runs and drawings preserving exact element order, line breaks, and image dimensions.
+    Extracts text runs and drawings preserving exact element order, line breaks, tabs, and image dimensions.
     """
     items = []
     html_runs = []
@@ -146,6 +146,10 @@ def _extract_paragraph_items(p: DocxParagraph, doc_part):
                     except Exception:
                         pass
 
+        # Check for page break in run
+        if r._r.xpath('.//w:br[@w:type="page"]') or r._r.xpath('.//w:lastRenderedPageBreak'):
+            items.append(('page_break',))
+
         raw_text = r.text
         if not raw_text:
             continue
@@ -154,7 +158,16 @@ def _extract_paragraph_items(p: DocxParagraph, doc_part):
         if not clean_text:
             continue
 
-        safe = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\n', '<br/>').replace('\r', '')
+        safe = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        
+        # In centered cover blocks, tabs between titles/locations are line breaks
+        if is_centered_block:
+            safe = safe.replace('\t', '<br/>')
+        else:
+            safe = safe.replace('\t', ' &nbsp; &nbsp; ')
+
+        safe = safe.replace('\n', '<br/>').replace('\r', '')
+
         run_font_name = r.font.name if r.font and r.font.name else None
         is_bold = bool(r.bold)
         is_italic = bool(r.italic)
@@ -240,7 +253,13 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
         story = []
         body = doc.element.body
 
-        for child in body:
+        for child_idx, child in enumerate(body):
+            tag = child.tag.split('}')[-1]
+
+            if tag == 'sectPr' and child_idx < len(body) - 1:
+                story.append(PageBreak())
+                continue
+
             if isinstance(child, CT_P):
                 p = DocxParagraph(child, doc)
                 raw_text = p.text.strip()
@@ -248,29 +267,27 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
 
                 # Smart alignment determination:
                 # Cover page elements, titles, and headers should be centered
-                if p.alignment == WD_ALIGN_PARAGRAPH.CENTER:
-                    align = TA_CENTER
-                elif any(kw in raw_text.lower() for kw in CENTER_KEYWORDS) and len(raw_text) < 140:
-                    align = TA_CENTER
-                elif 'heading' in style_name or 'title' in style_name:
-                    align = TA_CENTER
-                else:
-                    align = ALIGN_MAP.get(p.alignment, TA_LEFT)
+                is_centered = (
+                    p.alignment == WD_ALIGN_PARAGRAPH.CENTER
+                    or any(kw in raw_text.lower() for kw in CENTER_KEYWORDS) and len(raw_text) < 160
+                    or 'heading' in style_name or 'title' in style_name
+                )
+                align = TA_CENTER if is_centered else ALIGN_MAP.get(p.alignment, TA_LEFT)
 
                 # Explicit page break before
-                if p.paragraph_format.page_break_before:
+                if p.paragraph_format.page_break_before or child.xpath('.//w:br[@w:type="page"]'):
                     story.append(PageBreak())
 
-                # Check for <w:br w:type="page"/> inside paragraph
-                if child.xpath('.//w:br[@w:type="page"]'):
-                    story.append(PageBreak())
-                    continue
+                items = _extract_paragraph_items(p, doc.part, is_centered_block=is_centered)
 
-                items = _extract_paragraph_items(p, doc.part)
+                for item in items:
+                    item_type = item[0]
 
-                for item_type, *data in items:
-                    if item_type == 'image':
-                        img_bytes, w_pt, h_pt = data
+                    if item_type == 'page_break':
+                        story.append(PageBreak())
+
+                    elif item_type == 'image':
+                        _, img_bytes, w_pt, h_pt = item
                         try:
                             pil_img = PILImage.open(io.BytesIO(img_bytes))
                             orig_w, orig_h = pil_img.size
@@ -284,23 +301,25 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
 
                             # Cover page emblems/logos are centered
                             rl_img = RLImage(io.BytesIO(img_bytes), width=render_w, height=render_h, hAlign='CENTER')
-                            story.append(Spacer(1, 4))
+                            story.append(Spacer(1, 6))
                             story.append(rl_img)
-                            story.append(Spacer(1, 4))
+                            story.append(Spacer(1, 6))
                         except Exception as e:
                             print(f"[image rendering error] {e}")
 
                     elif item_type == 'text':
-                        html_text = data[0]
-                        space_before = p.paragraph_format.space_before.pt if p.paragraph_format.space_before else 0
-                        space_after = p.paragraph_format.space_after.pt if p.paragraph_format.space_after else 2
+                        html_text = item[1]
+                        space_before = p.paragraph_format.space_before.pt if p.paragraph_format.space_before else 1
+                        space_after = p.paragraph_format.space_after.pt if p.paragraph_format.space_after else 3
                         
                         if 'heading 1' in style_name or 'title' in style_name:
                             font_size = 16
                             leading = 20
+                            space_after = 6
                         elif 'heading 2' in style_name:
                             font_size = 13
                             leading = 16
+                            space_after = 4
                         elif 'heading 3' in style_name:
                             font_size = 11.5
                             leading = 15
@@ -322,7 +341,11 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                         story.append(Paragraph(html_text, p_style))
 
                 if not items:
-                    story.append(Spacer(1, 3))
+                    story.append(Spacer(1, 10))
+
+                # Section break attached to paragraph
+                if child.xpath('.//w:sectPr') and child_idx < len(body) - 1:
+                    story.append(PageBreak())
 
             elif isinstance(child, CT_Tbl):
                 tbl = DocxTable(child, doc)
@@ -366,22 +389,22 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                             else:
                                 c_align = ALIGN_MAP.get(cp.alignment, TA_LEFT)
 
-                            p_items = _extract_paragraph_items(cp, doc.part)
-                            for it_type, *it_data in p_items:
-                                if it_type == 'text':
-                                    c_html = it_data[0]
+                            p_items = _extract_paragraph_items(cp, doc.part, is_centered_block=True)
+                            for it in p_items:
+                                if it[0] == 'text':
+                                    c_html = it[1]
                                     c_style = ParagraphStyle(
                                         f'Cell_{len(table_data)}_{c_idx}_{len(cell_items)}',
                                         parent=styles['Normal'],
                                         fontName=resolve_reportlab_font("Segoe UI", is_bold=False),
-                                        fontSize=9.5,
-                                        leading=12,
+                                        fontSize=10,
+                                        leading=13,
                                         alignment=c_align,
                                         textColor=colors.HexColor('#0F172A')
                                     )
                                     cell_items.append(Paragraph(c_html, c_style))
-                                elif it_type == 'image':
-                                    img_bytes, w_pt, h_pt = it_data
+                                elif it[0] == 'image':
+                                    _, img_bytes, w_pt, h_pt = it
                                     try:
                                         rl_img = RLImage(io.BytesIO(img_bytes), width=min(w_pt or 80, col_w), height=h_pt or 80, hAlign='CENTER')
                                         cell_items.append(rl_img)
@@ -398,8 +421,9 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                 if table_data:
                     t = Table(table_data, colWidths=[col_w] * col_count, hAlign='CENTER')
                     t.setStyle(TableStyle(table_styles))
+                    story.append(Spacer(1, 4))
                     story.append(t)
-                    story.append(Spacer(1, 3))
+                    story.append(Spacer(1, 4))
 
         if not story:
             story.append(Paragraph("Empty Document", styles['Normal']))

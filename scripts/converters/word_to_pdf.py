@@ -116,15 +116,7 @@ def _get_image_extent(drawing_elem):
         pass
     return None, None
 
-CENTER_KEYWORDS = [
-    "skillbridge", "thesis", "supervised by", "submitted by",
-    "department of", "university", "bangladesh", "neub",
-    "b.sc.", "m.sc.", "engineering", "board of examiners", "qualification form",
-    "chairman", "sylhet", "education with innovation",
-    "computer science", "north east university", "july", "session:"
-]
-
-def _extract_paragraph_items(p: DocxParagraph, doc_part, is_centered_block: bool = False):
+def _extract_paragraph_items(p: DocxParagraph, doc_part):
     """
     Extracts text runs and drawings preserving exact element order, line breaks, tabs, and image dimensions.
     """
@@ -158,15 +150,7 @@ def _extract_paragraph_items(p: DocxParagraph, doc_part, is_centered_block: bool
         if not clean_text:
             continue
 
-        safe = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-        
-        # In centered cover blocks, tabs between titles/locations are line breaks
-        if is_centered_block:
-            safe = safe.replace('\t', '<br/>')
-        else:
-            safe = safe.replace('\t', ' &nbsp; &nbsp; ')
-
-        safe = safe.replace('\n', '<br/>').replace('\r', '')
+        safe = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('\t', ' &nbsp; &nbsp; ').replace('\n', '<br/>').replace('\r', '')
 
         run_font_name = r.font.name if r.font and r.font.name else None
         is_bold = bool(r.bold)
@@ -219,9 +203,9 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
     Advanced pure-Python layout & typography reconstructor:
     - Reads exact section page dimensions and margins.
     - Preserves body element sequence (paragraphs, tables, images).
-    - Smart cover-page centering for headings, university titles, emblems, and metadata.
+    - Preserves exact paragraph and table cell alignments (Left, Center, Right, Justify) directly from Word.
     - Preserves character formatting (bold, italic, underline, font color, size).
-    - Extracts embedded images with exact document dimensions and centered alignment.
+    - Extracts embedded images with exact document dimensions and alignment.
     - Preserves table cell shading, borders, and column widths.
     - Multilingual Bengali (Kalpurush / Noto Sans), Indic, and Arabic typography.
     """
@@ -262,23 +246,16 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
 
             if isinstance(child, CT_P):
                 p = DocxParagraph(child, doc)
-                raw_text = p.text.strip()
                 style_name = p.style.name.lower() if p.style and p.style.name else ""
 
-                # Smart alignment determination:
-                # Cover page elements, titles, and headers should be centered
-                is_centered = (
-                    p.alignment == WD_ALIGN_PARAGRAPH.CENTER
-                    or any(kw in raw_text.lower() for kw in CENTER_KEYWORDS) and len(raw_text) < 160
-                    or 'heading' in style_name or 'title' in style_name
-                )
-                align = TA_CENTER if is_centered else ALIGN_MAP.get(p.alignment, TA_LEFT)
+                # Respect exact alignment from Word document
+                align = ALIGN_MAP.get(p.alignment, TA_LEFT)
 
                 # Explicit page break before
                 if p.paragraph_format.page_break_before or child.xpath('.//w:br[@w:type="page"]'):
                     story.append(PageBreak())
 
-                items = _extract_paragraph_items(p, doc.part, is_centered_block=is_centered)
+                items = _extract_paragraph_items(p, doc.part)
 
                 for item in items:
                     item_type = item[0]
@@ -299,18 +276,23 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                                 render_w = min(orig_w * 0.75, content_width, 160)
                                 render_h = orig_h * (render_w / max(1, orig_w))
 
-                            # Cover page emblems/logos are centered
-                            rl_img = RLImage(io.BytesIO(img_bytes), width=render_w, height=render_h, hAlign='CENTER')
-                            story.append(Spacer(1, 6))
+                            align_str = 'LEFT'
+                            if p.alignment == WD_ALIGN_PARAGRAPH.CENTER:
+                                align_str = 'CENTER'
+                            elif p.alignment == WD_ALIGN_PARAGRAPH.RIGHT:
+                                align_str = 'RIGHT'
+
+                            rl_img = RLImage(io.BytesIO(img_bytes), width=render_w, height=render_h, hAlign=align_str)
+                            story.append(Spacer(1, 4))
                             story.append(rl_img)
-                            story.append(Spacer(1, 6))
+                            story.append(Spacer(1, 4))
                         except Exception as e:
                             print(f"[image rendering error] {e}")
 
                     elif item_type == 'text':
                         html_text = item[1]
-                        space_before = p.paragraph_format.space_before.pt if p.paragraph_format.space_before else 1
-                        space_after = p.paragraph_format.space_after.pt if p.paragraph_format.space_after else 3
+                        space_before = p.paragraph_format.space_before.pt if p.paragraph_format.space_before else 0
+                        space_after = p.paragraph_format.space_after.pt if p.paragraph_format.space_after else 2
                         
                         if 'heading 1' in style_name or 'title' in style_name:
                             font_size = 16
@@ -323,6 +305,7 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                         elif 'heading 3' in style_name:
                             font_size = 11.5
                             leading = 15
+                            space_after = 3
                         else:
                             font_size = 10.5
                             leading = 13.5
@@ -341,7 +324,7 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                         story.append(Paragraph(html_text, p_style))
 
                 if not items:
-                    story.append(Spacer(1, 10))
+                    story.append(Spacer(1, 4))
 
                 # Section break attached to paragraph
                 if child.xpath('.//w:sectPr') and child_idx < len(body) - 1:
@@ -383,13 +366,9 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                             pass
 
                         for cp in cell.paragraphs:
-                            c_raw = cp.text.strip()
-                            if cp.alignment == WD_ALIGN_PARAGRAPH.CENTER or (col_count == 2 and len(c_raw) < 40):
-                                c_align = TA_CENTER
-                            else:
-                                c_align = ALIGN_MAP.get(cp.alignment, TA_LEFT)
+                            c_align = ALIGN_MAP.get(cp.alignment, TA_LEFT)
 
-                            p_items = _extract_paragraph_items(cp, doc.part, is_centered_block=True)
+                            p_items = _extract_paragraph_items(cp, doc.part)
                             for it in p_items:
                                 if it[0] == 'text':
                                     c_html = it[1]
@@ -406,7 +385,12 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                                 elif it[0] == 'image':
                                     _, img_bytes, w_pt, h_pt = it
                                     try:
-                                        rl_img = RLImage(io.BytesIO(img_bytes), width=min(w_pt or 80, col_w), height=h_pt or 80, hAlign='CENTER')
+                                        c_img_align = 'LEFT'
+                                        if cp.alignment == WD_ALIGN_PARAGRAPH.CENTER:
+                                            c_img_align = 'CENTER'
+                                        elif cp.alignment == WD_ALIGN_PARAGRAPH.RIGHT:
+                                            c_img_align = 'RIGHT'
+                                        rl_img = RLImage(io.BytesIO(img_bytes), width=min(w_pt or 80, col_w), height=h_pt or 80, hAlign=c_img_align)
                                         cell_items.append(rl_img)
                                     except Exception:
                                         pass

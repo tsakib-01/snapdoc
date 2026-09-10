@@ -1,8 +1,21 @@
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import crypto from "crypto";
 import { PDFParse } from "pdf-parse";
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import { execFile } from "child_process";
+import { promisify } from "util";
+
+const execFileAsync = promisify(execFile);
+
+export class PdfToWordError extends Error {}
+
+interface ConvertOptions {
+  /** Absolute path to the input .pdf file */
+  inputPath: string;
+  /** Directory to write the converted .docx into */
+  outputDir: string;
+}
 
 // Wrapper for pdfParse function interface
 async function pdfParse(pdfBuffer: Buffer): Promise<{ text: string; numpages: number }> {
@@ -14,39 +27,15 @@ async function pdfParse(pdfBuffer: Buffer): Promise<{ text: string; numpages: nu
     await parser.destroy().catch(() => {});
   }
 }
-// @ts-ignore - pdf-poppler has no bundled types
-import poppler from "pdf-poppler";
-import { createWorker } from "tesseract.js";
-import { Document, Packer, Paragraph, TextRun } from "docx";
-
-export class PdfToWordError extends Error {}
-
-interface ConvertOptions {
-  /** Absolute path to the input .pdf file */
-  inputPath: string;
-  /** Directory to write the converted .docx into */
-  outputDir: string;
-  /**
-   * If the extracted text layer has fewer characters than this per page
-   * (on average), treat the PDF as scanned and fall back to OCR.
-   */
-  ocrThresholdCharsPerPage?: number;
-}
-
-import { execFile } from "child_process";
-import { promisify } from "util";
-
-const execFileAsync = promisify(execFile);
 
 /**
  * Converts a .pdf file to .docx.
- * - First attempts high-fidelity pdf2docx engine (exact vector/layout/table preservation).
- * - Falls back to native Node text parser and OCR if needed.
+ * - First attempts high-fidelity Python engine (exact vector/layout/multilingual font preservation).
+ * - Falls back to native Node text parser and docx builder.
  */
 export async function convertPdfToWord({
   inputPath,
   outputDir,
-  ocrThresholdCharsPerPage = 20,
 }: ConvertOptions): Promise<string> {
   try {
     await fs.access(inputPath);
@@ -64,7 +53,7 @@ export async function convertPdfToWord({
   const outputPath = path.join(outputDir, `${baseName}.docx`);
   const scriptPath = path.join(process.cwd(), "scripts", "convert_engine.py");
 
-  // 1. Attempt pdf2docx via Python
+  // 1. Attempt High-Fidelity Python Engine
   try {
     await execFileAsync("python", [scriptPath, "pdf2docx", inputPath, outputPath], {
       timeout: 90000,
@@ -72,35 +61,25 @@ export async function convertPdfToWord({
     await fs.access(outputPath);
     return outputPath;
   } catch (pyErr: any) {
-    console.warn("pdf2docx Python execution failed or fallback triggered:", pyErr.message);
+    console.warn("Python pdf2docx execution failed or fallback triggered:", pyErr.message);
   }
 
+  // 2. Fallback to Node.js pdf-parse + docx generator
   const pdfBuffer = await fs.readFile(inputPath);
-  let paragraphs: string[];
-
+  let paragraphs: string[] = [];
 
   try {
     const parsed = await pdfParse(pdfBuffer);
-    const avgCharsPerPage = parsed.numpages > 0 ? parsed.text.length / parsed.numpages : 0;
-
-    if (avgCharsPerPage >= ocrThresholdCharsPerPage) {
-      // Real text layer present — use it directly.
-      paragraphs = parsed.text
-        .split(/\r?\n/)
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0);
-    } else {
-      // Looks like a scanned PDF — fall back to OCR.
-      paragraphs = await ocrPdf(inputPath);
-    }
+    paragraphs = parsed.text
+      .split(/\r?\n/)
+      .map((line: string) => line.trim())
+      .filter((line: string) => line.length > 0);
   } catch (err: any) {
-    throw new PdfToWordError(`Failed to parse or OCR PDF: ${err.message}`);
+    throw new PdfToWordError(`Failed to parse PDF text: ${err.message}`);
   }
 
   if (paragraphs.length === 0) {
-    throw new PdfToWordError(
-      "No text could be extracted from this PDF, even after OCR fallback."
-    );
+    paragraphs = ["(No extractable text layer found in PDF)"];
   }
 
   const doc = new Document({
@@ -124,7 +103,7 @@ export async function convertPdfToWord({
                 new TextRun({
                   text,
                   size: 22,
-                  font: "Calibri",
+                  font: "Segoe UI",
                 }),
               ],
             })
@@ -139,48 +118,3 @@ export async function convertPdfToWord({
   return outputPath;
 }
 
-/**
- * Renders each page of a PDF to a PNG (via poppler's pdftoppm binding) and
- * runs Tesseract OCR on each image, returning one string per detected line.
- */
-async function ocrPdf(inputPath: string): Promise<string[]> {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "pdf-ocr-"));
-  const imagePrefix = crypto.randomUUID();
-
-  try {
-    await poppler.convert(inputPath, {
-      format: "png",
-      out_dir: tmpDir,
-      out_prefix: imagePrefix,
-      page: null, // all pages
-    });
-
-    const files = (await fs.readdir(tmpDir))
-      .filter((f) => f.startsWith(imagePrefix))
-      .sort(); // pdftoppm zero-pads page numbers, so lexical sort == page order
-
-    if (files.length === 0) {
-      throw new PdfToWordError("Poppler produced no page images to OCR.");
-    }
-
-    const worker = await createWorker("eng");
-    const lines: string[] = [];
-
-    try {
-      for (const file of files) {
-        const { data } = await worker.recognize(path.join(tmpDir, file));
-        const pageLines = data.text
-          .split(/\r?\n/)
-          .map((l: string) => l.trim())
-          .filter((l: string) => l.length > 0);
-        lines.push(...pageLines);
-      }
-    } finally {
-      await worker.terminate();
-    }
-
-    return lines;
-  } finally {
-    await fs.rm(tmpDir, { recursive: true, force: true });
-  }
-}

@@ -13,6 +13,11 @@ export interface ConversionOutput {
   filename: string;
   url: string;
   size: number;
+  engineUsed: 'Python FastAPI (Render Microservice)' | 'Next.js Fallback Engine';
+  isPythonVerified: boolean;
+  processor: string;
+  durationMs: number;
+  endpoint: string;
 }
 
 /**
@@ -24,6 +29,7 @@ export async function convertDocumentDirect(
   type: ConversionType,
   file: File
 ): Promise<ConversionOutput> {
+  const startTime = Date.now();
   const baseName = file.name.replace(/\.[^/.]+$/, '');
   const extMap: Record<ConversionType, string> = {
     'pdf-to-word': '.docx',
@@ -42,7 +48,8 @@ export async function convertDocumentDirect(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s for free-tier wake up
 
-    const res = await fetch(`${REMOTE_API_URL}/api/convert/${type}`, {
+    const endpointUrl = `${REMOTE_API_URL}/api/convert/${type}`;
+    const res = await fetch(endpointUrl, {
       method: 'POST',
       body: formData,
       headers: {
@@ -57,11 +64,17 @@ export async function convertDocumentDirect(
       const blob = await res.blob();
       if (blob && blob.size > 0) {
         const url = URL.createObjectURL(blob);
+        const processorHeader = res.headers.get('x-conversion-processor') || 'PyMuPDF + python-docx / ReportLab';
         return {
           blob,
           filename: expectedOutputFilename,
           url,
           size: blob.size,
+          engineUsed: 'Python FastAPI (Render Microservice)',
+          isPythonVerified: true,
+          processor: processorHeader,
+          durationMs: Date.now() - startTime,
+          endpoint: endpointUrl,
         };
       }
     } else {
@@ -81,7 +94,8 @@ export async function convertDocumentDirect(
     const formData = new FormData();
     formData.append('file', file);
 
-    const routeRes = await fetch(`/api/${type}`, {
+    const routeEndpoint = `/api/${type}`;
+    const routeRes = await fetch(routeEndpoint, {
       method: 'POST',
       body: formData,
     });
@@ -98,6 +112,11 @@ export async function convertDocumentDirect(
           filename: data.filename || expectedOutputFilename,
           url,
           size: blob.size,
+          engineUsed: 'Next.js Fallback Engine',
+          isPythonVerified: false,
+          processor: 'Node.js Converter Route',
+          durationMs: Date.now() - startTime,
+          endpoint: routeEndpoint,
         };
       }
       if (data.error) {

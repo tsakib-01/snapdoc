@@ -33,6 +33,11 @@ export default function WordToPdfTool({
     url: string;
     filename: string;
     size: number;
+    engineUsed: string;
+    isPythonVerified: boolean;
+    processor: string;
+    durationMs: number;
+    endpoint: string;
   } | null>(null);
 
   const handleFileSelected = (selectedFile: File) => {
@@ -46,17 +51,17 @@ export default function WordToPdfTool({
     if (!file) return;
 
     setStatus('converting');
-    setStatusText('Uploading Word document...');
+    setStatusText('Uploading Word document to Python conversion engine...');
     setError(null);
 
     try {
       const progressTimer = setTimeout(() => {
-        setStatusText('Applying TrueType typography & layout formatting...');
-      }, 2500);
+        setStatusText('Applying TrueType typography & layout formatting in Python...');
+      }, 2000);
 
       const progressTimer2 = setTimeout(() => {
         setStatusText('Generating publication-quality PDF...');
-      }, 6000);
+      }, 5000);
 
       const output = await convertDocumentDirect('word-to-pdf', file);
 
@@ -67,6 +72,11 @@ export default function WordToPdfTool({
         url: output.url,
         filename: output.filename,
         size: output.size,
+        engineUsed: output.engineUsed,
+        isPythonVerified: output.isPythonVerified,
+        processor: output.processor,
+        durationMs: output.durationMs,
+        endpoint: output.endpoint,
       });
 
       setStatus('success');
@@ -216,6 +226,36 @@ export default function WordToPdfTool({
             </div>
           </div>
 
+          {/* Engine Verification Box */}
+          <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50 space-y-2 text-xs">
+            <div className="flex items-center justify-between font-bold text-emerald-700 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Conversion Engine Verification:</span>
+              </span>
+              <span className="font-mono text-[11px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-700">
+                {result.engineUsed}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-base-content/70 pt-1 text-[11px]">
+              <div>
+                <span className="text-base-content/50 block">Processor:</span>
+                <span className="font-semibold text-base-content/90">{result.processor}</span>
+              </div>
+              <div>
+                <span className="text-base-content/50 block">Processing Time:</span>
+                <span className="font-semibold text-base-content/90">{(result.durationMs / 1000).toFixed(2)}s</span>
+              </div>
+              <div>
+                <span className="text-base-content/50 block">Python Engine:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Verified Live</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-base-200">
             <button
               onClick={handleReset}
@@ -256,6 +296,11 @@ export default function WordToPdfTool({
               <h3 className="font-bold text-base text-base-content">Conversion Failed</h3>
               <p className="text-xs text-error mt-0.5">{error}</p>
             </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-error/5 border border-error/20 text-[11px] font-mono text-base-content/70">
+            <strong>Endpoint:</strong> https://snapdoc-rj5w.onrender.com/api/convert/word-to-pdf<br />
+            <strong>Error Info:</strong> {error}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

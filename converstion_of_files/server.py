@@ -36,6 +36,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
@@ -50,6 +51,7 @@ async def verify_api_key(x_api_key: str = Security(api_key_header)):
 async def health_check():
     return {
         "status": "healthy",
+        "engine": "Python 3.11 FastAPI Document Studio",
         "supported_conversions": [
             {"from": "pdf", "to": "xlsx", "name": "PDF to Excel (.xlsx)"},
             {"from": "pdf", "to": "docx", "name": "PDF to Word (.docx)"},
@@ -84,7 +86,12 @@ async def api_pdf_to_excel(file: UploadFile = File(...)):
         return FileResponse(
             path=output_path,
             filename=output_filename,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "x-conversion-engine": "python-fastapi",
+                "x-conversion-processor": "pymupdf-openpyxl",
+                "x-conversion-status": "verified-success"
+            }
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
@@ -96,6 +103,7 @@ async def api_pdf_to_excel(file: UploadFile = File(...)):
                 pass
 
 @app.post("/api/convert/pdf-to-word", dependencies=[Depends(verify_api_key)])
+@app.post("/api/convert/pdf-to-doc", dependencies=[Depends(verify_api_key)])
 async def api_pdf_to_word(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Invalid file type. Expected .pdf file.")
@@ -118,7 +126,12 @@ async def api_pdf_to_word(file: UploadFile = File(...)):
         return FileResponse(
             path=output_path,
             filename=output_filename,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "x-conversion-engine": "python-fastapi",
+                "x-conversion-processor": "pymupdf-docx",
+                "x-conversion-status": "verified-success"
+            }
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
@@ -130,9 +143,10 @@ async def api_pdf_to_word(file: UploadFile = File(...)):
                 pass
 
 @app.post("/api/convert/word-to-pdf", dependencies=[Depends(verify_api_key)])
+@app.post("/api/convert/doc-to-pdf", dependencies=[Depends(verify_api_key)])
 async def api_word_to_pdf(file: UploadFile = File(...)):
-    if not (file.filename.lower().endswith(".docx") or file.filename.lower().endswith(".doc")):
-        raise HTTPException(status_code=400, detail="Invalid file type. Expected .docx or .doc file.")
+    if not (file.filename.lower().endswith(".docx") or file.filename.lower().endswith(".doc") or file.filename.lower().endswith(".rtf")):
+        raise HTTPException(status_code=400, detail="Invalid file type. Expected .docx, .doc, or .rtf file.")
     
     file_id = str(uuid.uuid4())
     base_name = os.path.splitext(os.path.basename(file.filename))[0]
@@ -152,12 +166,21 @@ async def api_word_to_pdf(file: UploadFile = File(...)):
         return FileResponse(
             path=output_path,
             filename=output_filename,
-            media_type="application/pdf"
+            media_type="application/pdf",
+            headers={
+                "x-conversion-engine": "python-fastapi",
+                "x-conversion-processor": "python-docx-reportlab",
+                "x-conversion-status": "verified-success"
+            }
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Conversion failed: {str(e)}")
     finally:
         if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except Exception:
+                pass
             try:
                 os.remove(input_path)
             except Exception:

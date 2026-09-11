@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Conversion Studio | Localhost (Multilingual)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="relative flex flex-col min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+  <div class="glow-bg"></div>
+
+  <!-- Header -->
+  <header class="relative z-10 border-b border-slate-800/80 bg-slate-950/40 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+            Conversion Studio
+            <span class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">Localhost</span>
+          </h1>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <div class="hidden sm:flex items-center space-x-2 text-xs text-indigo-300 bg-indigo-950/50 border border-indigo-500/30 px-3 py-1 rounded-full">
+          <span>🌐 100+ Languages (বাংলা, हिन्दी, العربية, etc.)</span>
+        </div>
+        <div class="flex items-center space-x-2 text-xs text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-3 py-1 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="font-medium">100% Ready</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="relative z-10 flex-1 max-w-6xl mx-auto px-6 py-10 w-full">
+    
+    <!-- Hero / Intro -->
+    <div class="text-center max-w-2xl mx-auto mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-3">
+        <span>✨ PDF &bull; Word &bull; Excel 4-Way High-Precision Converter</span>
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+        Convert Documents with <span class="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">100% Fidelity</span>
+      </h2>
+      <p class="text-slate-400 text-sm sm:text-base">
+        High-precision conversion with full support for <strong class="text-slate-200">Bangla (বাংলা)</strong>, Hindi, Arabic, English, Chinese, and 100+ languages.
+      </p>
+    </div>
+
+    <!-- Conversion Mode Selector (4 Options) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      
+      <!-- Option 1: PDF to Excel -->
+      <div data-mode="pdf-to-excel" class="mode-card active p-5 rounded-2xl flex flex-col justify-between">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-11 h-11 rounded-xl bg-emerald-950/80 border border-emerald-600/40 flex items-center justify-center text-emerald-400">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm1.8 14.5l-1.3-2.2-1.3 2.2h-1.5l2-3.2-1.9-3h1.5l1.2 2 1.2-2h1.5l-1.9 3 2 3.2h-1.4zM13 9V3.5L18.5 9H13z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">.xlsx</span>
+        </div>
+        <div>
+          <h3 class="text-white font-bold text-base mb-1">PDF to Excel</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Extracts all tables, numbers &amp; multilingual text into structured Excel sheets.</p>
+        </div>
+      </div>
+
+      <!-- Option 2: PDF to Word -->
+      <div data-mode="pdf-to-word" class="mode-card p-5 rounded-2xl flex flex-col justify-between">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-11 h-11 rounded-xl bg-blue-950/80 border border-blue-600/40 flex items-center justify-center text-blue-400">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm2 14.5h-1.3l-1.2-3.8-1.2 3.8H11l-1.7-6.2h1.4l1.1 4.3 1.2-4.3h1.1l1.2 4.3 1.1-4.3h1.4l-1.8 6.2zM13 9V3.5L18.5 9H13z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold px-2 py-1 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20">.docx</span>
+        </div>
+        <div>
+          <h3 class="text-white font-bold text-base mb-1">PDF to Word</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Preserves fonts, paragraphs, Bangla conjuncts, tables &amp; images in Word format.</p>
+        </div>
+      </div>
+
+      <!-- Option 3: Word to PDF -->
+      <div data-mode="word-to-pdf" class="mode-card p-5 rounded-2xl flex flex-col justify-between">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-11 h-11 rounded-xl bg-rose-950/80 border border-rose-600/40 flex items-center justify-center text-rose-400">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 12.5a2.5 2.5 0 0 1-5 0V11a2.5 2.5 0 0 1 5 0v3.5zm0-2.5V11a1.5 1.5 0 0 0-3 0v1h3zM13 9V3.5L18.5 9H13z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold px-2 py-1 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/20">.pdf</span>
+        </div>
+        <div>
+          <h3 class="text-white font-bold text-base mb-1">Word to PDF</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Converts .docx/.doc to high-res PDF with perfect multilingual typography.</p>
+        </div>
+      </div>
+
+      <!-- Option 4: Excel to PDF -->
+      <div data-mode="excel-to-pdf" class="mode-card p-5 rounded-2xl flex flex-col justify-between">
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-11 h-11 rounded-xl bg-amber-950/80 border border-amber-600/40 flex items-center justify-center text-amber-400">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm4-4H6v-2h10v2zm0-4H6V7h10v2z"/>
+            </svg>
+          </div>
+          <span class="text-xs font-semibold px-2 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20">.pdf</span>
+        </div>
+        <div>
+          <h3 class="text-white font-bold text-base mb-1">Excel to PDF</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">Converts .xlsx/.xls spreadsheets, multi-sheets &amp; data matrices to clean PDF.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Main Workspace Card -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 mb-8">
+      
+      <!-- Upload Drop Zone -->
+      <div id="drop-zone" class="drop-zone rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center justify-center bg-slate-900/40 relative">
+        <input type="file" id="file-input" class="hidden" accept=".pdf">
+        
+        <div class="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 shadow-inner">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+        </div>
+        
+        <p class="text-base font-semibold text-white mb-1">Drag and drop your document here</p>
+        <p class="text-xs text-slate-400 mb-4">or <span class="text-indigo-400 underline font-medium cursor-pointer">browse from your computer</span></p>
+        
+        <div class="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+          <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">PDF</span>
+          <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">DOCX</span>
+          <span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700">XLSX</span>
+          <span class="px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/60">Multilingual</span>
+        </div>
+      </div>
+
+      <!-- Selected File Details Card -->
+      <div id="file-details" class="hidden mt-6 p-4 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-between">
+        <div class="flex items-center space-x-3.5 truncate">
+          <div id="file-icon" class="shrink-0">
+            <!-- Dynamic SVG icon -->
+          </div>
+          <div class="truncate">
+            <div id="file-name" class="text-sm font-bold text-white truncate">document.pdf</div>
+            <div id="file-size" class="text-xs text-slate-400">1.2 MB</div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button id="remove-file-btn" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-700 rounded-xl transition" title="Remove file">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar & Status -->
+      <div id="progress-container" class="hidden mt-6">
+        <div class="flex justify-between text-xs font-semibold mb-2">
+          <span id="progress-text" class="text-indigo-300">Processing...</span>
+          <span class="text-slate-400 animate-pulse">Multilingual Engine Active</span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+          <div id="progress-bar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 rounded-full transition-all duration-300 w-0"></div>
+        </div>
+      </div>
+
+      <div id="status-message" class="hidden"></div>
+
+      <!-- Convert Button -->
+      <div class="mt-6 flex justify-end">
+        <button id="convert-btn" disabled class="btn-gradient w-full sm:w-auto px-8 py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>Convert Now (100% Done)</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Conversion History -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Recent Conversions
+        </h3>
+      </div>
+      <div id="history-list" class="space-y-3">
+        <div class="text-center text-gray-500 py-6 text-sm">No conversions yet. Completed downloads will appear here.</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="relative z-10 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+    <p>Localhost Document Conversion Studio &bull; 100% On-Device &bull; Multilingual &amp; Private</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

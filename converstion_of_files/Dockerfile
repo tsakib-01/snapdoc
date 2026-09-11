@@ -5,13 +5,14 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies & LibreOffice
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y -o Acquire::Retries=3 --no-install-recommends \
     build-essential \
-    libreoffice-writer \
-    libreoffice-calc \
+    libreoffice \
     fonts-dejavu-core \
-    fonts-liberation \
-    && rm -rf /var/lib/apt/lists/*
+    fonts-liberation && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

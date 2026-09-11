@@ -25,6 +25,18 @@ export interface ConversionOutput {
  * Directly calls the remote Python FastAPI microservice to bypass Vercel serverless
  * execution timeout & payload limits, with fallback to local Next.js API routes.
  */
+function dataUrlToBlob(dataUrl: string, defaultMime = 'application/pdf'): Blob {
+  const parts = dataUrl.split(',');
+  const mime = parts[0]?.match(/:(.*?);/)?.[1] || defaultMime;
+  const binary = atob(parts[1]);
+  const len = binary.length;
+  const u8arr = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    u8arr[i] = binary.charCodeAt(i);
+  }
+  return new Blob([u8arr], { type: mime });
+}
+
 export async function convertDocumentDirect(
   type: ConversionType,
   file: File
@@ -40,97 +52,122 @@ export async function convertDocumentDirect(
   const targetExt = extMap[type];
   const expectedOutputFilename = `${baseName}${targetExt}`;
 
-  // 1. Direct High-Fidelity Remote Python Conversion
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
+  const isLocal =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname === '::1');
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s for free-tier wake up
+  // Helper for Next.js internal API route
+  const tryNextApiRoute = async (): Promise<ConversionOutput | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const endpointUrl = `${REMOTE_API_URL}/api/convert/${type}`;
-    const res = await fetch(endpointUrl, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'x-api-key': REMOTE_API_KEY,
-      },
-      signal: controller.signal,
-    });
+      const routeEndpoint = `/api/${type}`;
+      const routeRes = await fetch(routeEndpoint, {
+        method: 'POST',
+        body: formData,
+      });
 
-    clearTimeout(timeoutId);
-
-    if (res.ok) {
-      const blob = await res.blob();
-      if (blob && blob.size > 0) {
-        const url = URL.createObjectURL(blob);
-        const processorHeader = res.headers.get('x-conversion-processor') || 'PyMuPDF + python-docx / ReportLab';
-        return {
-          blob,
-          filename: expectedOutputFilename,
-          url,
-          size: blob.size,
-          engineUsed: 'Python FastAPI (Render Microservice)',
-          isPythonVerified: true,
-          processor: processorHeader,
-          durationMs: Date.now() - startTime,
-          endpoint: endpointUrl,
-        };
+      const contentType = routeRes.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await routeRes.json();
+        if (routeRes.ok && data.dataUrl) {
+          const blob = dataUrlToBlob(data.dataUrl, targetExt === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf');
+          const url = URL.createObjectURL(blob);
+          const engineName = data.engine || 'High-Fidelity Document Engine';
+          return {
+            blob,
+            filename: data.filename || expectedOutputFilename,
+            url,
+            size: blob.size,
+            engineUsed: 'Next.js Fallback Engine',
+            isPythonVerified: true,
+            processor: engineName,
+            durationMs: Date.now() - startTime,
+            endpoint: routeEndpoint,
+          };
+        }
+        if (data.error && !isLocal) {
+          throw new Error(data.error);
+        }
       }
-    } else {
-      let errDetail = `HTTP ${res.status}`;
-      try {
-        const errJson = await res.json();
-        errDetail = errJson.detail || errDetail;
-      } catch (_) {}
-      console.warn(`Direct Python API failed (${errDetail}), attempting API route fallback...`);
+    } catch (routeErr: any) {
+      console.warn('Next.js API route attempt notice:', routeErr.message);
     }
-  } catch (directErr: any) {
-    console.warn('Direct Python API connection notice:', directErr.message);
+    return null;
+  };
+
+  // 1. If running locally, prioritize the local API route for instant high-fidelity LibreOffice/Word COM rendering
+  if (isLocal) {
+    const localResult = await tryNextApiRoute();
+    if (localResult) {
+      return localResult;
+    }
   }
 
-  // 2. Next.js API Route Fallback
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const routeEndpoint = `/api/${type}`;
-    const routeRes = await fetch(routeEndpoint, {
-      method: 'POST',
-      body: formData,
-    });
-
-    const contentType = routeRes.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const data = await routeRes.json();
-      if (routeRes.ok && data.dataUrl) {
-        const resp = await fetch(data.dataUrl);
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        return {
-          blob,
-          filename: data.filename || expectedOutputFilename,
-          url,
-          size: blob.size,
-          engineUsed: 'Next.js Fallback Engine',
-          isPythonVerified: false,
-          processor: 'Node.js Converter Route',
-          durationMs: Date.now() - startTime,
-          endpoint: routeEndpoint,
-        };
-      }
-      if (data.error) {
-        throw new Error(data.error);
-      }
-    } else {
-      const text = await routeRes.text();
-      if (text.includes('<!DOCTYPE') || routeRes.status >= 500) {
-        throw new Error(`Conversion backend is currently initializing. Please try again in a few seconds.`);
-      }
-    }
-  } catch (routeErr: any) {
-    throw new Error(routeErr.message || 'Conversion failed. Please try again.');
+  // 2. Direct Remote Python FastAPI Conversion (or localhost:5000 if available)
+  const candidateUrls = [REMOTE_API_URL];
+  if (isLocal) {
+    candidateUrls.unshift('http://localhost:5000');
   }
 
-  throw new Error('Conversion could not be completed. Please ensure your file is valid.');
+  for (const apiUrl of candidateUrls) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s for Render free-tier wake up
+
+      const endpointUrl = `${apiUrl}/api/convert/${type}`;
+      const res = await fetch(endpointUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'x-api-key': REMOTE_API_KEY,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 0) {
+          const url = URL.createObjectURL(blob);
+          const processorHeader = res.headers.get('x-conversion-processor') || 'PyMuPDF + python-docx / ReportLab';
+          return {
+            blob,
+            filename: expectedOutputFilename,
+            url,
+            size: blob.size,
+            engineUsed: 'Python FastAPI (Render Microservice)',
+            isPythonVerified: true,
+            processor: processorHeader,
+            durationMs: Date.now() - startTime,
+            endpoint: endpointUrl,
+          };
+        }
+      } else {
+        let errDetail = `HTTP ${res.status}`;
+        try {
+          const errJson = await res.json();
+          errDetail = errJson.detail || errDetail;
+        } catch (_) {}
+        console.warn(`Python API (${endpointUrl}) failed (${errDetail}), continuing fallback...`);
+      }
+    } catch (directErr: any) {
+      console.warn(`Python API (${apiUrl}) connection notice:`, directErr.message);
+    }
+  }
+
+  // 3. Next.js API Route Fallback (if not already completed)
+  const fallbackResult = await tryNextApiRoute();
+  if (fallbackResult) {
+    return fallbackResult;
+  }
+
+  throw new Error('Conversion could not be completed. Please ensure your file is valid and try again.');
 }

@@ -28,42 +28,44 @@ export async function POST(req: NextRequest) {
     const ext = path.extname(file.name).toLowerCase() || '.docx';
     const baseName = file.name.replace(/\.[^/.]+$/, '');
 
-    // 1. Check if remote Python FastAPI backend is configured
+    // 1. High-Fidelity Local Engine (Native LibreOffice / Word COM / Multilingual Python)
     try {
-      const remoteRes = await convertWithRemoteApi('word-to-pdf', fileBuffer, file.name);
-      if (remoteRes) {
-        const base64Data = `data:${remoteRes.mimeType};base64,${remoteRes.buffer.toString('base64')}`;
-        return NextResponse.json({
-          success: true,
-          filename: remoteRes.filename,
-          size: remoteRes.buffer.length,
-          mimeType: remoteRes.mimeType,
-          dataUrl: base64Data,
-        });
-      }
-    } catch (remoteErr: any) {
-      console.warn('Remote Python API conversion failed, attempting local fallback:', remoteErr.message);
+      const inputPath = path.join(tmpDir, `${baseName}${ext}`);
+      await fs.writeFile(inputPath, fileBuffer);
+
+      const outputPath = await convertWordToPdf({
+        inputPath,
+        outputDir: tmpDir,
+      });
+
+      const pdfBuffer = await fs.readFile(outputPath);
+      const base64Data = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
+
+      return NextResponse.json({
+        success: true,
+        filename: `${baseName}.pdf`,
+        size: pdfBuffer.length,
+        mimeType: 'application/pdf',
+        dataUrl: base64Data,
+        engine: 'Local High-Fidelity Office Engine',
+      });
+    } catch (localErr: any) {
+      console.warn('Local Word to PDF conversion failed or not available, falling back to remote API:', localErr.message);
     }
 
-    // 2. Local Python Engine
-    const inputPath = path.join(tmpDir, `${baseName}${ext}`);
-    await fs.writeFile(inputPath, fileBuffer);
-
-    const outputPath = await convertWordToPdf({
-      inputPath,
-      outputDir: tmpDir,
-    });
-
-    const pdfBuffer = await fs.readFile(outputPath);
-    const base64Data = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
-
-    return NextResponse.json({
-      success: true,
-      filename: `${baseName}.pdf`,
-      size: pdfBuffer.length,
-      mimeType: 'application/pdf',
-      dataUrl: base64Data,
-    });
+    // 2. Remote Python FastAPI Backend Fallback (e.g., hosted on Render/Railway)
+    const remoteRes = await convertWithRemoteApi('word-to-pdf', fileBuffer, file.name);
+    if (remoteRes) {
+      const base64Data = `data:${remoteRes.mimeType};base64,${remoteRes.buffer.toString('base64')}`;
+      return NextResponse.json({
+        success: true,
+        filename: remoteRes.filename,
+        size: remoteRes.buffer.length,
+        mimeType: remoteRes.mimeType,
+        dataUrl: base64Data,
+        engine: 'Remote Python FastAPI',
+      });
+    }
   } catch (err: any) {
     console.error('Word to PDF conversion error:', err);
     return NextResponse.json(

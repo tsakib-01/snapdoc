@@ -34,57 +34,51 @@ ALIGN_MAP = {
 
 def _convert_with_libreoffice(docx_path: str, output_pdf_path: str) -> bool:
     """
-    Attempts conversion using LibreOffice headless command line with isolated profile.
+    Attempts conversion using LibreOffice headless command line.
     This provides 100% exact, pixel-perfect Word to PDF fidelity.
     """
-    import shutil
-    import tempfile
-    
     soffice_paths = [
+        r"C:\Program Files\LibreOffice\program\soffice.com",
+        r"C:\Program Files (x86)\LibreOffice\program\soffice.com",
+        "soffice.com",
         "soffice",
         "libreoffice",
         "/usr/bin/soffice",
         "/usr/bin/libreoffice",
         "/usr/local/bin/soffice",
         "/usr/local/bin/libreoffice",
-        r"C:\Program Files\LibreOffice\program\soffice.exe",
-        r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
     ]
     out_dir = os.path.dirname(os.path.abspath(output_pdf_path))
-    profile_dir = tempfile.mkdtemp(prefix="lo_profile_")
     
-    try:
-        profile_url = "file:///" + profile_dir.replace("\\", "/").lstrip("/")
-        for soffice in soffice_paths:
-            try:
-                cmd = [
-                    soffice,
-                    "--headless",
-                    "--invisible",
-                    "--nologo",
-                    "--nodefault",
-                    "--nofirststartwizard",
-                    f"-env:UserInstallation={profile_url}",
-                    "--convert-to",
-                    "pdf",
-                    "--outdir",
-                    out_dir,
-                    docx_path
-                ]
-                res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45)
-                if res.returncode == 0:
-                    base_name = os.path.splitext(os.path.basename(docx_path))[0] + ".pdf"
-                    generated_pdf = os.path.join(out_dir, base_name)
-                    if os.path.exists(generated_pdf):
-                        if os.path.abspath(generated_pdf) != os.path.abspath(output_pdf_path):
-                            if os.path.exists(output_pdf_path):
-                                os.remove(output_pdf_path)
-                            os.rename(generated_pdf, output_pdf_path)
-                        return True
-            except Exception:
-                continue
-    finally:
-        shutil.rmtree(profile_dir, ignore_errors=True)
+    for soffice in soffice_paths:
+        if os.path.isabs(soffice) and not os.path.exists(soffice):
+            continue
+        try:
+            cmd = [
+                soffice,
+                "--headless",
+                "--invisible",
+                "--nologo",
+                "--nodefault",
+                "--norestore",
+                "--convert-to",
+                "pdf",
+                "--outdir",
+                out_dir,
+                docx_path
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=35)
+            if res.returncode == 0:
+                base_name = os.path.splitext(os.path.basename(docx_path))[0] + ".pdf"
+                generated_pdf = os.path.join(out_dir, base_name)
+                if os.path.exists(generated_pdf):
+                    if os.path.abspath(generated_pdf) != os.path.abspath(output_pdf_path):
+                        if os.path.exists(output_pdf_path):
+                            os.remove(output_pdf_path)
+                        os.rename(generated_pdf, output_pdf_path)
+                    return True
+        except Exception:
+            continue
     return False
 
 def _convert_with_docx2pdf(docx_path: str, output_pdf_path: str) -> bool:
@@ -157,7 +151,9 @@ def _extract_paragraph_items(p: DocxParagraph, doc_part):
         is_italic = bool(r.italic)
         is_underline = bool(r.underline)
 
-        resolved_font = resolve_reportlab_font(run_font_name or "Segoe UI", is_bold=is_bold, is_italic=is_italic)
+        script_info = get_best_font_for_script(clean_text, preferred_font=run_font_name)
+        chosen_font = script_info.get("ascii") if script_info.get("is_complex") else (run_font_name or "Segoe UI")
+        resolved_font = resolve_reportlab_font(chosen_font, is_bold=is_bold, is_italic=is_italic)
         font_attrs = [f'name="{resolved_font}"']
 
         if r.font and r.font.size:
@@ -310,10 +306,13 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                             font_size = 10.5
                             leading = 13.5
 
+                        para_script = get_best_font_for_script(html_text)
+                        default_para_font = resolve_reportlab_font(para_script["ascii"] if para_script.get("is_complex") else "Segoe UI", is_bold=False)
+
                         p_style = ParagraphStyle(
                             f'P_{len(story)}',
                             parent=styles['Normal'],
-                            fontName=resolve_reportlab_font("Segoe UI", is_bold=False),
+                            fontName=default_para_font,
                             fontSize=font_size,
                             leading=leading,
                             alignment=align,
@@ -372,10 +371,12 @@ def _convert_with_python_reportlab(docx_path: str, output_pdf_path: str) -> bool
                             for it in p_items:
                                 if it[0] == 'text':
                                     c_html = it[1]
+                                    c_script = get_best_font_for_script(c_html)
+                                    c_font = resolve_reportlab_font(c_script["ascii"] if c_script.get("is_complex") else "Segoe UI", is_bold=False)
                                     c_style = ParagraphStyle(
                                         f'Cell_{len(table_data)}_{c_idx}_{len(cell_items)}',
                                         parent=styles['Normal'],
-                                        fontName=resolve_reportlab_font("Segoe UI", is_bold=False),
+                                        fontName=c_font,
                                         fontSize=10,
                                         leading=13,
                                         alignment=c_align,

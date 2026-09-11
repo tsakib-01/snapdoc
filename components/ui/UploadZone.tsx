@@ -60,25 +60,6 @@ export default function UploadZone({
           setErrorMessage(`"${f.name}" is not a valid PDF file. Please upload PDF files only.`);
           return;
         }
-      } else if (accept.includes('docx') || accept.includes('.doc')) {
-        const isWord =
-          /\.(docx|doc|rtf)$/i.test(f.name) ||
-          f.type.includes('word') ||
-          f.type.includes('rtf');
-        if (!isWord) {
-          setErrorMessage(`"${f.name}" is not a supported Word document (.docx, .doc, .rtf).`);
-          return;
-        }
-      } else if (accept.includes('xlsx') || accept.includes('.xls') || accept.includes('csv')) {
-        const isExcel =
-          /\.(xlsx|xls|csv)$/i.test(f.name) ||
-          f.type.includes('sheet') ||
-          f.type.includes('excel') ||
-          f.type.includes('csv');
-        if (!isExcel) {
-          setErrorMessage(`"${f.name}" is not a supported spreadsheet (.xlsx, .xls, .csv).`);
-          return;
-        }
       } else if (accept.includes('image')) {
         const isImg =
           f.type.startsWith('image/') ||
@@ -161,13 +142,7 @@ export default function UploadZone({
             Choose File{multiple ? 's' : ''}
           </span>
           <span className="text-[10px] sm:text-[11px] text-base-content/50 px-2 py-1 bg-base-200 rounded-lg">
-            {accept.includes('pdf')
-              ? 'PDF up to 100MB'
-              : accept.includes('docx') || accept.includes('.doc')
-              ? 'Word (.docx, .doc) up to 50MB'
-              : accept.includes('xlsx') || accept.includes('.xls') || accept.includes('csv')
-              ? 'Excel (.xlsx, .xls, .csv) up to 50MB'
-              : 'JPG, PNG, WebP up to 50MB'}
+            {accept.includes('pdf') ? 'PDF up to 100MB' : 'JPG, PNG, WebP up to 50MB'}
           </span>
         </div>
       </div>

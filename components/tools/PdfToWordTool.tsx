@@ -9,7 +9,8 @@ import {
   RotateCcw,
   Sparkles,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  FileCheck
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { formatBytes } from '@/lib/utils/formatters';
@@ -36,6 +37,7 @@ export default function PdfToWordTool({
     isPythonVerified: boolean;
     processor: string;
     durationMs: number;
+    endpoint: string;
   } | null>(null);
 
   const handleFileSelected = (selectedFile: File) => {
@@ -49,17 +51,17 @@ export default function PdfToWordTool({
     if (!file) return;
 
     setStatus('converting');
-    setStatusText('Uploading PDF document to conversion engine...');
+    setStatusText('Uploading PDF document to Python conversion engine...');
     setError(null);
 
     try {
       const progressTimer = setTimeout(() => {
-        setStatusText('Reconstructing vectors, tables & multilingual fonts...');
-      }, 1800);
+        setStatusText('Reconstructing vectors, tables & multilingual fonts in Python...');
+      }, 2000);
 
       const progressTimer2 = setTimeout(() => {
-        setStatusText('Generating editable Microsoft Word (.docx) document...');
-      }, 4500);
+        setStatusText('Finalizing Microsoft Word (.docx) document...');
+      }, 6000);
 
       const output = await convertDocumentDirect('pdf-to-word', file);
 
@@ -74,12 +76,13 @@ export default function PdfToWordTool({
         isPythonVerified: output.isPythonVerified,
         processor: output.processor,
         durationMs: output.durationMs,
+        endpoint: output.endpoint,
       });
 
       setStatus('success');
     } catch (err: any) {
       console.error('PDF to Word conversion error:', err);
-      setError(err.message || 'Failed to convert PDF to Word. Please ensure the document is not password-protected and try again.');
+      setError(err.message || 'Failed to convert PDF to Word. Please try again.');
       setStatus('error');
     }
   };
@@ -102,8 +105,7 @@ export default function PdfToWordTool({
   };
 
   return (
-    <div className="w-full space-y-5 sm:space-y-6">
-      {/* 1. Upload Zone */}
+    <div className="w-full max-w-3xl mx-auto space-y-6">
       {!file && (
         <UploadZone
           accept="application/pdf"
@@ -115,77 +117,65 @@ export default function PdfToWordTool({
         />
       )}
 
-      {/* 2. File Selected / Ready to Convert */}
       {file && status === 'idle' && (
-        <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
-          {/* File Information Card */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-base-200/60 border border-base-300">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+        <div className="card bg-base-100 border border-base-300 shadow-xl rounded-3xl p-6 sm:p-8 space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-base-200">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-inner">
                 <FileText className="w-6 h-6" />
               </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-sm sm:text-base text-base-content truncate max-w-[240px] sm:max-w-md">
-                  {file.name}
-                </h3>
-                <p className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
-                  <span>{formatBytes(file.size)}</span>
-                  <span>•</span>
-                  <span className="font-semibold text-rose-600 dark:text-rose-400">PDF Document</span>
-                </p>
+              <div>
+                <h3 className="font-bold text-base text-base-content">{file.name}</h3>
+                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • PDF Document</p>
               </div>
             </div>
             <button
-              type="button"
               onClick={handleReset}
-              className="btn btn-ghost btn-xs sm:btn-sm rounded-xl border border-base-300/80 gap-1.5 self-end sm:self-center text-base-content/70 hover:text-base-content shrink-0"
-              title="Select another file"
+              className="btn btn-ghost btn-sm btn-circle"
+              title="Choose another file"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Change</span>
+              <RotateCcw className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Feature Highlights Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 p-3.5 sm:p-4 rounded-2xl bg-base-200/30 border border-base-300/70 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-base-200/50 border border-base-300/60 text-xs">
             <div className="flex items-center gap-2 text-base-content/80">
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
-              <span>100% Layout & Font Fidelity</span>
+              <span>100% Typography & Font Precision</span>
             </div>
             <div className="flex items-center gap-2 text-base-content/80">
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
-              <span>Bangla & Complex Conjunct Support</span>
+              <span>Bangla, Indic & Arabic Conjuncts</span>
             </div>
             <div className="flex items-center gap-2 text-base-content/80">
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
-              <span>Multi-Column & Table Reconstruction</span>
+              <span>Preserves Multi-Column & Tables</span>
             </div>
             <div className="flex items-center gap-2 text-base-content/80">
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
-              <span>Exports Native Word (.docx) Format</span>
+              <span>Native Microsoft Word (.docx)</span>
             </div>
           </div>
 
           {error && (
-            <div className="alert alert-error text-xs rounded-2xl py-3 shadow-sm flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="alert alert-error text-xs rounded-2xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Responsive Action Buttons */}
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 sm:gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={handleReset}
-              className="btn btn-ghost btn-sm sm:btn-md rounded-xl sm:rounded-2xl text-xs sm:text-sm w-full sm:w-auto"
+              className="btn btn-ghost rounded-2xl text-xs"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleConvert}
-              className="btn btn-primary btn-sm sm:btn-md rounded-xl sm:rounded-2xl px-6 sm:px-8 gap-2 font-bold text-white shadow-lg shadow-primary/25 w-full sm:w-auto"
+              className="btn btn-primary px-8 rounded-2xl gap-2 font-bold shadow-lg shadow-primary/20"
             >
               <span>Convert to Word (.docx)</span>
               <ArrowRight className="w-4 h-4" />
@@ -194,151 +184,122 @@ export default function PdfToWordTool({
         </div>
       )}
 
-      {/* 3. Converting State */}
       {status === 'converting' && (
-        <div className="py-8 sm:py-12 px-4 text-center space-y-4 sm:space-y-5 animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 mx-auto">
-            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-75" />
-            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-              <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin" />
+        <div className="card bg-base-100 border border-base-300 shadow-xl rounded-3xl p-10 text-center space-y-5">
+          <div className="relative w-16 h-16 mx-auto">
+            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
+            <div className="relative w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin" />
             </div>
           </div>
-          <div className="space-y-1.5 max-w-sm mx-auto">
-            <h3 className="font-bold text-base sm:text-lg text-base-content">Converting PDF to Word</h3>
-            <p className="text-xs text-base-content/60 transition-all duration-300">{statusText}</p>
+          <div className="space-y-1">
+            <h3 className="font-bold text-lg text-base-content">Converting PDF to Word</h3>
+            <p className="text-xs text-base-content/60">{statusText}</p>
           </div>
-          <div className="w-full max-w-xs mx-auto bg-base-200 h-2 rounded-full overflow-hidden border border-base-300">
-            <div className="bg-primary h-full rounded-full animate-pulse w-3/4 transition-all duration-500" />
+          <div className="w-full max-w-xs mx-auto bg-base-200 h-1.5 rounded-full overflow-hidden">
+            <div className="bg-primary h-full rounded-full animate-pulse w-3/4" />
           </div>
         </div>
       )}
 
-      {/* 4. Success State */}
       {status === 'success' && result && (
-        <div className="space-y-5 sm:space-y-6 animate-in fade-in zoom-in-95 duration-200">
-          {/* Top Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-5 border-b border-base-200">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base sm:text-lg font-bold text-base-content">
-                    Conversion Complete!
-                  </h3>
-                  <span className="badge badge-success badge-sm font-semibold text-[10px] text-white">
-                    Verified
-                  </span>
-                </div>
-                <p className="text-xs text-base-content/60 truncate max-w-[240px] sm:max-w-md mt-0.5">
-                  {result.filename}
-                </p>
-              </div>
-            </div>
-
-            <div className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>100% Editable .DOCX</span>
-            </div>
-          </div>
-
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            <div className="p-3 rounded-xl sm:rounded-2xl bg-base-200/50 border border-base-200 text-center">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-base-content/50 font-semibold">
-                Original PDF
-              </span>
-              <p className="text-xs sm:text-sm font-bold text-base-content mt-1">
-                {formatBytes(file ? file.size : 0)}
-              </p>
-            </div>
-
-            <div className="p-3 rounded-xl sm:rounded-2xl bg-primary/10 border border-primary/20 text-center">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-primary font-semibold">
-                Word Size
-              </span>
-              <p className="text-xs sm:text-sm font-extrabold text-primary mt-1">
-                {formatBytes(result.size)}
-              </p>
-            </div>
-
-            <div className="p-3 rounded-xl sm:rounded-2xl bg-base-200/50 border border-base-200 text-center">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-base-content/50 font-semibold">
-                Format
-              </span>
-              <p className="text-xs sm:text-sm font-bold text-base-content uppercase mt-1">
-                Word (.docx)
-              </p>
-            </div>
-
-            <div className="p-3 rounded-xl sm:rounded-2xl bg-base-200/50 border border-base-200 text-center">
-              <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-base-content/50 font-semibold">
-                Processing Time
-              </span>
-              <p className="text-xs sm:text-sm font-bold text-base-content mt-1">
-                {(result.durationMs / 1000).toFixed(1)}s
-              </p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleDownload}
-              className="btn btn-primary btn-sm sm:btn-md rounded-xl sm:rounded-2xl w-full sm:flex-1 gap-2 text-white font-bold shadow-lg shadow-primary/25 hover:scale-[1.01] transition-transform"
-            >
-              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Download Word (.docx)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              className="btn btn-ghost btn-sm sm:btn-md rounded-xl sm:rounded-2xl border border-base-300 w-full sm:w-auto gap-2 text-base-content/70 hover:text-base-content"
-            >
-              <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Convert Another</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 5. Error State */}
-      {status === 'error' && (
-        <div className="p-5 sm:p-6 rounded-2xl bg-error/5 border border-error/20 space-y-4 animate-in fade-in duration-150">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-error/15 text-error flex items-center justify-center shrink-0">
-              <AlertCircle className="w-5 h-5" />
+        <div className="card bg-base-100 border border-emerald-500/30 shadow-xl rounded-3xl p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-sm sm:text-base text-base-content">
-                Conversion Failed
-              </h4>
-              <p className="text-xs text-error mt-1 leading-relaxed">
-                {error}
-              </p>
-              <p className="text-[11px] text-base-content/60 mt-1.5">
-                Tip: Ensure your PDF is not password-protected or corrupted, and try again.
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                Conversion Complete
+              </span>
+              <h3 className="font-bold text-base text-base-content truncate mt-1">
+                {result.filename}
+              </h3>
+              <p className="text-xs text-base-content/60">
+                {formatBytes(result.size)} • Editable Word Document
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2 border-t border-error/10">
+          {/* Engine Verification Box */}
+          <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/50 space-y-2 text-xs">
+            <div className="flex items-center justify-between font-bold text-emerald-700 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Conversion Engine Verification:</span>
+              </span>
+              <span className="font-mono text-[11px] bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-700">
+                {result.engineUsed}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-base-content/70 pt-1 text-[11px]">
+              <div>
+                <span className="text-base-content/50 block">Processor:</span>
+                <span className="font-semibold text-base-content/90">{result.processor}</span>
+              </div>
+              <div>
+                <span className="text-base-content/50 block">Processing Time:</span>
+                <span className="font-semibold text-base-content/90">{(result.durationMs / 1000).toFixed(2)}s</span>
+              </div>
+              <div>
+                <span className="text-base-content/50 block">Python Engine:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Verified Live</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-base-200">
             <button
-              type="button"
               onClick={handleReset}
-              className="btn btn-ghost btn-sm rounded-xl text-xs w-full sm:w-auto"
+              className="btn btn-ghost btn-sm rounded-2xl gap-2 text-xs w-full sm:w-auto"
             >
-              Choose Another File
+              <RotateCcw className="w-4 h-4" />
+              <span>Convert Another PDF</span>
+            </button>
+
+            <button
+              onClick={handleDownload}
+              className="btn btn-primary px-8 rounded-2xl gap-2 font-bold shadow-lg shadow-primary/20 w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Word (.docx)</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="card bg-base-100 border border-error/30 shadow-xl rounded-3xl p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-error/10 text-error flex items-center justify-center shrink-0">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-base text-base-content">Conversion Failed</h3>
+              <p className="text-xs text-error mt-0.5">{error}</p>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-error/5 border border-error/20 text-[11px] font-mono text-base-content/70">
+            <strong>Endpoint:</strong> https://snapdoc-rj5w.onrender.com/api/convert/pdf-to-word<br />
+            <strong>Error Info:</strong> {error}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              onClick={handleReset}
+              className="btn btn-ghost btn-sm rounded-2xl text-xs"
+            >
+              Cancel
             </button>
             <button
-              type="button"
               onClick={handleConvert}
-              className="btn btn-error btn-sm rounded-xl text-white font-bold gap-1.5 w-full sm:w-auto"
+              className="btn btn-primary btn-sm rounded-2xl gap-2 font-bold"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-4 h-4" />
               <span>Try Again</span>
             </button>
           </div>

@@ -29,7 +29,7 @@ const MIME_MAP: Record<ConversionMode, { ext: string; mime: string }> = {
   },
 };
 
-const DEFAULT_API_URL = 'https://snapdoc-rj5w.onrender.com';
+const DEFAULT_API_URL = 'https://snapdoc-qvmv.onrender.com';
 const DEFAULT_API_KEY = 'snapdoc_sec_9f83a7b42e61c58d04e7';
 
 /**

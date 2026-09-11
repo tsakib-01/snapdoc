@@ -7,13 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libreoffice-writer \
     libreoffice-calc \
-    default-jre-headless \
-    fonts-kalpurush \
+    libreoffice-nogui \
     fonts-noto-core \
-    fonts-noto-extra \
     fonts-noto-cjk \
     fonts-freefont-ttf \
-    fonts-dejavu \
+    fonts-dejavu-core \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 

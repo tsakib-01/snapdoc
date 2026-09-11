@@ -1,16 +1,14 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bullseye
 
 WORKDIR /app
 
-# Install system dependencies & LibreOffice for exact Word/Excel/PDF rendering
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies & LibreOffice
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libreoffice-writer \
     libreoffice-calc \
-    libreoffice-nogui \
-    fonts-noto-core \
-    fonts-noto-cjk \
-    fonts-freefont-ttf \
     fonts-dejavu-core \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*

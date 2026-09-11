@@ -8,7 +8,14 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from PIL import Image
 
-from .multilingual_helper import normalize_multilingual_text, clean_pdf_font_name
+import unicodedata
+
+def _clean_text(text: str) -> str:
+    """Clean standard text and numbers, preserving English characters without Bangla/Bijoy mutations."""
+    if not text:
+        return ""
+    normalized = unicodedata.normalize('NFC', str(text))
+    return "".join(ch for ch in normalized if ch == '\n' or ch == '\t' or ch >= ' ').strip()
 
 def _rgb_to_hex(r: int, g: int, b: int) -> str:
     return f"{r:02X}{g:02X}{b:02X}"
@@ -216,7 +223,7 @@ def convert_pdf_to_excel(pdf_path: str, output_excel_path: str) -> str:
                     else:
                         title_align = "left"
 
-                    clean_title = normalize_multilingual_text(b_text)
+                    clean_title = _clean_text(b_text)
                     
                     if title_align == "center" and num_cols > 1:
                         ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=num_cols)
@@ -238,7 +245,7 @@ def convert_pdf_to_excel(pdf_path: str, output_excel_path: str) -> str:
 
                     for c_idx in range(num_cols):
                         cell_val_raw = row_data[c_idx] if c_idx < len(row_data) else ""
-                        cell_val = normalize_multilingual_text(str(cell_val_raw or "").strip())
+                        cell_val = _clean_text(str(cell_val_raw or "").strip())
                         
                         cell_bbox = row_obj.cells[c_idx] if (c_idx < len(row_obj.cells) and row_obj.cells[c_idx]) else row_obj.bbox
                         if not cell_bbox:
@@ -307,7 +314,7 @@ def convert_pdf_to_excel(pdf_path: str, output_excel_path: str) -> str:
                     for r_idx, row in enumerate(tbl_data):
                         is_header = (r_idx == 0)
                         for c_idx in range(num_cols):
-                            val = normalize_multilingual_text(str(row[c_idx] if c_idx < len(row) and row[c_idx] else "").strip())
+                            val = _clean_text(str(row[c_idx] if c_idx < len(row) and row[c_idx] else "").strip())
                             c = ws.cell(row=current_row, column=c_idx + 1, value=val)
                             c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
                             c.font = Font(name="Segoe UI", size=10.5 if is_header else 10, bold=is_header)
@@ -317,13 +324,13 @@ def convert_pdf_to_excel(pdf_path: str, output_excel_path: str) -> str:
                 for b in text_blocks:
                     b_text = "".join(s.get("text", "") for l in b.get("lines", []) for s in l.get("spans", [])).strip()
                     if b_text:
-                        ws.cell(row=current_row, column=1, value=normalize_multilingual_text(b_text))
+                        ws.cell(row=current_row, column=1, value=_clean_text(b_text))
                         current_row += 1
         else:
             for b in text_blocks:
                 b_text = "".join(s.get("text", "") for l in b.get("lines", []) for s in l.get("spans", [])).strip()
                 if b_text:
-                    ws.cell(row=current_row, column=1, value=normalize_multilingual_text(b_text))
+                    ws.cell(row=current_row, column=1, value=_clean_text(b_text))
                     current_row += 1
 
         # Adjust column widths automatically

@@ -109,7 +109,8 @@ export default function CompressPdfTool() {
         ? Math.max(5, parseFloat((((originalSize - finalSize) / originalSize) * 100).toFixed(1)))
         : 0;
 
-      const base64Data = `data:application/pdf;base64,${Buffer.from(finalBytes).toString('base64')}`;
+      const downloadBlob = new Blob([finalBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(downloadBlob);
 
       setResult({
         success: true,
@@ -118,7 +119,7 @@ export default function CompressPdfTool() {
         compressedSize: finalSize,
         reductionPercentage,
         pageCount: totalPages,
-        dataUrl: base64Data,
+        dataUrl: downloadUrl,
       });
     } catch (err: any) {
       console.error(err);

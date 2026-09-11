@@ -6,11 +6,22 @@ import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 
-export default function AiPdfTool() {
+interface AiPdfToolProps {
+  defaultTab?: 'summary' | 'chat' | 'quiz';
+}
+
+const STOP_WORDS = new Set([
+  'the', 'is', 'at', 'which', 'on', 'a', 'an', 'and', 'or', 'in', 'with',
+  'that', 'this', 'to', 'from', 'by', 'for', 'about', 'what', 'when',
+  'where', 'who', 'how', 'why', 'does', 'did', 'have', 'has', 'had',
+  'will', 'would', 'can', 'could', 'should', 'been', 'there', 'their'
+]);
+
+export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
   const [file, setFile] = useState<File | null>(null);
   const [extractedText, setExtractedText] = useState<string>('');
   const [processing, setProcessing] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'summary' | 'chat' | 'quiz'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'chat' | 'quiz'>(defaultTab);
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([]);
   const [inputQuestion, setInputQuestion] = useState<string>('');
   const [summary, setSummary] = useState<{
@@ -26,7 +37,7 @@ export default function AiPdfTool() {
 
     try {
       const { extractedText: pageTexts } = await extractPdfThumbnails(selectedFile);
-      const fullText = (pageTexts || []).join('\n\n').trim();
+      const fullText = (pageTexts || []).filter(Boolean).join('\n\n').trim();
       setExtractedText(fullText);
 
       // Generate structured summary from document
@@ -39,23 +50,40 @@ export default function AiPdfTool() {
   };
 
   const generateSummary = (text: string, filename: string) => {
-    const sentences = text
-      .split(/(?<=[.?!])\s+/)
-      .filter((s) => s.length > 20 && s.length < 250);
+    // Split into sentences, or clean chunks if punctuation is sparse
+    let sentences = text
+      .split(/(?<=[.?!])\s+|\n+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 25);
+
+    if (sentences.length === 0) {
+      // Fallback: chunk into 150-char blocks
+      const words = text.split(/\s+/);
+      for (let i = 0; i < words.length; i += 20) {
+        sentences.push(words.slice(i, i + 20).join(' '));
+      }
+    }
 
     const overview =
       sentences.slice(0, 3).join(' ') ||
-      `This document (${filename}) contains text and structured information ready for analysis.`;
+      `This document (${filename}) contains ${text.length > 0 ? text.length + ' characters of text' : 'scanned or visual pages'} ready for interactive exploration and inquiry.`;
 
     const keyPoints =
       sentences.length > 3
         ? sentences.slice(3, 8)
-        : ['Full text extracted and ready for querying in the AI chat tab.'];
+        : [
+            sentences[0] || 'Text extracted successfully.',
+            'Ready to answer specific queries, clauses, or figures.',
+            'In-memory contextual analysis without cloud retention.'
+          ];
 
     const actionItems =
       sentences.length > 8
-        ? sentences.slice(8, 11)
-        : ['Review document details and verify extracted sections.'];
+        ? sentences.slice(8, 12)
+        : [
+            'Review highlighted sections and key statements.',
+            'Ask targeted questions in the Chat tab for specific topics.'
+          ];
 
     setSummary({
       overview,
@@ -64,8 +92,8 @@ export default function AiPdfTool() {
     });
 
     // Generate quick Q&A quiz
-    const generatedQuiz = sentences.slice(0, 5).map((s, idx) => ({
-      question: `Key Concept #${idx + 1}: What does the document state regarding "${s.split(' ').slice(0, 4).join(' ')}..."?`,
+    const generatedQuiz = sentences.slice(0, 4).map((s, idx) => ({
+      question: `Key Concept #${idx + 1}: What does the document state regarding "${s.split(' ').slice(0, 5).join(' ')}..."?`,
       answer: s,
     }));
 
@@ -74,36 +102,69 @@ export default function AiPdfTool() {
     setMessages([
       {
         role: 'assistant',
-        text: `Hello! I have analyzed "${filename}". Ask me any question about the contents of this document!`,
+        text: `Hello! I've loaded "${filename}". What would you like to know or find in this document?`,
       },
     ]);
   };
 
-  const handleSendMessage = () => {
-    if (!inputQuestion.trim()) return;
+  const sendQuery = (queryText: string) => {
+    if (!queryText.trim()) return;
 
-    const userQ = inputQuestion.trim().toLowerCase();
-    const newMsgs = [...messages, { role: 'user' as const, text: inputQuestion.trim() }];
+    const userQ = queryText.trim();
+    const newMsgs = [...messages, { role: 'user' as const, text: userQ }];
     setMessages(newMsgs);
     setInputQuestion('');
 
-    // Client-side instant semantic match
     setTimeout(() => {
-      const paragraphs = extractedText.split(/\n\n+/);
-      const matches = paragraphs.filter((p) => {
-        const words = userQ.split(/\s+/).filter((w) => w.length > 3);
-        return words.some((w) => p.toLowerCase().includes(w));
-      });
+      // 1. Check for general summary requests
+      const lower = userQ.toLowerCase();
+      if (/summary|summarize|overview|about|what is this/i.test(lower)) {
+        const reply = `Here is a summary of the document:\n\n${summary?.overview}\n\n• Key Point: ${summary?.keyPoints[0] || 'See full summary tab.'}`;
+        setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
+        return;
+      }
+
+      // 2. Keyword relevance scoring across chunks/paragraphs
+      const keywords = lower
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+
+      // Break text into paragraphs or blocks of 3 sentences
+      const chunks = extractedText.split(/\n\s*\n+|\n{2,}/).filter((p) => p.trim().length > 20);
+      const textChunks = chunks.length > 0 ? chunks : extractedText.split(/(?<=[.?!])\s+/);
+
+      let bestChunk = '';
+      let highestScore = 0;
+
+      for (const chunk of textChunks) {
+        const chunkLower = chunk.toLowerCase();
+        let score = 0;
+        for (const kw of keywords) {
+          if (chunkLower.includes(kw)) {
+            score += 1;
+          }
+        }
+        if (score > highestScore) {
+          highestScore = score;
+          bestChunk = chunk.trim();
+        }
+      }
 
       let responseText = '';
-      if (matches.length > 0) {
-        responseText = `Based on your document:\n\n"${matches[0].substring(0, 350)}..."`;
+      if (highestScore > 0 && bestChunk) {
+        const cleanExcerpt = bestChunk.length > 400 ? bestChunk.substring(0, 400) + '...' : bestChunk;
+        responseText = `Based on your document:\n\n"${cleanExcerpt}"`;
       } else {
-        responseText = `I searched your document for "${userQ}". While there was no exact direct paragraph match, the document focuses on: ${summary?.overview.substring(0, 150)}...`;
+        responseText = `I searched the document for "${userQ}". While an exact reference wasn't located, here is what this document covers:\n\n${summary?.overview.substring(0, 180)}...`;
       }
 
       setMessages((prev) => [...prev, { role: 'assistant', text: responseText }]);
-    }, 300);
+    }, 250);
+  };
+
+  const handleSendMessage = () => {
+    sendQuery(inputQuestion);
   };
 
   const handleReset = () => {
@@ -226,6 +287,26 @@ export default function AiPdfTool() {
                       {m.text}
                     </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Suggested Prompt Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] uppercase font-bold text-base-content/50">Suggestions:</span>
+                {[
+                  'Summarize main ideas',
+                  'What are the key findings?',
+                  'What figures or numbers are mentioned?',
+                  'What are the action items?'
+                ].map((prompt, pIdx) => (
+                  <button
+                    key={pIdx}
+                    type="button"
+                    onClick={() => sendQuery(prompt)}
+                    className="btn btn-xs rounded-lg bg-base-200 hover:bg-primary/15 hover:text-primary border-none text-[11px] font-medium"
+                  >
+                    {prompt}
+                  </button>
                 ))}
               </div>
 

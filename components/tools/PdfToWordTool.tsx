@@ -10,7 +10,8 @@ import {
   Sparkles,
   ArrowRight,
   AlertCircle,
-  FileCheck
+  FileCheck,
+  Info
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { formatBytes } from '@/lib/utils/formatters';
@@ -249,6 +250,17 @@ export default function PdfToWordTool({
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Font Fidelity & System Font Fallback Notice */}
+          <div className="p-3.5 rounded-2xl bg-base-200/50 border border-base-300 space-y-1 text-xs text-base-content/70">
+            <div className="flex items-center gap-1.5 font-bold text-base-content text-[11px]">
+              <Info className="w-3.5 h-3.5 text-primary" />
+              <span>Note on Font Rendering & Layout Fidelity</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-base-content/60">
+              Your document structure, text, and tables have been converted into editable Word paragraphs. If your original PDF used specialized or non-standard fonts, your word processor (e.g., Microsoft Word, Google Docs) will seamlessly substitute them with your system&apos;s closest available standard fonts (such as Calibri or Arial). You can freely change or restyle any fonts once opened.
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-base-200">

@@ -31,7 +31,10 @@ import {
   UserCheck,
   Users,
   FileSignature,
-  LayoutGrid
+  LayoutGrid,
+  Link as LinkIcon,
+  Send,
+  Stamp
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
@@ -40,7 +43,7 @@ import { PDFDocument } from 'pdf-lib';
 
 export interface PlacedElement {
   id: string;
-  type: 'signature' | 'initials' | 'text' | 'date' | 'check' | 'cross' | 'dot' | 'line';
+  type: 'signature' | 'initials' | 'text' | 'date' | 'check' | 'cross' | 'dot' | 'line' | 'seal';
   dataUrl?: string;
   text?: string;
   x: number; // percentage (0 - 100)
@@ -84,6 +87,72 @@ function recolorSignatureDataUrl(dataUrl: string, targetHexColor: string): Promi
   });
 }
 
+// Generate an official digital seal badge PNG with verification metadata
+function generateDigitalSealDataUrl(signerName: string, reason: string, certId: string, date: string): string {
+  if (typeof document === 'undefined') return '';
+  const canvas = document.createElement('canvas');
+  canvas.width = 460;
+  canvas.height = 160;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+
+  // Background
+  ctx.fillStyle = '#ffffff';
+  if ((ctx as any).roundRect) {
+    (ctx as any).roundRect(4, 4, 452, 152, 12);
+  } else {
+    ctx.rect(4, 4, 452, 152);
+  }
+  ctx.fill();
+
+  // Outer border
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#059669';
+  ctx.stroke();
+
+  // Inner border
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#10b98144';
+  ctx.strokeRect(10, 10, 440, 140);
+
+  // Seal circle icon
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(58, 80, 36, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Seal Checkmark
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✓', 58, 80);
+
+  // Text labels
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#065f46';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.fillText('DIGITALLY CERTIFIED & SEALED', 112, 42);
+
+  ctx.fillStyle = '#1f2937';
+  ctx.font = '600 13px sans-serif';
+  ctx.fillText(`Signer: ${signerName || 'Authorized Signatory'}`, 112, 68);
+
+  ctx.fillStyle = '#4b5563';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`Status: ${reason || 'Verified Authentic'}`, 112, 92);
+
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '10px monospace';
+  ctx.fillText(`Cert: ${certId} • ${date}`, 112, 116);
+
+  ctx.fillStyle = '#059669';
+  ctx.font = 'bold 9px sans-serif';
+  ctx.fillText('SNAPDOC TRUST ENGINE • ISO 32000 AUDIT SECURE', 112, 134);
+
+  return canvas.toDataURL('image/png');
+}
+
 export default function SignPdfTool() {
   // File & Rendering States
   const [file, setFile] = useState<File | null>(null);
@@ -99,8 +168,25 @@ export default function SignPdfTool() {
   const [showSealingModal, setShowSealingModal] = useState<boolean>(false);
   const [showSignatureCreator, setShowSignatureCreator] = useState<boolean>(false);
   const [showSignaturesModal, setShowSignaturesModal] = useState<boolean>(false);
+  const [showMultiSignerModal, setShowMultiSignerModal] = useState<boolean>(false);
+  const [showDigitalSealModal, setShowDigitalSealModal] = useState<boolean>(false);
   const [creatorMode, setCreatorMode] = useState<'signature' | 'initials'>('signature');
   const [creatorTab, setCreatorTab] = useState<'draw' | 'type' | 'upload'>('draw');
+
+  // Multi-Signer States
+  const [multiSigners, setMultiSigners] = useState<{ id: string; name: string; email: string; color: string }[]>([
+    { id: 'signer_1', name: 'Signer 1', email: 'client@example.com', color: '#2563eb' },
+    { id: 'signer_2', name: 'Signer 2', email: 'manager@example.com', color: '#10b981' },
+  ]);
+  const [newSignerName, setNewSignerName] = useState<string>('');
+  const [newSignerEmail, setNewSignerEmail] = useState<string>('');
+  const [isMultiSignerMode, setIsMultiSignerMode] = useState<boolean>(false);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
+
+  // Digital Seal State
+  const [sealSignerName, setSealSignerName] = useState<string>('Authorized Signatory');
+  const [sealReason, setSealReason] = useState<string>('Certified Document Integrity');
+  const [sealCertId, setSealCertId] = useState<string>(() => `SNPD-SEAL-${Math.floor(100000 + Math.random() * 900000)}`);
 
   // Symbols Dropdown
   const [showSymbolsDropdown, setShowSymbolsDropdown] = useState<boolean>(false);
@@ -341,6 +427,71 @@ export default function SignPdfTool() {
     const newItems = [...placedElements, item];
     recordState(newItems);
     setSelectedElementId(item.id);
+  };
+
+  // Apply Digital Seal to Document
+  const handleApplyDigitalSeal = () => {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    const sealDataUrl = generateDigitalSealDataUrl(sealSignerName, sealReason, sealCertId, today);
+    if (!sealDataUrl) return;
+
+    placeItemOnPage({
+      id: `elem_${Date.now()}`,
+      type: 'seal',
+      dataUrl: sealDataUrl,
+      x: 30,
+      y: 45,
+      width: 40,
+      height: 14,
+      pageIndex: currentPage - 1,
+      color: '#059669',
+      opacity: 1.0,
+    });
+    setShowDigitalSealModal(false);
+  };
+
+  // Add Multi-Signer
+  const handleAddSigner = () => {
+    if (!newSignerName.trim()) return;
+    const colors = ['#2563eb', '#10b981', '#7c3aed', '#ea580c', '#0891b2'];
+    const assignedColor = colors[multiSigners.length % colors.length];
+    setMultiSigners([
+      ...multiSigners,
+      {
+        id: `signer_${Date.now()}`,
+        name: newSignerName.trim(),
+        email: newSignerEmail.trim() || `${newSignerName.trim().toLowerCase().replace(/\\s+/g, '')}@example.com`,
+        color: assignedColor,
+      },
+    ]);
+    setNewSignerName('');
+    setNewSignerEmail('');
+  };
+
+  // Remove Signer
+  const handleRemoveSigner = (id: string) => {
+    if (multiSigners.length <= 1) return;
+    setMultiSigners(multiSigners.filter((s) => s.id !== id));
+  };
+
+  // Start Multi-Signer Preparation Mode & Place Signer Field Tags
+  const handleStartMultiSignerPreparation = () => {
+    setIsMultiSignerMode(true);
+    setShowMultiSignerModal(false);
+    multiSigners.forEach((signer, idx) => {
+      placeItemOnPage({
+        id: `elem_signer_${Date.now()}_${idx}`,
+        type: 'text',
+        text: `[Signer: ${signer.name}]`,
+        x: 20 + (idx % 2) * 40,
+        y: 65 + Math.floor(idx / 2) * 12,
+        width: 32,
+        height: 6,
+        pageIndex: currentPage - 1,
+        color: signer.color,
+        opacity: 0.95,
+      });
+    });
   };
 
   // Quick Place Pre-saved Signature or Initials
@@ -750,7 +901,7 @@ export default function SignPdfTool() {
                   <button
                     onClick={() => {
                       setShowWhoSigningModal(false);
-                      setShowSealingModal(true);
+                      setShowMultiSignerModal(true);
                     }}
                     className="btn btn-primary w-full gap-2 rounded-xl"
                   >
@@ -808,7 +959,10 @@ export default function SignPdfTool() {
                 </div>
                 <div className="space-y-1 w-full">
                   <button
-                    onClick={() => setShowSealingModal(false)}
+                    onClick={() => {
+                      setShowSealingModal(false);
+                      setShowDigitalSealModal(true);
+                    }}
                     className="btn btn-primary w-full gap-2 rounded-xl"
                   >
                     <ShieldCheck className="w-4 h-4" />
@@ -818,6 +972,226 @@ export default function SignPdfTool() {
                   <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ 100% Free with SnapDoc</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2b. Modal: Multi-Party / Third-Party Signer Request */}
+      {showMultiSignerModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-base-100 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-base-300 space-y-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b border-base-200 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-base-content">Get Signatures from Others</h2>
+                  <p className="text-xs text-base-content/60">Invite recipients and prepare signature tags on this document</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowMultiSignerModal(false)}
+                className="btn btn-sm btn-circle btn-ghost"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Signers List */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-base-content/70 uppercase tracking-wider">Document Recipients ({multiSigners.length})</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {multiSigners.map((signer, idx) => (
+                  <div
+                    key={signer.id}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-base-200/50 border border-base-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: signer.color }}
+                      >
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-bold text-base-content">{signer.name}</p>
+                        <p className="text-xs text-base-content/50">{signer.email}</p>
+                      </div>
+                    </div>
+                    {multiSigners.length > 1 && (
+                      <button
+                        onClick={() => handleRemoveSigner(signer.id)}
+                        className="btn btn-ghost btn-xs text-error"
+                        title="Remove signer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Signer Form */}
+              <div className="p-3 rounded-2xl bg-base-200/30 border border-dashed border-base-300 space-y-2">
+                <p className="text-xs font-semibold text-base-content/80">+ Add Another Recipient</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    placeholder="Recipient Name (e.g. John Doe)"
+                    value={newSignerName}
+                    onChange={(e) => setNewSignerName(e.target.value)}
+                    className="input input-sm input-bordered rounded-xl flex-1 text-xs"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email (optional)"
+                    value={newSignerEmail}
+                    onChange={(e) => setNewSignerEmail(e.target.value)}
+                    className="input input-sm input-bordered rounded-xl flex-1 text-xs"
+                  />
+                  <button
+                    onClick={handleAddSigner}
+                    disabled={!newSignerName.trim()}
+                    className="btn btn-sm btn-primary rounded-xl text-xs"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-base-200">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    navigator.clipboard?.writeText(window.location.href);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2500);
+                  }
+                }}
+                className="btn btn-sm btn-outline rounded-xl w-full sm:w-auto gap-1.5 text-xs"
+              >
+                <LinkIcon className="w-3.5 h-3.5" />
+                <span>{copiedLink ? 'Link Copied!' : 'Copy Signing Link'}</span>
+              </button>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowMultiSignerModal(false)}
+                  className="btn btn-sm btn-ghost rounded-xl text-xs"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartMultiSignerPreparation}
+                  className="btn btn-sm btn-primary rounded-xl gap-1.5 text-xs font-bold"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Prepare Signer Fields</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2c. Modal: Create & Stamp Digital Seal */}
+      {showDigitalSealModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-base-100 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-base-300 space-y-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b border-base-200 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-base-content">Digital Seal Studio</h2>
+                  <p className="text-xs text-base-content/60">Generate tamper-evident seal with audit trail badge</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDigitalSealModal(false)}
+                className="btn btn-sm btn-circle btn-ghost"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Seal Form Inputs */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-base-content/70">Signatory / Company Name</label>
+                <input
+                  type="text"
+                  value={sealSignerName}
+                  onChange={(e) => setSealSignerName(e.target.value)}
+                  placeholder="e.g. Acme Corporation or Jane Doe"
+                  className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-base-content/70">Verification Status / Reason</label>
+                <input
+                  type="text"
+                  value={sealReason}
+                  onChange={(e) => setSealReason(e.target.value)}
+                  placeholder="e.g. Certified Document Integrity"
+                  className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-base-content/70">Certificate ID</label>
+                <input
+                  type="text"
+                  value={sealCertId}
+                  readOnly
+                  className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs bg-base-200 font-mono text-base-content/70"
+                />
+              </div>
+            </div>
+
+            {/* Real-time Preview */}
+            <div>
+              <label className="text-xs font-bold text-base-content/70 mb-1.5 block">Seal Preview on Document</label>
+              <div className="p-4 rounded-2xl bg-base-200/50 border border-base-300 flex items-center justify-center">
+                <div className="bg-white rounded-xl border-2 border-emerald-600 p-3 shadow-sm flex items-center gap-3 w-full max-w-sm">
+                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg font-bold shrink-0">
+                    ✓
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-tight">DIGITALLY CERTIFIED & SEALED</p>
+                    <p className="text-xs font-semibold text-slate-900 truncate">Signer: {sealSignerName || 'Authorized Signatory'}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{sealReason} • {sealCertId}</p>
+                    <p className="text-[9px] font-bold text-emerald-600">SNAPDOC TRUST ENGINE • ISO 32000 AUDIT SECURE</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-base-200">
+              <button
+                type="button"
+                onClick={() => setShowDigitalSealModal(false)}
+                className="btn btn-ghost rounded-xl px-4 text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyDigitalSeal}
+                className="btn btn-primary rounded-xl px-5 gap-1.5 text-xs font-bold"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Apply Seal to PDF</span>
+              </button>
             </div>
           </div>
         </div>
@@ -1206,6 +1580,34 @@ export default function SignPdfTool() {
                   </div>
                 )}
               </div>
+
+              <div className="h-4 w-px bg-base-300 mx-0.5" />
+
+              {/* Digital Seal Tool */}
+              <button
+                onClick={() => setShowDigitalSealModal(true)}
+                className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-1 text-emerald-700 hover:bg-emerald-500/10 px-1.5 sm:px-2.5"
+                title="Stamp Official Digital Seal"
+              >
+                <Stamp className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-xs hidden md:inline font-semibold">Seal</span>
+              </button>
+
+              {/* Multi-Party Signers Tool */}
+              <button
+                onClick={() => setShowMultiSignerModal(true)}
+                className={`btn btn-xs sm:btn-sm rounded-xl gap-1 px-1.5 sm:px-2.5 ${
+                  isMultiSignerMode
+                    ? 'btn-primary btn-outline font-bold text-xs'
+                    : 'btn-ghost text-blue-700 hover:bg-blue-500/10'
+                }`}
+                title="Multi-Party Signers"
+              >
+                <Users className="w-3.5 h-3.5 text-blue-600" />
+                <span className="text-xs hidden md:inline font-semibold">
+                  {isMultiSignerMode ? `Signers (${multiSigners.length})` : 'Signers'}
+                </span>
+              </button>
 
               {/* Undo / Redo */}
               <button

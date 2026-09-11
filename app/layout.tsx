@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import ConnectionStatusBanner from '@/components/ui/ConnectionStatusBanner';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://snapdoc.app'),
@@ -121,6 +122,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-base-200/30 text-base-content antialiased flex flex-col min-h-screen selection:bg-primary selection:text-white">
+        <ConnectionStatusBanner />
         <Header />
         <main className="flex-1">
           {children}

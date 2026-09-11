@@ -6,7 +6,19 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 
-export default function ImageToPdfTool() {
+interface ImageToPdfToolProps {
+  title?: string;
+  subtitle?: string;
+  accept?: string;
+  fileTypeLabel?: string;
+}
+
+export default function ImageToPdfTool({
+  title = 'Drop one or multiple images to convert to PDF',
+  subtitle = 'Supports JPG, PNG, and WebP (Up to 30 images)',
+  accept = 'image/jpeg,image/jpg,image/png,image/webp',
+  fileTypeLabel = 'Image',
+}: ImageToPdfToolProps = {}) {
   const [files, setFiles] = useState<File[]>([]);
   const [pageSize, setPageSize] = useState<'A4' | 'LETTER' | 'FIT'>('A4');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'auto'>('portrait');
@@ -76,13 +88,13 @@ export default function ImageToPdfTool() {
       {/* Upload Zone */}
       {files.length === 0 && (
         <UploadZone
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept={accept}
           multiple={true}
           maxFiles={30}
           files={files}
           onFilesSelected={setFiles}
-          title="Drop one or multiple images to convert to PDF"
-          subtitle="Supports JPG, PNG, and WebP (Up to 30 images)"
+          title={title}
+          subtitle={subtitle}
         />
       )}
 
@@ -220,7 +232,7 @@ export default function ImageToPdfTool() {
             ) : (
               <>
                 <FileText className="w-5 h-5" />
-                Convert {files.length} Image{files.length === 1 ? '' : 's'} to PDF
+                Convert {files.length} {fileTypeLabel}{files.length === 1 ? '' : 's'} to PDF
               </>
             )}
           </button>

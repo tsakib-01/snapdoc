@@ -1,8 +1,60 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { UploadCloud, FileImage, FileText, AlertCircle, X, CheckCircle2 } from 'lucide-react';
+import { UploadCloud, FileImage, FileText, FileSpreadsheet, AlertCircle, X, CheckCircle2 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
+
+function getFileStyle(filename: string = '', mimeType: string = '') {
+  const lowerName = filename.toLowerCase();
+  const lowerMime = mimeType.toLowerCase();
+
+  // Excel / Spreadsheets: Green
+  if (
+    lowerName.endsWith('.xlsx') ||
+    lowerName.endsWith('.xls') ||
+    lowerName.endsWith('.csv') ||
+    lowerMime.includes('spreadsheet') ||
+    lowerMime.includes('excel') ||
+    lowerMime.includes('csv')
+  ) {
+    return {
+      icon: FileSpreadsheet,
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      containerBg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600',
+    };
+  }
+
+  // Word Documents: Blue
+  if (
+    lowerName.endsWith('.docx') ||
+    lowerName.endsWith('.doc') ||
+    lowerName.endsWith('.rtf') ||
+    lowerMime.includes('word') ||
+    lowerMime.includes('officedocument.wordprocessingml')
+  ) {
+    return {
+      icon: FileText,
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      containerBg: 'bg-blue-500/15 border-blue-500/30 text-blue-600',
+    };
+  }
+
+  // PDF Documents: Red
+  if (lowerName.endsWith('.pdf') || lowerMime.includes('pdf')) {
+    return {
+      icon: FileText,
+      iconColor: 'text-red-600 dark:text-red-400',
+      containerBg: 'bg-red-500/15 border-red-500/30 text-red-600',
+    };
+  }
+
+  // Default Image / Generic
+  return {
+    icon: FileImage,
+    iconColor: 'text-blue-500',
+    containerBg: 'bg-primary/10 border-primary/20 text-primary',
+  };
+}
 
 interface UploadZoneProps {
   accept: string; // e.g. "image/jpeg,image/png" or "application/pdf"
@@ -102,6 +154,33 @@ export default function UploadZone({
     if (inputRef.current) inputRef.current.value = '';
   };
 
+  const acceptLower = accept.toLowerCase();
+  const isExcelDropzone =
+    acceptLower.includes('spreadsheet') ||
+    acceptLower.includes('excel') ||
+    acceptLower.includes('csv') ||
+    acceptLower.includes('.xlsx') ||
+    acceptLower.includes('.xls');
+  const isWordDropzone =
+    acceptLower.includes('word') ||
+    acceptLower.includes('docx') ||
+    acceptLower.includes('.doc');
+  const isPdfDropzone = acceptLower.includes('pdf');
+
+  let dropzoneIconBg = 'bg-primary/10 text-primary shadow-primary/20';
+  let DropzoneIcon = UploadCloud;
+
+  if (isExcelDropzone) {
+    dropzoneIconBg = 'bg-emerald-500/15 text-emerald-600 shadow-emerald-500/20';
+    DropzoneIcon = FileSpreadsheet;
+  } else if (isWordDropzone) {
+    dropzoneIconBg = 'bg-blue-500/15 text-blue-600 shadow-blue-500/20';
+    DropzoneIcon = FileText;
+  } else if (isPdfDropzone) {
+    dropzoneIconBg = 'bg-red-500/15 text-red-600 shadow-red-500/20';
+    DropzoneIcon = FileText;
+  }
+
   return (
     <div className="w-full space-y-4">
       {/* Drag and drop card */}
@@ -126,8 +205,8 @@ export default function UploadZone({
           disabled={disabled}
         />
 
-        <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 sm:mb-4 shadow-inner shadow-primary/20">
-          <UploadCloud className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse" />
+        <div className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl ${dropzoneIconBg} flex items-center justify-center mb-3 sm:mb-4 shadow-inner`}>
+          <DropzoneIcon className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 animate-pulse" />
         </div>
 
         <h3 className="text-sm sm:text-lg font-bold text-base-content">
@@ -176,44 +255,44 @@ export default function UploadZone({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {files.map((file, idx) => (
-              <div
-                key={`${file.name}-${idx}`}
-                className="flex items-center justify-between p-3 rounded-2xl bg-base-100 border border-base-300 shadow-sm"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center shrink-0">
-                    {file.type.includes('pdf') ? (
-                      <FileText className="w-4 h-4 text-red-500" />
-                    ) : (
-                      <FileImage className="w-4 h-4 text-blue-500" />
-                    )}
+            {files.map((file, idx) => {
+              const fileStyle = getFileStyle(file.name, file.type);
+              const FileItemIcon = fileStyle.icon;
+              return (
+                <div
+                  key={`${file.name}-${idx}`}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-base-100 border border-base-300 shadow-sm"
+                >
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${fileStyle.containerBg}`}>
+                      <FileItemIcon className={`w-4 h-4 ${fileStyle.iconColor}`} />
+                    </div>
+                    <div className="overflow-hidden text-left">
+                      <p className="text-xs font-semibold text-base-content truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-[11px] text-base-content/50">
+                        {formatBytes(file.size)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="overflow-hidden text-left">
-                    <p className="text-xs font-semibold text-base-content truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-[11px] text-base-content/50">
-                      {formatBytes(file.size)}
-                    </p>
-                  </div>
-                </div>
 
-                {onFileRemove && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFileRemove(idx);
-                    }}
-                    className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error ml-2"
-                    title="Remove file"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
+                  {onFileRemove && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFileRemove(idx);
+                      }}
+                      className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error ml-2"
+                      title="Remove file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

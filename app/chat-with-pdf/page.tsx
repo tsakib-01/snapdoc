@@ -41,7 +41,7 @@ export default function ChatWithPdfPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <AiPdfTool />
+      <AiPdfTool defaultTab="chat" />
     </ToolLayout>
   );
 }

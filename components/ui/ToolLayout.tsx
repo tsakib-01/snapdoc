@@ -124,15 +124,6 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
       )}
 
       <div className={`w-full ${isWide ? 'max-w-[1500px] px-1 sm:px-4 md:px-6 py-2 sm:py-6 space-y-2.5 sm:space-y-6' : 'max-w-5xl px-3 sm:px-6 py-6 sm:py-12 space-y-6 sm:space-y-8'} mx-auto`}>
-        {/* Breadcrumbs with Semantic Microdata */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-base-content/60 overflow-x-auto no-scrollbar py-0.5 px-1">
-          <Link href="/" className="hover:text-primary transition-colors shrink-0">Home</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-base-content/40 shrink-0" />
-          <Link href="/tools" className="hover:text-primary transition-colors capitalize shrink-0">{tool.category} Tools</Link>
-          <ChevronRight className="w-3.5 h-3.5 text-base-content/40 shrink-0" />
-          <span className="font-semibold text-base-content truncate">{tool.name}</span>
-        </nav>
-
         {/* Tool Header */}
         <div className={`text-center ${isWide ? 'space-y-1 max-w-3xl' : 'space-y-2.5 max-w-3xl'} mx-auto px-1`}>
           {tool.badge && (

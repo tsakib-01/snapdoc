@@ -284,7 +284,7 @@ export default function PdfToWordTool({
           </div>
 
           <div className="p-3 rounded-xl bg-error/5 border border-error/20 text-[11px] font-mono text-base-content/70">
-            <strong>Endpoint:</strong> https://snapdoc-rj5w.onrender.com/api/convert/pdf-to-word<br />
+            <strong>Endpoint:</strong> https://snapdoc-qvmv.onrender.com/api/convert/pdf-to-word<br />
             <strong>Error Info:</strong> {error}
           </div>
 

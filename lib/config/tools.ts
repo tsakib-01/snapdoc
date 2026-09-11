@@ -1269,6 +1269,202 @@ export const TOOLS: ToolMeta[] = [
         a: 'It scans the underlying character streams and fonts embedded in your PDF document to reconstruct the plain text.'
       }
     ]
+  },
+  {
+    id: 'word-to-pdf',
+    name: 'Word to PDF',
+    shortName: 'Word to PDF',
+    slug: 'word-to-pdf',
+    description: 'Convert Microsoft Word (.docx, .doc) documents into publication-ready PDF with 100% typography fidelity.',
+    longDescription: 'Converts Word (.docx / .doc) documents to crisp, high-resolution PDF files with exact font preservation (Calibri, Arial, Times New Roman, Segoe UI, Kalpurush, etc.), complex Indic & Bengali (বাংলা) ligature rendering, paragraph spacing, and embedded table borders.',
+    category: 'convert',
+    badge: 'Popular',
+    icon: 'FileText',
+    popular: true,
+    acceptedTypes: '.doc,.docx,.rtf,.txt',
+    maxFiles: 1,
+    keywords: [
+      'word to pdf',
+      'docx to pdf',
+      'convert word to pdf',
+      'bangla word to pdf',
+      'exact font word to pdf',
+      'high quality word to pdf',
+      'doc to pdf converter'
+    ],
+    features: [
+      'Native Word COM & TrueType ReportLab multilingual engine',
+      '100% typography and font family fidelity (Calibri, Arial, Times, Kalpurush, etc.)',
+      'Preserves complex Indic & Bengali (বাংলা) ligatures and right-to-left scripts',
+      'Preserves headers, footers, paragraph spacing, headings, and tables',
+      'Zero layout shift across different operating systems and mobile devices',
+      'Private in-memory processing with zero data retention'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your Word document (.docx, .doc) or RTF file.' },
+      { step: '2', text: 'Click "Convert to PDF" to initiate high-precision typography rendering.' },
+      { step: '3', text: 'Preview and download your finalized, publication-ready PDF document.' }
+    ],
+    faqs: [
+      {
+        q: 'How does it guarantee font fidelity and prevent font substitution?',
+        a: 'We utilize localized TrueType font matching and OpenXML typography parsing so font sizes, weights, and families match the original Word document.'
+      },
+      {
+        q: 'Is there any watermark added to converted PDFs?',
+        a: 'No, your PDFs are clean and unwatermarked with 100% original formatting.'
+      },
+      {
+        q: 'Are my uploaded documents secure and private?',
+        a: 'Yes, all conversions run locally in temporary memory buffers and are immediately removed after download.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-to-word',
+    name: 'PDF to Word (.docx)',
+    shortName: 'PDF to Word',
+    slug: 'pdf-to-word',
+    description: 'Convert PDF documents to editable Microsoft Word (.docx) with 100% layout, font, and multilingual precision.',
+    longDescription: 'Preserves typography, font families (Calibri, Arial, Segoe UI, Kalpurush, and 100+ fonts), complex Indic & Bengali (বাংলা) ligatures, two-column layouts, paragraphs, tables, borders, margins, and embedded images in standard Microsoft Word (.docx) format.',
+    category: 'convert',
+    badge: 'Popular',
+    icon: 'FileText',
+    popular: true,
+    acceptedTypes: 'application/pdf',
+    maxFiles: 1,
+    keywords: [
+      'pdf to word',
+      'convert pdf to word',
+      'pdf to docx',
+      'bangla pdf to word',
+      'exact layout pdf to word',
+      'multilingual pdf converter',
+      'editable word converter'
+    ],
+    features: [
+      '100% Font & Typography Preservation (Calibri, Arial, Segoe UI, Kalpurush, and 100+ fonts)',
+      'Complex Script & Bengali (বাংলা) ligature/conjunct support without broken glyphs',
+      'Multi-column layout & header/footer flow reconstruction',
+      'Preserves embedded high-resolution pictures, borders, and margins',
+      'Exports directly to native Microsoft Word (.docx) format',
+      '100% In-memory processing with complete privacy'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload or drop your PDF document.' },
+      { step: '2', text: 'Click "Convert to Word (.docx)" to initiate vector layout reconstruction.' },
+      { step: '3', text: 'Download your editable Word document with intact typography and tables.' }
+    ],
+    faqs: [
+      {
+        q: 'Will Bangla, Hindi, and other complex scripts render correctly without broken letters?',
+        a: 'Yes! Our dedicated Unicode reordering and TrueType font styling engine ensures Bangla (বাংলা), Hindi, Arabic, and 100+ languages render perfectly with intact conjuncts (যুক্তবর্ণ).'
+      },
+      {
+        q: 'Does this preserve multi-column question papers and layouts?',
+        a: 'Yes, two-column layouts, question sets, tables, and centered headers are automatically detected and reconstructed into clean Word tables and margins.'
+      },
+      {
+        q: 'Can I edit the generated .docx file in Microsoft Word and Google Docs?',
+        a: 'Yes, the resulting file is a standard Microsoft Word (.docx) document compatible with Word, Google Docs, Apple Pages, and LibreOffice.'
+      }
+    ]
+  },
+  {
+    id: 'excel-to-pdf',
+    name: 'Excel to PDF',
+    shortName: 'Excel to PDF',
+    slug: 'excel-to-pdf',
+    description: 'Convert Excel spreadsheets (.xlsx, .xls) and CSV data tables into crisp, publication-grade PDF documents with auto-fit layout, colors, and orientation.',
+    longDescription: 'Converts .xlsx, .xls, and .csv spreadsheets to print-ready PDF files with smart page orientation (portrait/landscape), auto-fit column widths, exact cell background fills, bold typography, borders, and full multilingual font support.',
+    category: 'convert',
+    icon: 'FileSpreadsheet',
+    acceptedTypes: '.xlsx,.xls,.csv',
+    maxFiles: 1,
+    keywords: [
+      'excel to pdf',
+      'xlsx to pdf',
+      'convert excel to pdf',
+      'spreadsheet to pdf',
+      'fit excel to pdf page',
+      'preserve colors excel to pdf',
+      'bangla excel to pdf'
+    ],
+    features: [
+      'Auto-fit layout with intelligent landscape / portrait orientation selection',
+      'Preserves exact cell colors, theme fills, bold typography, and custom borders',
+      'Multi-sheet workbook support with seamless page breaks',
+      'Preserves merged cells and document titles without synthetic headers',
+      '100% Multilingual TrueType font rendering (Bangla, Hindi, Arabic, Chinese, Latin)',
+      'Zero permanent storage with instantaneous local conversion'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your Excel (.xlsx / .xls) spreadsheet or CSV file.' },
+      { step: '2', text: 'Click "Convert to PDF" to calculate column widths, cell fills, and optimal orientation.' },
+      { step: '3', text: 'Preview and download your print-ready PDF document.' }
+    ],
+    faqs: [
+      {
+        q: 'Will wide tables get cut off?',
+        a: 'No, wide tables (>6 columns) automatically switch to Landscape orientation with auto-balanced column widths to ensure complete data visibility.'
+      },
+      {
+        q: 'Are custom cell background colors and styling preserved?',
+        a: 'Yes, theme colors, tints, explicit hex fills, borders, and font weights are accurately translated into the final PDF.'
+      },
+      {
+        q: 'Can I convert multi-sheet workbooks?',
+        a: 'Yes, all sheets containing data are converted with clean page breaks between them.'
+      }
+    ]
+  },
+  {
+    id: 'pdf-to-excel',
+    name: 'PDF to Excel (.xlsx)',
+    shortName: 'PDF to Excel',
+    slug: 'pdf-to-excel',
+    description: 'Convert PDF tables, invoices, statements, and spreadsheets into structured Excel (.xlsx) workbooks with exact cell background colors, borders, numbers, and multilingual text.',
+    longDescription: 'Extracts multi-page tables, financial reports, and data grids into beautifully styled Microsoft Excel (.xlsx) workbooks with preserved cell background fills, bold headers, numeric formatting, borders, and automatic column widths.',
+    category: 'convert',
+    icon: 'FileSpreadsheet',
+    acceptedTypes: 'application/pdf',
+    maxFiles: 1,
+    keywords: [
+      'pdf to excel',
+      'pdf to xlsx',
+      'extract table from pdf',
+      'preserve table colors pdf to excel',
+      'bangla pdf to excel',
+      'pdf spreadsheet converter',
+      'financial statement pdf to excel'
+    ],
+    features: [
+      'Smart multi-page table detection (lattice & stream algorithms)',
+      'Preserves cell background fill colors, fonts, boldness, and alignments',
+      'Extracts real numbers, currency amounts, and percentages into Excel formats',
+      'Detects vector table borders and centers document titles without synthetic headers',
+      'Auto-fits column widths for immediate readability',
+      'Full Unicode, Bengali (বাংলা), and multilingual character support'
+    ],
+    howTo: [
+      { step: '1', text: 'Upload your PDF containing tables, spreadsheets, or financial reports.' },
+      { step: '2', text: 'Click "Convert to Excel (.xlsx)" to extract structured grids, styles, and numbers.' },
+      { step: '3', text: 'Download your clean, editable Excel workbook.' }
+    ],
+    faqs: [
+      {
+        q: 'Are cell colors, borders, and headers preserved in Excel?',
+        a: 'Yes! The converter samples exact cell colors from the PDF, detects table border strokes, and sets bold header typography in the generated Excel (.xlsx) sheet.'
+      },
+      {
+        q: 'Does it format numbers as editable numbers instead of strings?',
+        a: 'Yes, numeric values, prices, and currencies are converted to real numbers so you can immediately run formulas, sums, and pivot tables.'
+      },
+      {
+        q: 'Does it handle multi-page PDF documents?',
+        a: 'Yes, multi-page PDFs are neatly converted into organized sheets with auto-balanced column widths.'
+      }
+    ]
   }
 ];
 

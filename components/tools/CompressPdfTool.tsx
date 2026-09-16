@@ -8,7 +8,7 @@ import { formatBytes } from '@/lib/utils/formatters';
 
 export default function CompressPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
-  const [compressionLevel, setCompressionLevel] = useState<'recommended' | 'extreme' | 'lossless'>('recommended');
+  const [compressionLevel, setCompressionLevel] = useState<'25' | '50' | '75'>('50');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progressText, setProgressText] = useState<string>('Optimizing PDF Structure...');
   const [result, setResult] = useState<any | null>(null);
@@ -105,55 +105,55 @@ export default function CompressPdfTool() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
-                onClick={() => setCompressionLevel('recommended')}
+                onClick={() => setCompressionLevel('25')}
                 className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  compressionLevel === 'recommended'
+                  compressionLevel === '25'
                     ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
                     : 'border-base-300 bg-base-100 hover:bg-base-200/60'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">Recommended</span>
-                  <span className="badge badge-xs badge-primary">Balanced</span>
+                  <span className="font-bold text-xs text-base-content">25% Reduction</span>
+                  <span className="badge badge-xs badge-primary">High Quality</span>
                 </div>
                 <p className="text-[11px] text-base-content/60 mt-1">
-                  Balanced size reduction with high visual sharpness.
+                  Mild reduction (~25% smaller). Preserves crisp text and high-resolution images.
                 </p>
               </button>
 
               <button
                 type="button"
-                onClick={() => setCompressionLevel('extreme')}
+                onClick={() => setCompressionLevel('50')}
                 className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  compressionLevel === 'extreme'
+                  compressionLevel === '50'
                     ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
                     : 'border-base-300 bg-base-100 hover:bg-base-200/60'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">Extreme</span>
-                  <span className="badge badge-xs badge-secondary">Max Ratio</span>
+                  <span className="font-bold text-xs text-base-content">50% Reduction</span>
+                  <span className="badge badge-xs badge-secondary">Balanced</span>
                 </div>
                 <p className="text-[11px] text-base-content/60 mt-1">
-                  Maximum compression for email attachments & strict upload limits.
+                  Balanced reduction (~50% smaller). Ideal for email attachments and sharing.
                 </p>
               </button>
 
               <button
                 type="button"
-                onClick={() => setCompressionLevel('lossless')}
+                onClick={() => setCompressionLevel('75')}
                 className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  compressionLevel === 'lossless'
+                  compressionLevel === '75'
                     ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
                     : 'border-base-300 bg-base-100 hover:bg-base-200/60'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">Lossless</span>
-                  <span className="badge badge-xs badge-neutral">100% Vector</span>
+                  <span className="font-bold text-xs text-base-content">75% Reduction</span>
+                  <span className="badge badge-xs badge-neutral">Max Reduction</span>
                 </div>
                 <p className="text-[11px] text-base-content/60 mt-1">
-                  Cleans redundant streams and metadata without touching images.
+                  Maximum compression (~75% smaller). Best for strict upload & portal limits.
                 </p>
               </button>
             </div>

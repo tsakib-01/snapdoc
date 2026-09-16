@@ -19,7 +19,7 @@ export interface CompressPdfResult {
 
 export async function compressPdfDocument(
   pdfBuffer: Buffer,
-  level: 'recommended' | 'extreme' | 'lossless' = 'recommended'
+  level: '25' | '50' | '75' | 'recommended' | 'extreme' | 'lossless' = '50'
 ): Promise<CompressPdfResult> {
   const originalSize = pdfBuffer.length;
   let compressedBytes: Uint8Array | null = null;

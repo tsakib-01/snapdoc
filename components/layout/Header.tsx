@@ -83,12 +83,10 @@ export default function Header() {
                       Convert PDF
                     </span>
                     <ul className="menu menu-compact p-0 text-xs space-y-0.5">
-                      <li><Link href="/pdf-to-word" className="py-1.5 font-medium text-primary">PDF to Word</Link></li>
+                      <li><Link href="/excel-to-pdf" className="py-1.5 font-medium text-primary">Excel to PDF</Link></li>
                       <li><Link href="/pdf-to-excel" className="py-1.5">PDF to Excel / CSV</Link></li>
                       <li><Link href="/pdf-to-png" className="py-1.5">PDF to PNG</Link></li>
                       <li><Link href="/pdf-to-jpg" className="py-1.5">PDF to JPG</Link></li>
-                      <li><Link href="/word-to-pdf" className="py-1.5">Word to PDF</Link></li>
-                      <li><Link href="/excel-to-pdf" className="py-1.5">Excel to PDF</Link></li>
                       <li><Link href="/pdf-ocr" className="py-1.5">OCR Text Extractor</Link></li>
                     </ul>
                   </div>
@@ -180,7 +178,7 @@ export default function Header() {
                 <Link href="/organize-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Organize PDF</Link>
                 <Link href="/merge-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Merge PDF</Link>
                 <Link href="/split-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Split PDF</Link>
-                <Link href="/pdf-to-word" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">PDF to Word</Link>
+                <Link href="/excel-to-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Excel to PDF</Link>
                 <Link href="/compress-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Compress PDF</Link>
                 <Link href="/sign-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Sign PDF</Link>
               </div>

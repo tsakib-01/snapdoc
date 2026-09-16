@@ -5,6 +5,9 @@ import { ShieldCheck, Lock, Trash2, EyeOff } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Privacy Policy - 100% In-Memory Processing Guarantee',
   description: 'Learn about our strict zero file storage policy and privacy architecture.',
+  alternates: {
+    canonical: 'https://snapdoc.app/privacy',
+  },
 };
 
 export default function PrivacyPage() {

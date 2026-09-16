@@ -6,6 +6,9 @@ import ToolLayout from '@/components/ui/ToolLayout';
 export const metadata: Metadata = {
   title: 'Chat with PDF - Free Interactive AI Document Chat',
   description: 'Ask questions, extract information, and converse with your PDF documents online for free.',
+  alternates: {
+    canonical: 'https://snapdoc.app/chat-with-pdf',
+  },
 };
 
 export default function ChatWithPdfPage() {

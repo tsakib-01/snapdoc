@@ -6,6 +6,9 @@ import ToolLayout from '@/components/ui/ToolLayout';
 export const metadata: Metadata = {
   title: 'PDF OCR & Text Extractor - Convert Scanned PDF to Text',
   description: 'Extract text, numbers, and data from scanned PDFs online for free with optical character recognition.',
+  alternates: {
+    canonical: 'https://snapdoc.app/pdf-ocr',
+  },
 };
 
 export default function PdfOcrPage() {

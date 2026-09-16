@@ -85,12 +85,12 @@ export default function Footer() {
           <div className="space-y-3">
             <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Convert & Office</h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/pdf-to-word" className="hover:text-primary transition-colors">PDF to Word</Link></li>
+              <li><Link href="/excel-to-pdf" className="hover:text-primary transition-colors">Excel to PDF</Link></li>
               <li><Link href="/pdf-to-excel" className="hover:text-primary transition-colors">PDF to Excel</Link></li>
               <li><Link href="/pdf-to-jpg" className="hover:text-primary transition-colors">PDF to JPG</Link></li>
               <li><Link href="/pdf-to-png" className="hover:text-primary transition-colors">PDF to PNG</Link></li>
-              <li><Link href="/word-to-pdf" className="hover:text-primary transition-colors">Word to PDF</Link></li>
-              <li><Link href="/excel-to-pdf" className="hover:text-primary transition-colors">Excel to PDF</Link></li>
+              <li><Link href="/html-to-pdf" className="hover:text-primary transition-colors">HTML to PDF</Link></li>
+              <li><Link href="/pdf-ocr" className="hover:text-primary transition-colors">OCR Text Extractor</Link></li>
               <li><Link href="/txt-to-pdf" className="hover:text-primary transition-colors">TXT to PDF</Link></li>
             </ul>
           </div>

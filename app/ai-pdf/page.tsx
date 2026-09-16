@@ -6,6 +6,9 @@ import ToolLayout from '@/components/ui/ToolLayout';
 export const metadata: Metadata = {
   title: 'AI PDF Assistant & Summarizer - Chat with PDF Online',
   description: 'Upload any PDF to get instant AI summaries, key takeaways, and ask questions directly in an interactive chat.',
+  alternates: {
+    canonical: 'https://snapdoc.app/ai-pdf',
+  },
 };
 
 export default function AiPdfPage() {

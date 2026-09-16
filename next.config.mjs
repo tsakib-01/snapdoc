@@ -10,6 +10,20 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  async redirects() {
+    return [
+      {
+        source: '/word-to-pdf',
+        destination: '/tools',
+        permanent: false,
+      },
+      {
+        source: '/pdf-to-word',
+        destination: '/tools',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -6,6 +6,9 @@ import ToolLayout from '@/components/ui/ToolLayout';
 export const metadata: Metadata = {
   title: 'Excel to PDF Converter - High-Precision Spreadsheets to PDF',
   description: 'Convert Excel spreadsheets (.xlsx, .xls) and CSV data tables into crisp, publication-grade PDF documents with auto-fit layout, colors, and orientation.',
+  alternates: {
+    canonical: 'https://snapdoc.app/excel-to-pdf',
+  },
 };
 
 export default function ExcelToPdfPage() {

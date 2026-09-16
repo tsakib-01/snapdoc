@@ -6,6 +6,9 @@ import ToolLayout from '@/components/ui/ToolLayout';
 export const metadata: Metadata = {
   title: 'HTML to PDF Converter - Convert Web Snippets & Code to PDF',
   description: 'Convert HTML code snippets and web templates into formatted PDF documents online for free.',
+  alternates: {
+    canonical: 'https://snapdoc.app/html-to-pdf',
+  },
 };
 
 export default function HtmlToPdfPage() {

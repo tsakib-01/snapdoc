@@ -6,6 +6,9 @@ import ToolLayout from '@/components/ui/ToolLayout';
 export const metadata: Metadata = {
   title: 'Camera PDF Scanner - Scan Documents Online to PDF',
   description: 'Use your smartphone or webcam camera to scan receipts, book pages, and notes into multi-page PDF documents.',
+  alternates: {
+    canonical: 'https://snapdoc.app/pdf-scanner',
+  },
 };
 
 export default function PdfScannerPage() {

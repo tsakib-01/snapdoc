@@ -887,37 +887,6 @@ export const TOOLS: ToolMeta[] = [
     ]
   },
   {
-    id: 'pdf-to-word',
-    name: 'PDF to Word Converter',
-    shortName: 'PDF to Word',
-    slug: 'pdf-to-word',
-    description: 'Convert PDF documents into editable Word (.doc) and Text files.',
-    longDescription: 'Extract text, paragraphs, and content from your PDF documents directly into downloadable Word files so you can edit and reuse text freely.',
-    category: 'convert',
-    badge: 'Popular',
-    icon: 'FileText',
-    popular: true,
-    acceptedTypes: 'application/pdf',
-    keywords: ['pdf to word', 'convert pdf to word', 'pdf to doc', 'pdf to docx online', 'editable pdf'],
-    features: [
-      'Extracts selectable text and formatting from PDF',
-      'Download as Word (.doc) or plain text (.txt)',
-      'Direct copy-to-clipboard button',
-      '100% In-memory processing with no signup required'
-    ],
-    howTo: [
-      { step: '1', text: 'Upload your PDF document.' },
-      { step: '2', text: 'View extracted text content in the editor.' },
-      { step: '3', text: 'Select "Word" format and click Download.' }
-    ],
-    faqs: [
-      {
-        q: 'Can I edit the converted file in Microsoft Word or Google Docs?',
-        a: 'Yes! The downloaded file can be opened and edited directly in Word or Google Docs.'
-      }
-    ]
-  },
-  {
     id: 'pdf-to-excel',
     name: 'PDF to Excel / CSV',
     shortName: 'PDF to Excel',
@@ -972,35 +941,6 @@ export const TOOLS: ToolMeta[] = [
       {
         q: 'What is the difference between PDF to JPG and PDF to PNG?',
         a: 'PNG provides lossless compression which keeps text and graphics extremely sharp with zero compression artifacts.'
-      }
-    ]
-  },
-  {
-    id: 'word-to-pdf',
-    name: 'Word to PDF Converter',
-    shortName: 'Word to PDF',
-    slug: 'word-to-pdf',
-    description: 'Convert Microsoft Word (.doc, .docx) and text documents into print-ready PDF files.',
-    longDescription: 'Turn your Word documents into universally compatible, secure PDF files with preserved formatting, clean margins, and crisp text typography.',
-    category: 'convert',
-    icon: 'FileText',
-    acceptedTypes: '.doc,.docx,.rtf,.txt',
-    keywords: ['word to pdf', 'convert word to pdf', 'docx to pdf', 'doc to pdf online'],
-    features: [
-      'Standard A4 and Letter layout rendering',
-      'Clean typography and margin wrapping',
-      'Zero formatting shift across devices',
-      '100% In-memory processing with no account required'
-    ],
-    howTo: [
-      { step: '1', text: 'Upload your Word document or text file.' },
-      { step: '2', text: 'Click "Convert to PDF" to start processing.' },
-      { step: '3', text: 'Download your finalized PDF document.' }
-    ],
-    faqs: [
-      {
-        q: 'Can anyone else see or store my uploaded Word document?',
-        a: 'No, all conversions are executed in volatile memory buffers with zero permanent disk storage.'
       }
     ]
   },

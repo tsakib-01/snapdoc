@@ -34,12 +34,14 @@ import {
   LayoutGrid,
   Link as LinkIcon,
   Send,
-  Stamp
+  Stamp,
+  RotateCw
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
+import { generateOfficialSeal, removeWhiteBackground } from '@/lib/pdf/sealGenerator';
 
 export interface PlacedElement {
   id: string;
@@ -53,6 +55,7 @@ export interface PlacedElement {
   pageIndex: number;
   color: string;
   opacity: number; // 0.1 to 1.0
+  rotation?: number; // degrees (0 - 360)
 }
 
 interface SavedSignature {
@@ -183,10 +186,24 @@ export default function SignPdfTool() {
   const [isMultiSignerMode, setIsMultiSignerMode] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Digital Seal State
-  const [sealSignerName, setSealSignerName] = useState<string>('Authorized Signatory');
-  const [sealReason, setSealReason] = useState<string>('Certified Document Integrity');
-  const [sealCertId, setSealCertId] = useState<string>(() => `SNPD-SEAL-${Math.floor(100000 + Math.random() * 900000)}`);
+  // Digital Seal Studio States
+  const [sealStudioTab, setSealStudioTab] = useState<'create' | 'upload'>('create');
+  const [sealShape, setSealShape] = useState<'circle' | 'rectangle'>('circle');
+  const [sealCompanyName, setSealCompanyName] = useState<string>('ACME GLOBAL CORPORATION');
+  const [sealRegNumber, setSealRegNumber] = useState<string>('REG-892410-X');
+  const [sealTitle, setSealTitle] = useState<string>('OFFICIAL CORPORATE SEAL');
+  const [sealAuthorizedName, setSealAuthorizedName] = useState<string>('DIRECTOR OF OPERATIONS');
+  const [sealIncludeDate, setSealIncludeDate] = useState<boolean>(true);
+  const [sealDateStr, setSealDateStr] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [sealColor, setSealColor] = useState<string>('#1e40af'); // Classic Official Blue
+  const [sealLogoDataUrl, setSealLogoDataUrl] = useState<string | null>(null);
+  const [sealGeneratedPreview, setSealGeneratedPreview] = useState<string>('');
+
+  // Upload Seal States
+  const [uploadedSealRawUrl, setUploadedSealRawUrl] = useState<string | null>(null);
+  const [uploadedSealRemoveBg, setUploadedSealRemoveBg] = useState<boolean>(true);
+  const [uploadedSealProcessedUrl, setUploadedSealProcessedUrl] = useState<string | null>(null);
+  const [isProcessingSealUpload, setIsProcessingSealUpload] = useState<boolean>(false);
 
   // Symbols Dropdown
   const [showSymbolsDropdown, setShowSymbolsDropdown] = useState<boolean>(false);
@@ -206,9 +223,11 @@ export default function SignPdfTool() {
   const [undoStack, setUndoStack] = useState<PlacedElement[][]>([]);
   const [redoStack, setRedoStack] = useState<PlacedElement[][]>([]);
 
-  // Dragging & Resizing States (Mouse & Touch)
+  // Dragging, Resizing & Rotating States (Mouse & Touch)
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [isRotating, setIsRotating] = useState<boolean>(false);
+  const [rotateCenter, setRotateCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [elementInitialRect, setElementInitialRect] = useState<{ x: number; y: number; width: number; height: number }>({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -429,23 +448,106 @@ export default function SignPdfTool() {
     setSelectedElementId(item.id);
   };
 
-  // Apply Digital Seal to Document
-  const handleApplyDigitalSeal = () => {
-    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    const sealDataUrl = generateDigitalSealDataUrl(sealSignerName, sealReason, sealCertId, today);
-    if (!sealDataUrl) return;
+  // Real-time Seal Generator Effect
+  useEffect(() => {
+    let isMounted = true;
+    generateOfficialSeal({
+      shape: sealShape,
+      companyName: sealCompanyName.trim() || 'ACME GLOBAL CORPORATION',
+      regNumber: sealRegNumber.trim() || undefined,
+      sealTitle: sealTitle.trim() || 'OFFICIAL CORPORATE SEAL',
+      authorizedName: sealAuthorizedName.trim() || 'AUTHORIZED SIGNATORY',
+      includeDate: sealIncludeDate,
+      dateStr: sealDateStr,
+      color: sealColor,
+      logoDataUrl: sealLogoDataUrl,
+    }).then((url) => {
+      if (isMounted) {
+        setSealGeneratedPreview(url);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    sealShape,
+    sealCompanyName,
+    sealRegNumber,
+    sealTitle,
+    sealAuthorizedName,
+    sealIncludeDate,
+    sealDateStr,
+    sealColor,
+    sealLogoDataUrl,
+  ]);
+
+  // Handle Logo Upload for Seal
+  const handleSealLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setSealLogoDataUrl(ev.target?.result as string);
+    };
+    reader.readAsDataURL(f);
+  };
+
+  // Handle Uploaded Seal Image
+  const handleSealUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const raw = ev.target?.result as string;
+      setUploadedSealRawUrl(raw);
+      if (uploadedSealRemoveBg) {
+        setIsProcessingSealUpload(true);
+        const transparentUrl = await removeWhiteBackground(raw);
+        setUploadedSealProcessedUrl(transparentUrl);
+        setIsProcessingSealUpload(false);
+      } else {
+        setUploadedSealProcessedUrl(raw);
+      }
+    };
+    reader.readAsDataURL(f);
+  };
+
+  // Handle Toggle Remove White Background
+  const handleToggleRemoveBg = async (checked: boolean) => {
+    setUploadedSealRemoveBg(checked);
+    if (!uploadedSealRawUrl) return;
+    if (checked) {
+      setIsProcessingSealUpload(true);
+      const transparentUrl = await removeWhiteBackground(uploadedSealRawUrl);
+      setUploadedSealProcessedUrl(transparentUrl);
+      setIsProcessingSealUpload(false);
+    } else {
+      setUploadedSealProcessedUrl(uploadedSealRawUrl);
+    }
+  };
+
+  // Apply Seal to Document
+  const handleApplySeal = () => {
+    const finalDataUrl = sealStudioTab === 'create' ? sealGeneratedPreview : uploadedSealProcessedUrl;
+    if (!finalDataUrl) return;
+
+    const currentThumb = pages[currentPage - 1];
+    const pageAspect = currentThumb ? currentThumb.aspectRatio : 0.707;
+    const widthPct = 22;
+    const heightPct = Math.min(32, widthPct * pageAspect);
 
     placeItemOnPage({
-      id: `elem_${Date.now()}`,
+      id: `seal_${Date.now()}`,
       type: 'seal',
-      dataUrl: sealDataUrl,
-      x: 30,
-      y: 45,
-      width: 40,
-      height: 14,
+      dataUrl: finalDataUrl,
+      x: 39,
+      y: 40,
+      width: widthPct,
+      height: heightPct,
       pageIndex: currentPage - 1,
-      color: '#059669',
-      opacity: 1.0,
+      color: sealColor,
+      opacity: 0.9,
+      rotation: 0,
     });
     setShowDigitalSealModal(false);
   };
@@ -596,6 +698,9 @@ export default function SignPdfTool() {
   const updateElementProp = (id: string, updates: Partial<PlacedElement>) => {
     const newItems = placedElements.map((el) => (el.id === id ? { ...el, ...updates } : el));
     recordState(newItems);
+    if (updates.pageIndex !== undefined) {
+      setCurrentPage(updates.pageIndex + 1);
+    }
   };
 
   // Dynamically change color of any placed element (signature, text, symbol)
@@ -611,7 +716,7 @@ export default function SignPdfTool() {
     }
   };
 
-  // Mouse & Touch Dragging Handlers
+  // Mouse & Touch Dragging, Resizing & Rotating Handlers
   const handleElementStart = (clientX: number, clientY: number, elem: PlacedElement) => {
     if (activeTool === 'hand') return;
     setSelectedElementId(elem.id);
@@ -627,6 +732,16 @@ export default function SignPdfTool() {
     setElementInitialRect({ x: elem.x, y: elem.y, width: elem.width, height: elem.height });
   };
 
+  const handleRotateStart = (clientX: number, clientY: number, elem: PlacedElement) => {
+    if (!pageContainerRef.current) return;
+    const containerRect = pageContainerRef.current.getBoundingClientRect();
+    const centerX = containerRect.left + ((elem.x + elem.width / 2) / 100) * containerRect.width;
+    const centerY = containerRect.top + ((elem.y + elem.height / 2) / 100) * containerRect.height;
+    setSelectedElementId(elem.id);
+    setIsRotating(true);
+    setRotateCenter({ x: centerX, y: centerY });
+  };
+
   const processMove = useCallback(
     (clientX: number, clientY: number) => {
       if (!pageContainerRef.current) return;
@@ -634,7 +749,17 @@ export default function SignPdfTool() {
       const deltaXPercent = ((clientX - dragStart.x) / rect.width) * 100;
       const deltaYPercent = ((clientY - dragStart.y) / rect.height) * 100;
 
-      if (isDragging && selectedElementId) {
+      if (isRotating && selectedElementId) {
+        const rad = Math.atan2(clientY - rotateCenter.y, clientX - rotateCenter.x);
+        let deg = Math.round((rad * 180) / Math.PI + 90);
+        while (deg > 180) deg -= 360;
+        while (deg < -180) deg += 360;
+        if (Math.abs(deg) <= 3) deg = 0;
+
+        setPlacedElements((prev) =>
+          prev.map((el) => (el.id === selectedElementId ? { ...el, rotation: deg } : el))
+        );
+      } else if (isDragging && selectedElementId) {
         const newX = Math.max(0, Math.min(100 - elementInitialRect.width, elementInitialRect.x + deltaXPercent));
         const newY = Math.max(0, Math.min(100 - elementInitialRect.height, elementInitialRect.y + deltaYPercent));
 
@@ -677,7 +802,7 @@ export default function SignPdfTool() {
         );
       }
     },
-    [isDragging, isResizing, selectedElementId, dragStart, elementInitialRect]
+    [isDragging, isResizing, isRotating, selectedElementId, dragStart, elementInitialRect, rotateCenter]
   );
 
   const handlePageMouseMove = (e: React.MouseEvent) => {
@@ -685,7 +810,7 @@ export default function SignPdfTool() {
   };
 
   const handlePageTouchMove = (e: React.TouchEvent) => {
-    if (isDragging || isResizing) {
+    if (isDragging || isResizing || isRotating) {
       if (e.touches.length > 0) {
         processMove(e.touches[0].clientX, e.touches[0].clientY);
       }
@@ -695,6 +820,7 @@ export default function SignPdfTool() {
   const handleEnd = () => {
     setIsDragging(false);
     setIsResizing(null);
+    setIsRotating(false);
   };
 
   // 3. Finalize & Sign PDF using pdf-lib
@@ -717,16 +843,38 @@ export default function SignPdfTool() {
         const pdfWidth = (el.width / 100) * pageWidth;
         const pdfHeight = (el.height / 100) * pageHeight;
         const pdfY = pageHeight - (el.y / 100) * pageHeight - pdfHeight;
+        const rotDeg = el.rotation || 0;
+
+        const drawWithRotation = (pngImg: any) => {
+          if (!rotDeg) {
+            page.drawImage(pngImg, {
+              x: pdfX,
+              y: pdfY,
+              width: pdfWidth,
+              height: pdfHeight,
+              opacity: el.opacity,
+            });
+          } else {
+            const cx = pdfX + pdfWidth / 2;
+            const cy = pdfY + pdfHeight / 2;
+            const rad = (-rotDeg * Math.PI) / 180;
+            const drawX = cx - (pdfWidth / 2) * Math.cos(rad) + (pdfHeight / 2) * Math.sin(rad);
+            const drawY = cy - (pdfWidth / 2) * Math.sin(rad) - (pdfHeight / 2) * Math.cos(rad);
+
+            page.drawImage(pngImg, {
+              x: drawX,
+              y: drawY,
+              width: pdfWidth,
+              height: pdfHeight,
+              rotate: degrees(-rotDeg),
+              opacity: el.opacity,
+            });
+          }
+        };
 
         if (el.dataUrl) {
           const pngImage = await pdfDoc.embedPng(el.dataUrl);
-          page.drawImage(pngImage, {
-            x: pdfX,
-            y: pdfY,
-            width: pdfWidth,
-            height: pdfHeight,
-            opacity: el.opacity,
-          });
+          drawWithRotation(pngImage);
         } else if (el.type === 'text' || el.type === 'date') {
           const offCanvas = document.createElement('canvas');
           offCanvas.width = 600;
@@ -739,13 +887,7 @@ export default function SignPdfTool() {
             offCtx.fillText(el.text || '', 20, 75);
             const textDataUrl = offCanvas.toDataURL('image/png');
             const pngImage = await pdfDoc.embedPng(textDataUrl);
-            page.drawImage(pngImage, {
-              x: pdfX,
-              y: pdfY,
-              width: pdfWidth,
-              height: pdfHeight,
-              opacity: el.opacity,
-            });
+            drawWithRotation(pngImage);
           }
         } else if (['check', 'cross', 'dot', 'line'].includes(el.type)) {
           const symCanvas = document.createElement('canvas');
@@ -785,13 +927,7 @@ export default function SignPdfTool() {
 
             const symDataUrl = symCanvas.toDataURL('image/png');
             const pngImage = await pdfDoc.embedPng(symDataUrl);
-            page.drawImage(pngImage, {
-              x: pdfX,
-              y: pdfY,
-              width: pdfWidth,
-              height: pdfHeight,
-              opacity: el.opacity,
-            });
+            drawWithRotation(pngImage);
           }
         }
       }
@@ -1101,17 +1237,19 @@ export default function SignPdfTool() {
       )}
 
       {/* 2c. Modal: Create & Stamp Digital Seal */}
+      {/* 2c. Modal: Official Seal & Stamp Studio */}
       {showDigitalSealModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-base-100 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-base-300 space-y-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between border-b border-base-200 pb-3">
-              <div className="flex items-center gap-2.5">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-base-100 rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-base-300 space-y-4 animate-in fade-in zoom-in-95 duration-200 my-auto max-h-[95vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-base-200 pb-3 shrink-0">
+              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5" />
+                  <Stamp className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-base-content">Digital Seal Studio</h2>
-                  <p className="text-xs text-base-content/60">Generate tamper-evident seal with audit trail badge</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-base-content">Official Seal & Stamp Studio</h2>
+                  <p className="text-xs text-base-content/60">Generate authentic corporate seals or upload your official company stamp</p>
                 </div>
               </div>
               <button
@@ -1122,74 +1260,392 @@ export default function SignPdfTool() {
               </button>
             </div>
 
-            {/* Seal Form Inputs */}
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-base-content/70">Signatory / Company Name</label>
-                <input
-                  type="text"
-                  value={sealSignerName}
-                  onChange={(e) => setSealSignerName(e.target.value)}
-                  placeholder="e.g. Acme Corporation or Jane Doe"
-                  className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-base-content/70">Verification Status / Reason</label>
-                <input
-                  type="text"
-                  value={sealReason}
-                  onChange={(e) => setSealReason(e.target.value)}
-                  placeholder="e.g. Certified Document Integrity"
-                  className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-base-content/70">Certificate ID</label>
-                <input
-                  type="text"
-                  value={sealCertId}
-                  readOnly
-                  className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs bg-base-200 font-mono text-base-content/70"
-                />
-              </div>
+            {/* Studio Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b border-base-200 pb-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSealStudioTab('create')}
+                className={`btn btn-sm rounded-xl gap-2 font-bold transition-all ${
+                  sealStudioTab === 'create'
+                    ? 'btn-primary text-primary-content shadow-sm'
+                    : 'btn-ghost text-base-content/70 hover:text-base-content'
+                }`}
+              >
+                <PenTool className="w-4 h-4" />
+                <span>Create New Seal</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSealStudioTab('upload')}
+                className={`btn btn-sm rounded-xl gap-2 font-bold transition-all ${
+                  sealStudioTab === 'upload'
+                    ? 'btn-primary text-primary-content shadow-sm'
+                    : 'btn-ghost text-base-content/70 hover:text-base-content'
+                }`}
+              >
+                <Upload className="w-4 h-4" />
+                <span>Upload Seal</span>
+              </button>
             </div>
 
-            {/* Real-time Preview */}
-            <div>
-              <label className="text-xs font-bold text-base-content/70 mb-1.5 block">Seal Preview on Document</label>
-              <div className="p-4 rounded-2xl bg-base-200/50 border border-base-300 flex items-center justify-center">
-                <div className="bg-white rounded-xl border-2 border-emerald-600 p-3 shadow-sm flex items-center gap-3 w-full max-w-sm">
-                  <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg font-bold shrink-0">
-                    ✓
+            {/* Tab Body */}
+            <div className="overflow-y-auto flex-1 pr-1 space-y-4">
+              {sealStudioTab === 'create' ? (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                  {/* Left Column: Form Inputs */}
+                  <div className="md:col-span-7 space-y-3.5">
+                    {/* Seal Shape Selector */}
+                    <div>
+                      <label className="text-[11px] font-bold text-base-content/70 block mb-1">Seal Shape</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSealShape('circle')}
+                          className={`btn btn-sm rounded-xl border ${
+                            sealShape === 'circle'
+                              ? 'border-primary bg-primary/10 text-primary font-bold'
+                              : 'border-base-300 bg-base-100 text-base-content/70 font-normal'
+                          }`}
+                        >
+                          <Circle className="w-3.5 h-3.5" />
+                          <span>Circular Official Seal</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSealShape('rectangle')}
+                          className={`btn btn-sm rounded-xl border ${
+                            sealShape === 'rectangle'
+                              ? 'border-primary bg-primary/10 text-primary font-bold'
+                              : 'border-base-300 bg-base-100 text-base-content/70 font-normal'
+                          }`}
+                        >
+                          <div className="w-3.5 h-2.5 border-2 border-current rounded-sm" />
+                          <span>Boxed Stamp</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Organization / Company Name */}
+                    <div>
+                      <label className="text-[11px] font-bold text-base-content/70 block">
+                        Organization / Company Name <span className="text-error">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={sealCompanyName}
+                        onChange={(e) => setSealCompanyName(e.target.value)}
+                        placeholder="e.g. ACME GLOBAL CORPORATION"
+                        className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs font-semibold"
+                      />
+                    </div>
+
+                    {/* Seal Title */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[11px] font-bold text-base-content/70">
+                          Seal Title <span className="text-error">*</span>
+                        </label>
+                        <div className="flex items-center gap-1">
+                          {['OFFICIAL SEAL', 'APPROVED', 'NOTARY PUBLIC'].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => setSealTitle(preset)}
+                              className="text-[9px] px-1.5 py-0.5 rounded bg-base-200 hover:bg-base-300 text-base-content/70 font-medium"
+                            >
+                              {preset}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={sealTitle}
+                        onChange={(e) => setSealTitle(e.target.value)}
+                        placeholder="e.g. OFFICIAL SEAL or NOTARY PUBLIC"
+                        className="input input-sm input-bordered w-full rounded-xl text-xs font-semibold"
+                      />
+                    </div>
+
+                    {/* Registration / License Number */}
+                    <div>
+                      <label className="text-[11px] font-bold text-base-content/70 block">
+                        Registration / License Number <span className="text-base-content/40 font-normal">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={sealRegNumber}
+                        onChange={(e) => setSealRegNumber(e.target.value)}
+                        placeholder="e.g. REG-892410-X or LIC-998822"
+                        className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs"
+                      />
+                    </div>
+
+                    {/* Authorized Person's Name */}
+                    <div>
+                      <label className="text-[11px] font-bold text-base-content/70 block">
+                        Authorized Person&apos;s Name / Signatory
+                      </label>
+                      <input
+                        type="text"
+                        value={sealAuthorizedName}
+                        onChange={(e) => setSealAuthorizedName(e.target.value)}
+                        placeholder="e.g. DIRECTOR OF OPERATIONS or John Smith"
+                        className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs font-semibold"
+                      />
+                    </div>
+
+                    {/* Optional Date */}
+                    <div className="p-2.5 rounded-xl bg-base-200/50 border border-base-300 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={sealIncludeDate}
+                            onChange={(e) => setSealIncludeDate(e.target.checked)}
+                            className="checkbox checkbox-primary checkbox-xs rounded"
+                          />
+                          <span className="text-xs font-bold text-base-content">Include Date on Seal</span>
+                        </label>
+                        {sealIncludeDate && (
+                          <button
+                            type="button"
+                            onClick={() => setSealDateStr(new Date().toISOString().slice(0, 10))}
+                            className="text-[10px] text-primary hover:underline font-semibold"
+                          >
+                            Set Today
+                          </button>
+                        )}
+                      </div>
+                      {sealIncludeDate && (
+                        <input
+                          type="date"
+                          value={sealDateStr}
+                          onChange={(e) => setSealDateStr(e.target.value)}
+                          className="input input-xs input-bordered w-full rounded-lg text-xs"
+                        />
+                      )}
+                    </div>
+
+                    {/* Center Logo Upload */}
+                    <div>
+                      <label className="text-[11px] font-bold text-base-content/70 block mb-1">
+                        Emblem / Logo <span className="text-base-content/40 font-normal">(Optional Center Icon)</span>
+                      </label>
+                      {sealLogoDataUrl ? (
+                        <div className="flex items-center gap-3 p-2 rounded-xl bg-base-200/60 border border-base-300">
+                          <img
+                            src={sealLogoDataUrl}
+                            alt="Seal Logo"
+                            className="w-10 h-10 object-contain rounded-lg bg-white p-1 border border-base-300"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-base-content truncate">Custom Logo Active</p>
+                            <p className="text-[10px] text-base-content/60">Centered inside seal inner ring</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSealLogoDataUrl(null)}
+                            className="btn btn-xs btn-ghost text-error rounded-lg"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-dashed border-base-300 hover:border-primary/60 cursor-pointer bg-base-100 hover:bg-base-200/40 transition-colors">
+                          <Upload className="w-3.5 h-3.5 text-base-content/60" />
+                          <span className="text-xs text-base-content/70 font-medium">Upload Logo (PNG, SVG, JPG)</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleSealLogoUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Seal Appearance / Color */}
+                    <div>
+                      <label className="text-[11px] font-bold text-base-content/70 block mb-1.5">
+                        Seal Appearance & Color
+                      </label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {[
+                          { label: 'Navy', hex: '#1e40af' },
+                          { label: 'Royal', hex: '#2563eb' },
+                          { label: 'Emerald', hex: '#059669' },
+                          { label: 'Crimson', hex: '#dc2626' },
+                          { label: 'Black', hex: '#111827' },
+                          { label: 'Purple', hex: '#6b21a8' },
+                          { label: 'Burgundy', hex: '#831843' },
+                        ].map((c) => (
+                          <button
+                            key={c.hex}
+                            type="button"
+                            onClick={() => setSealColor(c.hex)}
+                            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+                              sealColor === c.hex
+                                ? 'ring-2 ring-primary ring-offset-2 scale-110 shadow'
+                                : 'hover:scale-105 opacity-90 hover:opacity-100'
+                            }`}
+                            style={{ backgroundColor: c.hex }}
+                            title={c.label}
+                          >
+                            {sealColor === c.hex && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                          </button>
+                        ))}
+                        <label
+                          className="w-7 h-7 rounded-xl border border-base-300 flex items-center justify-center cursor-pointer hover:bg-base-200 overflow-hidden relative"
+                          title="Custom Color Picker"
+                        >
+                          <input
+                            type="color"
+                            value={sealColor}
+                            onChange={(e) => setSealColor(e.target.value)}
+                            className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
+                          />
+                          <span className="text-[10px] font-bold text-base-content/70">🎨</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-tight">DIGITALLY CERTIFIED & SEALED</p>
-                    <p className="text-xs font-semibold text-slate-900 truncate">Signer: {sealSignerName || 'Authorized Signatory'}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{sealReason} • {sealCertId}</p>
-                    <p className="text-[9px] font-bold text-emerald-600">SNAPDOC TRUST ENGINE • ISO 32000 AUDIT SECURE</p>
+
+                  {/* Right Column: Live Seal Preview */}
+                  <div className="md:col-span-5 flex flex-col justify-between space-y-3">
+                    <div className="bg-gradient-to-b from-base-200/60 to-base-200/20 p-4 rounded-3xl border border-base-300 flex flex-col items-center justify-center text-center">
+                      <div className="flex items-center justify-between w-full mb-3 px-1">
+                        <span className="text-[11px] font-bold text-base-content/70 uppercase tracking-wider">Live Preview</span>
+                        <span className="badge badge-sm badge-ghost text-[10px] font-mono">600 DPI Vector</span>
+                      </div>
+
+                      <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-2xl bg-white shadow-md border border-slate-200 flex items-center justify-center p-3 relative overflow-hidden">
+                        {/* Subtle security paper pattern background */}
+                        <div
+                          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                          style={{
+                            backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
+                            backgroundSize: '12px 12px',
+                          }}
+                        />
+                        {sealGeneratedPreview ? (
+                          <img
+                            src={sealGeneratedPreview}
+                            alt="Seal Live Preview"
+                            className="w-full h-full object-contain pointer-events-none select-none drop-shadow"
+                          />
+                        ) : (
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-base-content/60 mt-3 max-w-xs">
+                        This official seal will be placed onto your document. You can drag, resize, rotate, and adjust opacity directly on the page.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* Tab 2: Upload Seal */
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                    {/* Left Column: Upload Zone & Controls */}
+                    <div className="md:col-span-7 space-y-4">
+                      <div className="p-4 rounded-2xl border-2 border-dashed border-base-300 hover:border-primary/60 bg-base-200/30 text-center space-y-2 relative">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          onChange={handleSealUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-base-content">Upload Seal or Stamp Image</p>
+                          <p className="text-xs text-base-content/60">PNG, JPG, WebP or SVG supported</p>
+                        </div>
+                        <button type="button" className="btn btn-xs btn-primary rounded-lg font-bold">
+                          Browse Files
+                        </button>
+                      </div>
+
+                      {/* Transparent Background Option */}
+                      <div className="p-3 rounded-2xl bg-base-200/50 border border-base-300 space-y-1">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={uploadedSealRemoveBg}
+                            onChange={(e) => handleToggleRemoveBg(e.target.checked)}
+                            className="checkbox checkbox-primary checkbox-xs rounded"
+                          />
+                          <span className="text-xs font-bold text-base-content">
+                            Auto-remove white background (Make Transparent)
+                          </span>
+                        </label>
+                        <p className="text-[11px] text-base-content/60 pl-6">
+                          Converts scanned white paper backgrounds into authentic transparent stamps that blend seamlessly over PDF text.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Upload Preview */}
+                    <div className="md:col-span-5">
+                      <div className="bg-base-200/50 p-4 rounded-3xl border border-base-300 flex flex-col items-center justify-center text-center">
+                        <span className="text-[11px] font-bold text-base-content/70 uppercase tracking-wider mb-2">
+                          Uploaded Seal Preview
+                        </span>
+
+                        <div
+                          className="w-56 h-56 sm:w-64 sm:h-64 rounded-2xl border border-slate-300 flex items-center justify-center p-3 relative overflow-hidden"
+                          style={{
+                            backgroundColor: '#f8fafc',
+                            backgroundImage: 'linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)',
+                            backgroundSize: '16px 16px',
+                            backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                          }}
+                        >
+                          {isProcessingSealUpload ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                              <span className="text-xs text-base-content/70 font-medium">Removing background...</span>
+                            </div>
+                          ) : uploadedSealProcessedUrl ? (
+                            <img
+                              src={uploadedSealProcessedUrl}
+                              alt="Uploaded Seal"
+                              className="w-full h-full object-contain pointer-events-none select-none drop-shadow"
+                            />
+                          ) : (
+                            <div className="text-center text-base-content/40 p-4">
+                              <Stamp className="w-10 h-10 mx-auto mb-2 stroke-1" />
+                              <p className="text-xs">No image uploaded yet</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-base-200">
+            {/* Modal Footer Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-base-200 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowDigitalSealModal(false)}
-                className="btn btn-ghost rounded-xl px-4 text-xs"
+                className="btn btn-ghost rounded-xl px-4 text-xs font-semibold"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleApplyDigitalSeal}
-                className="btn btn-primary rounded-xl px-5 gap-1.5 text-xs font-bold"
+                onClick={handleApplySeal}
+                disabled={sealStudioTab === 'upload' && !uploadedSealProcessedUrl}
+                className="btn btn-primary rounded-xl px-6 gap-2 text-xs font-bold shadow-md hover:shadow-lg transition-all"
               >
-                <ShieldCheck className="w-4 h-4" />
+                <Stamp className="w-4 h-4" />
                 <span>Apply Seal to PDF</span>
               </button>
             </div>
@@ -1746,6 +2202,8 @@ export default function SignPdfTool() {
                           height: `${elem.height}%`,
                           opacity: elem.opacity,
                           touchAction: 'none',
+                          transform: `rotate(${elem.rotation || 0}deg)`,
+                          transformOrigin: 'center center',
                         }}
                         className={`absolute cursor-move flex items-center justify-center transition-shadow select-none ${
                           isSelected
@@ -1794,48 +2252,140 @@ export default function SignPdfTool() {
                             {/* Floating Toolbar anchored above element */}
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              className="absolute -top-11 left-1/2 -translate-x-1/2 bg-base-100 rounded-2xl shadow-xl border border-base-300 px-2.5 py-1 flex items-center gap-1.5 z-40 animate-in fade-in zoom-in-95 duration-150 scale-90 sm:scale-100"
+                              className="absolute -top-14 left-1/2 bg-base-100 rounded-2xl shadow-2xl border border-base-300 px-2.5 py-1 flex items-center gap-1.5 z-40 animate-in fade-in zoom-in-95 duration-150 whitespace-nowrap scale-90 sm:scale-100"
+                              style={{
+                                transform: `translateX(-50%) rotate(-${elem.rotation || 0}deg)`,
+                                transformOrigin: 'center center',
+                              }}
                             >
-                              {/* Color Picker */}
-                              <div className="flex items-center gap-1.5">
+                              {/* Page Selector (Choose which page) */}
+                              {pages.length > 1 && (
+                                <>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] text-base-content/60 font-semibold">Page:</span>
+                                    <select
+                                      value={elem.pageIndex}
+                                      onChange={(e) =>
+                                        updateElementProp(elem.id, { pageIndex: parseInt(e.target.value, 10) })
+                                      }
+                                      className="select select-xs rounded-lg bg-base-200 border-none text-[10px] font-bold px-1.5 py-0 h-6 min-h-0"
+                                      title="Move to page"
+                                    >
+                                      {pages.map((_, idx) => (
+                                        <option key={idx} value={idx}>
+                                          P.{idx + 1}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
+                                  <div className="h-3.5 w-px bg-base-300 mx-0.5" />
+                                </>
+                              )}
+
+                              {/* Quick Rotation Buttons */}
+                              <div className="flex items-center gap-0.5">
                                 <button
                                   type="button"
-                                  onClick={() => handleColorChange(elem.id, '#1e293b')}
-                                  className={`w-4 h-4 rounded-full bg-slate-900 border border-slate-700 transition-all ${
-                                    elem.color === '#1e293b' ? 'ring-2 ring-primary ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'
-                                  }`}
-                                  title="Black"
-                                />
+                                  onClick={() =>
+                                    updateElementProp(elem.id, {
+                                      rotation: ((elem.rotation || 0) - 15 + 360) % 360,
+                                    })
+                                  }
+                                  title="Rotate Left 15°"
+                                  className="btn btn-xs btn-ghost btn-circle"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleColorChange(elem.id, '#2563eb')}
-                                  className={`w-4 h-4 rounded-full bg-blue-600 border border-blue-400 transition-all ${
-                                    elem.color === '#2563eb' ? 'ring-2 ring-primary ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'
-                                  }`}
-                                  title="Blue"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleColorChange(elem.id, '#dc2626')}
-                                  className={`w-4 h-4 rounded-full bg-red-600 border border-red-400 transition-all ${
-                                    elem.color === '#dc2626' ? 'ring-2 ring-primary ring-offset-1 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'
-                                  }`}
-                                  title="Red"
-                                />
+                                  onClick={() =>
+                                    updateElementProp(elem.id, {
+                                      rotation: ((elem.rotation || 0) + 15) % 360,
+                                    })
+                                  }
+                                  title="Rotate Right 15°"
+                                  className="btn btn-xs btn-ghost btn-circle"
+                                >
+                                  <RotateCw className="w-3 h-3" />
+                                </button>
+                                {(elem.rotation || 0) !== 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateElementProp(elem.id, { rotation: 0 })}
+                                    title="Reset Rotation (0°)"
+                                    className="px-1 py-0.5 text-[9px] font-bold bg-primary/10 hover:bg-primary/20 text-primary rounded"
+                                  >
+                                    0°
+                                  </button>
+                                )}
                               </div>
 
                               <div className="h-3.5 w-px bg-base-300 mx-0.5" />
 
                               {/* Opacity Selector */}
-                              <select
-                                value={elem.opacity}
-                                onChange={(e) => updateElementProp(elem.id, { opacity: parseFloat(e.target.value) })}
-                                className="select select-xs rounded-lg bg-base-200 border-none text-[10px] font-semibold px-1 py-0 h-6 min-h-0"
-                              >
-                                <option value="1">100%</option>
-                                <option value="0.8">80%</option>
-                                <option value="0.5">50%</option>
-                              </select>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] text-base-content/60 font-semibold">Opacity:</span>
+                                <select
+                                  value={elem.opacity}
+                                  onChange={(e) =>
+                                    updateElementProp(elem.id, { opacity: parseFloat(e.target.value) })
+                                  }
+                                  className="select select-xs rounded-lg bg-base-200 border-none text-[10px] font-bold px-1 py-0 h-6 min-h-0"
+                                >
+                                  <option value="1">100%</option>
+                                  <option value="0.9">90%</option>
+                                  <option value="0.8">80%</option>
+                                  <option value="0.7">70%</option>
+                                  <option value="0.5">50%</option>
+                                  <option value="0.3">30%</option>
+                                </select>
+                              </div>
+
+                              <div className="h-3.5 w-px bg-base-300 mx-0.5" />
+
+                              {/* Color Picker */}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleColorChange(elem.id, '#1e293b')}
+                                  className={`w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700 transition-all ${
+                                    elem.color === '#1e293b'
+                                      ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                                      : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Black"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleColorChange(elem.id, '#1e40af')}
+                                  className={`w-3.5 h-3.5 rounded-full bg-blue-700 border border-blue-500 transition-all ${
+                                    elem.color === '#1e40af' || elem.color === '#2563eb'
+                                      ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                                      : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Official Blue"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleColorChange(elem.id, '#dc2626')}
+                                  className={`w-3.5 h-3.5 rounded-full bg-red-600 border border-red-400 transition-all ${
+                                    elem.color === '#dc2626'
+                                      ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                                      : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Red"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleColorChange(elem.id, '#059669')}
+                                  className={`w-3.5 h-3.5 rounded-full bg-emerald-600 border border-emerald-400 transition-all ${
+                                    elem.color === '#059669'
+                                      ? 'ring-2 ring-primary ring-offset-1 scale-110'
+                                      : 'opacity-80 hover:opacity-100 hover:scale-105'
+                                  }`}
+                                  title="Emerald"
+                                />
+                              </div>
 
                               <div className="h-3.5 w-px bg-base-300 mx-0.5" />
 
@@ -1858,6 +2408,27 @@ export default function SignPdfTool() {
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
+                            </div>
+
+                            {/* Interactive Rotation Stalk Handle */}
+                            <div
+                              className="absolute -top-7 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto z-40 cursor-grab active:cursor-grabbing"
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                handleRotateStart(e.clientX, e.clientY, elem);
+                              }}
+                              onTouchStart={(e) => {
+                                e.stopPropagation();
+                                if (e.touches.length > 0) {
+                                  handleRotateStart(e.touches[0].clientX, e.touches[0].clientY, elem);
+                                }
+                              }}
+                              title="Drag to Rotate freely"
+                            >
+                              <div className="w-5 h-5 rounded-full bg-white border-2 border-primary shadow flex items-center justify-center hover:scale-110 transition-transform">
+                                <RotateCw className="w-3 h-3 text-primary" />
+                              </div>
+                              <div className="w-0.5 h-2 bg-primary/80" />
                             </div>
 
                             {/* Resize Handles with Touch Support */}

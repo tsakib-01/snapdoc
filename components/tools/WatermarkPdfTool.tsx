@@ -113,7 +113,7 @@ export default function WatermarkPdfTool() {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
-      {!file && (
+      {(!file || loadingThumbnails) && (
         <UploadZone
           accept="application/pdf"
           maxFiles={1}
@@ -121,15 +121,10 @@ export default function WatermarkPdfTool() {
           title="Upload PDF to Add Watermark"
           subtitle="Stamp high-visibility text or logo watermarks across every page of your PDF document."
           onFilesSelected={(files) => handleFileSelected(files[0])}
+          loading={loadingThumbnails}
+          loadingMessage="Rendering document pages & initializing watermark studio..."
+          files={file ? [file] : []}
         />
-      )}
-
-      {loadingThumbnails && (
-        <div className="py-12 text-center space-y-4">
-          <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-          <h3 className="font-bold text-base">Loading Document Pages...</h3>
-          <p className="text-xs text-base-content/60">Rendering visual watermark preview studio</p>
-        </div>
       )}
 
       {file && !loadingThumbnails && !resultData && (

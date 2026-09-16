@@ -19,51 +19,67 @@ export interface SealConfig {
 /**
  * Draws text curved along a circular arc on a canvas context.
  */
+/**
+ * Draws text curved along a circular arc on a canvas context.
+ * isTop: true places text on the top arc (centered at 12 o'clock, reading left-to-right).
+ * isTop: false places text on the bottom arc (centered at 6 o'clock, upright, reading left-to-right).
+ */
 function drawCurvedText(
   ctx: CanvasRenderingContext2D,
   text: string,
   cx: number,
   cy: number,
   radius: number,
-  startAngle: number,
-  clockwise: boolean = true
+  isTop: boolean,
+  maxArcAngle: number = Math.PI * 0.70 // ~126 degrees max to leave clear space for side stars
 ) {
+  if (!text || !text.trim()) return;
+
   ctx.save();
-  ctx.translate(cx, cy);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
-  // Measure total width to distribute characters evenly
-  const chars = text.split('');
-  const charWidths = chars.map((ch) => ctx.measureText(ch).width);
-  const totalWidth = charWidths.reduce((a, b) => a + b, 0);
-  const totalAngle = totalWidth / radius;
+  // Measure and adjust font size dynamically if text is too long
+  const fontMatch = ctx.font.match(/(\d+)px/);
+  let fontSize = fontMatch ? parseInt(fontMatch[1], 10) : 22;
+  const baseFontName = ctx.font.replace(/\d+px/, '').trim() || 'Arial, sans-serif';
 
-  let currentAngle = clockwise
-    ? startAngle - totalAngle / 2
-    : startAngle + totalAngle / 2;
+  let chars = text.split('');
+  let charWidths = chars.map((ch) => ctx.measureText(ch).width);
+  let totalWidth = charWidths.reduce((a, b) => a + b, 0);
+  let totalAngle = totalWidth / radius;
+
+  // Dynamically shrink font size if text exceeds comfortable arc
+  while (totalAngle > maxArcAngle && fontSize > 9) {
+    fontSize -= 1;
+    ctx.font = `bold ${fontSize}px ${baseFontName}`;
+    charWidths = chars.map((ch) => ctx.measureText(ch).width);
+    totalWidth = charWidths.reduce((a, b) => a + b, 0);
+    totalAngle = totalWidth / radius;
+  }
+
+  let currentAngle = -totalAngle / 2;
 
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
     const chWidth = charWidths[i];
     const chAngle = chWidth / radius;
+    currentAngle += chAngle / 2;
 
-    if (clockwise) {
-      currentAngle += chAngle / 2;
-      ctx.save();
-      ctx.rotate(currentAngle);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(currentAngle);
+    if (isTop) {
+      // Top Arc: centered at 12 o'clock (UP)
       ctx.translate(0, -radius);
-      ctx.fillText(ch, 0, 0);
-      ctx.restore();
-      currentAngle += chAngle / 2;
     } else {
-      currentAngle -= chAngle / 2;
-      ctx.save();
-      ctx.rotate(currentAngle);
+      // Bottom Arc: centered at 6 o'clock (DOWN), upright orientation
       ctx.translate(0, radius);
-      ctx.scale(-1, -1); // Flip upright for bottom arc
-      ctx.fillText(ch, 0, 0);
-      ctx.restore();
-      currentAngle -= chAngle / 2;
     }
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+
+    currentAngle += chAngle / 2;
   }
 
   ctx.restore();
@@ -118,22 +134,22 @@ export async function generateOfficialSeal(config: SealConfig): Promise<string> 
 
     // 5. Decorative Star Accents at left and right (9 o'clock and 3 o'clock)
     ctx.fillStyle = color;
-    ctx.font = 'bold 24px sans-serif';
+    ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('★', cx - 220, cy);
-    ctx.fillText('★', cx + 220, cy);
+    ctx.fillText('★', cx - 218, cy);
+    ctx.fillText('★', cx + 218, cy);
 
-    // 6. Curved Company Name (Top Arc)
+    // 6. Curved Company Name (Top Arc - 12 o'clock)
     ctx.fillStyle = color;
-    ctx.font = 'bold 26px "Arial", "Helvetica", sans-serif';
+    ctx.font = 'bold 24px "Arial", "Helvetica", sans-serif';
     const topText = (config.companyName || 'ORGANIZATION NAME').toUpperCase();
-    drawCurvedText(ctx, topText, cx, cy, 220, -Math.PI / 2, true);
+    drawCurvedText(ctx, topText, cx, cy, 218, true);
 
-    // 7. Curved Registration / License / Subtitle (Bottom Arc)
-    ctx.font = 'bold 20px "Arial", "Helvetica", sans-serif';
+    // 7. Curved Registration / License / Subtitle (Bottom Arc - 6 o'clock)
+    ctx.font = 'bold 18px "Arial", "Helvetica", sans-serif';
     const bottomText = (config.regNumber ? `REG NO: ${config.regNumber}` : 'AUTHENTIC CERTIFIED SEAL').toUpperCase();
-    drawCurvedText(ctx, bottomText, cx, cy, 220, Math.PI / 2, false);
+    drawCurvedText(ctx, bottomText, cx, cy, 218, false);
 
     // 8. Center Area Content
     if (config.logoDataUrl) {

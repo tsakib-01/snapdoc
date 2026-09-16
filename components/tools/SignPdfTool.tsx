@@ -963,8 +963,8 @@ export default function SignPdfTool() {
 
   return (
     <div className="w-full mx-auto select-none">
-      {/* 0. Initial Upload Screen */}
-      {!file && (
+      {/* 0. Initial Upload Screen & Professional Large File Loading */}
+      {(!file || loadingPdf) && (
         <div className="max-w-4xl mx-auto space-y-6">
           <UploadZone
             accept="application/pdf"
@@ -973,13 +973,10 @@ export default function SignPdfTool() {
             title="Upload PDF to eSign"
             subtitle="Sign yourself or request signatures. Draw, type, or upload your signature and place it anywhere with drag-and-drop."
             onFilesSelected={handleFilesSelected}
+            loading={loadingPdf}
+            loadingMessage="Rendering PDF pages & preparing high-resolution eSign studio..."
+            files={file ? [file] : []}
           />
-          {loadingPdf && (
-            <div className="flex items-center justify-center gap-3 p-6 rounded-2xl bg-base-100 border border-base-300">
-              <Loader2 className="w-5 h-5 text-primary animate-spin" />
-              <span className="text-sm font-medium text-base-content">Preparing PDF pages & eSign studio...</span>
-            </div>
-          )}
         </div>
       )}
 

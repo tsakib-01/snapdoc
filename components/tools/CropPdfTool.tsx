@@ -119,7 +119,7 @@ export default function CropPdfTool() {
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
-      {!file && (
+      {(!file || loadingThumbnails) && (
         <UploadZone
           accept="application/pdf"
           maxFiles={1}
@@ -127,15 +127,10 @@ export default function CropPdfTool() {
           title="Upload PDF to Crop & Trim Margins"
           subtitle="Visually trim page margins, remove headers/footers, or crop PDF document boundaries."
           onFilesSelected={(files) => handleFileSelected(files[0])}
+          loading={loadingThumbnails}
+          loadingMessage="Generating visual page previews & initializing crop studio..."
+          files={file ? [file] : []}
         />
-      )}
-
-      {loadingThumbnails && (
-        <div className="py-12 text-center space-y-4">
-          <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-          <h3 className="font-bold text-base">Generating Visual Page Previews...</h3>
-          <p className="text-xs text-base-content/60">Rendering document pages for visual crop studio</p>
-        </div>
       )}
 
       {file && !loadingThumbnails && !resultData && (

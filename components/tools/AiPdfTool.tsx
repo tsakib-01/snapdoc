@@ -118,7 +118,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {!file && (
+      {(!file || processing) && (
         <UploadZone
           accept="application/pdf"
           maxFiles={1}
@@ -126,15 +126,10 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
           title="Upload PDF for AI Assistant & Summarizer"
           subtitle="Get instant executive summaries, ask questions in real-time chat, and generate key takeaways."
           onFilesSelected={(files) => handleFileSelected(files[0])}
+          loading={processing}
+          loadingMessage="Analyzing document with AI Engine & generating insights..."
+          files={file ? [file] : []}
         />
-      )}
-
-      {processing && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 text-center space-y-4 shadow-sm">
-          <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-          <h3 className="font-bold text-base">Analyzing Document with AI Engine...</h3>
-          <p className="text-xs text-base-content/60">Extracting context, key figures, action items, and Q&A references</p>
-        </div>
       )}
 
       {file && !processing && summary && (

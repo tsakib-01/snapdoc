@@ -199,11 +199,19 @@ def _format_excel_cell(cell) -> str:
         # Percentage formatting
         if '%' in fmt:
             pct_val = val * 100.0
-            if '0.00' in fmt or '.00' in fmt:
+            dec_match = re.search(r'\.(0+|#+)', fmt)
+            if dec_match:
+                dec_len = len(dec_match.group(1))
+                return f"{pct_val:.{dec_len}f}%"
+            elif '0.00' in fmt or '.00' in fmt:
                 return f"{pct_val:.2f}%"
             elif '0.0' in fmt or '.0' in fmt:
                 return f"{pct_val:.1f}%"
-            return f"{pct_val:.0f}%"
+            else:
+                # No decimal given in format
+                if isinstance(pct_val, (int, float)) and (isinstance(pct_val, int) or pct_val.is_integer() or '0%' in fmt):
+                    return f"{int(round(pct_val))}%"
+                return f"{pct_val:g}%"
 
         # Check for currency symbols in format string
         curr_sym = None
@@ -212,29 +220,41 @@ def _format_excel_cell(cell) -> str:
                 curr_sym = sym
                 break
 
-        has_comma = ',' in fmt or curr_sym is not None
-        dec_places = 2 if ('0.00' in fmt or '.00' in fmt or (curr_sym and '.' in fmt)) else (1 if '0.0' in fmt else 0)
-
-        # If currency format but no explicit decimals, default to 2
-        if curr_sym and dec_places == 0 and '$' in fmt:
+        has_comma = ',' in fmt or (curr_sym is not None and ('#' in fmt or ',' in fmt))
+        
+        # Check if format specifies explicit decimal places
+        dec_match = re.search(r'\.(0+|#+)', fmt)
+        dec_places = 0
+        if dec_match:
+            dec_places = len(dec_match.group(1))
+        elif '0.00' in fmt or '.00' in fmt:
             dec_places = 2
+        elif '0.0' in fmt or '.0' in fmt:
+            dec_places = 1
 
         sign = '-' if val < 0 else ''
         abs_val = abs(val)
 
-        if has_comma:
-            if dec_places > 0:
+        # If no decimal is given in format: do NOT force decimal/float
+        if dec_places == 0:
+            is_explicit_int_fmt = bool(re.search(r'[0#]', fmt)) and not bool(dec_match)
+            if isinstance(abs_val, int) or abs_val.is_integer() or is_explicit_int_fmt:
+                int_val = int(round(abs_val))
+                formatted_num = f"{int_val:,}" if has_comma else f"{int_val}"
+            else:
+                # Value has actual fractional digits and format didn't restrict it (e.g. General)
+                if has_comma:
+                    parts = f"{abs_val:g}".split('.')
+                    int_part = f"{int(parts[0]):,}"
+                    formatted_num = f"{int_part}.{parts[1]}" if len(parts) > 1 else int_part
+                else:
+                    formatted_num = f"{abs_val:g}"
+        else:
+            # Explicit decimals specified in the spreadsheet format
+            if has_comma:
                 formatted_num = f"{abs_val:,.{dec_places}f}"
             else:
-                formatted_num = f"{int(round(abs_val)):,}"
-        else:
-            if dec_places > 0:
                 formatted_num = f"{abs_val:.{dec_places}f}"
-            else:
-                if isinstance(val, float) and not val.is_integer():
-                    formatted_num = f"{abs_val}"
-                else:
-                    formatted_num = f"{int(round(abs_val))}"
 
         if curr_sym:
             return f"{sign}{curr_sym}{formatted_num}"

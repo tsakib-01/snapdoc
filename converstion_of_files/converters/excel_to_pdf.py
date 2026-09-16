@@ -1,4 +1,6 @@
 import os
+import uuid
+import csv
 import subprocess
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -406,25 +408,132 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
         print(f"[excel_to_pdf reportlab error] {e}")
         return False
 
+def _prepare_excel_for_landscape(excel_path: str) -> str:
+    """
+    Prepares spreadsheet for Landscape printing before passing to LibreOffice or COM:
+    - Sets orientation to Landscape
+    - Sets paperSize to A4
+    - Enables fitToPage with fitToWidth=1 and fitToHeight=1
+    Supports .xlsx and .csv files.
+    """
+    try:
+        ext = os.path.splitext(excel_path)[1].lower()
+        if ext == '.csv':
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Sheet1"
+            with open(excel_path, 'r', encoding='utf-8', errors='replace') as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    ws.append(row)
+        elif ext == '.xlsx':
+            wb = openpyxl.load_workbook(excel_path)
+        else:
+            return excel_path
+
+        for ws in wb.worksheets:
+            try:
+                ws.sheet_properties.pageSetUpPr.fitToPage = True
+            except Exception:
+                pass
+            ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+            ws.page_setup.paperSize = ws.PAPERSIZE_A4
+            ws.page_setup.fitToWidth = 1
+            ws.page_setup.fitToHeight = 1
+
+        out_dir = os.path.dirname(os.path.abspath(excel_path))
+        temp_path = os.path.join(out_dir, f"prep_landscape_{uuid.uuid4().hex[:8]}.xlsx")
+        wb.save(temp_path)
+        return temp_path
+    except Exception as e:
+        print(f"[prepare_excel_for_landscape warning] {e}")
+        return excel_path
+
+def _is_pdf_landscape(pdf_path: str) -> bool:
+    """Returns True if the generated PDF is in Landscape orientation."""
+    try:
+        from pypdf import PdfReader
+        if not os.path.exists(pdf_path) or os.path.getsize(pdf_path) == 0:
+            return False
+        reader = PdfReader(pdf_path)
+        if not reader.pages:
+            return False
+        page = reader.pages[0]
+        rot = int(page.get('/Rotate', 0) or 0)
+        w = float(page.mediabox.width)
+        h = float(page.mediabox.height)
+        if rot in [90, 270]:
+            w, h = h, w
+        return w > h
+    except Exception:
+        return False
+
+def _force_pdf_landscape(pdf_path: str) -> bool:
+    """If any page in the PDF is still portrait (width < height), rotates it to landscape."""
+    try:
+        from pypdf import PdfReader, PdfWriter
+        if not os.path.exists(pdf_path):
+            return False
+        reader = PdfReader(pdf_path)
+        writer = PdfWriter()
+        modified = False
+        for page in reader.pages:
+            rot = int(page.get('/Rotate', 0) or 0)
+            w = float(page.mediabox.width)
+            h = float(page.mediabox.height)
+            if rot in [90, 270]:
+                w, h = h, w
+            if w < h:
+                page.rotate(90)
+                modified = True
+            writer.add_page(page)
+        if modified:
+            with open(pdf_path, 'wb') as f:
+                writer.write(f)
+        return True
+    except Exception as e:
+        print(f"[force_pdf_landscape warning] {e}")
+        return False
+
 def convert_excel_to_pdf(excel_path: str, output_pdf_path: str) -> str:
     """
-    Converts an Excel spreadsheet (.xlsx / .xls) to a PDF document with 100% precision:
-    - Preserves exact cell colors, column widths, font weights (bold/normal), borders, and alignments.
-    - Zero synthetic headers.
+    Converts an Excel spreadsheet (.xlsx / .xls / .csv) to a PDF document with 100% precision:
+    - Guaranteed Landscape orientation for wide visibility.
+    - Fits onto a single page (or 1 page per sheet).
+    - Preserves exact cell colors, column widths, font weights, borders, and alignments.
     - 100% multilingual font support.
     """
     os.makedirs(os.path.dirname(os.path.abspath(output_pdf_path)), exist_ok=True)
 
-    # Strategy 1: Excel COM with PageSetup optimization
-    if _convert_with_excel_com(excel_path, output_pdf_path):
-        return output_pdf_path
+    prepared_path = _prepare_excel_for_landscape(excel_path)
+    clean_prepared = (prepared_path != excel_path and os.path.exists(prepared_path))
 
-    # Strategy 2: LibreOffice Headless
-    if _convert_with_libreoffice(excel_path, output_pdf_path):
-        return output_pdf_path
+    try:
+        # Strategy 1: Excel COM with PageSetup optimization
+        if _convert_with_excel_com(prepared_path, output_pdf_path):
+            if _is_pdf_landscape(output_pdf_path):
+                return output_pdf_path
 
-    # Strategy 3: openpyxl + High-Fidelity Multilingual ReportLab Engine
-    if _convert_with_python_reportlab(excel_path, output_pdf_path):
-        return output_pdf_path
+        # Strategy 2: LibreOffice Headless with prepared landscape workbook
+        if _convert_with_libreoffice(prepared_path, output_pdf_path):
+            if _is_pdf_landscape(output_pdf_path):
+                return output_pdf_path
+
+        # Strategy 3: openpyxl + High-Fidelity Multilingual ReportLab Engine (Always Landscape & 1 page)
+        if _convert_with_python_reportlab(excel_path, output_pdf_path):
+            if _is_pdf_landscape(output_pdf_path):
+                return output_pdf_path
+
+        # Strategy 4: If any engine created a PDF but it wasn't landscape, force rotate
+        if os.path.exists(output_pdf_path) and os.path.getsize(output_pdf_path) > 0:
+            _force_pdf_landscape(output_pdf_path)
+            return output_pdf_path
+    finally:
+        if clean_prepared:
+            try:
+                os.remove(prepared_path)
+            except Exception:
+                pass
 
     raise RuntimeError("Failed to convert Excel spreadsheet to PDF using all available engines.")
+

@@ -25,6 +25,34 @@ export interface ConversionOutput {
  * Directly calls the remote Python FastAPI microservice to bypass Vercel serverless
  * execution timeout & payload limits, with fallback to local Next.js API routes.
  */
+async function ensureBlobLandscape(blob: Blob): Promise<Blob> {
+  try {
+    const { PDFDocument, degrees } = await import('pdf-lib');
+    const arrayBuf = await blob.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuf, { ignoreEncryption: true });
+    let modified = false;
+    const pages = pdfDoc.getPages();
+    for (const page of pages) {
+      const { width, height } = page.getSize();
+      const rot = page.getRotation().angle;
+      const isRotated90 = rot === 90 || rot === 270;
+      const effW = isRotated90 ? height : width;
+      const effH = isRotated90 ? width : height;
+      if (effW < effH) {
+        page.setRotation(degrees((rot + 90) % 360));
+        modified = true;
+      }
+    }
+    if (modified) {
+      const saved = await pdfDoc.save();
+      return new Blob([saved as any], { type: 'application/pdf' });
+    }
+  } catch (e) {
+    console.warn('ensureBlobLandscape notice:', e);
+  }
+  return blob;
+}
+
 function dataUrlToBlob(dataUrl: string, defaultMime = 'application/pdf'): Blob {
   const parts = dataUrl.split(',');
   const mime = parts[0]?.match(/:(.*?);/)?.[1] || defaultMime;
@@ -74,7 +102,10 @@ export async function convertDocumentDirect(
       if (contentType.includes('application/json')) {
         const data = await routeRes.json();
         if (routeRes.ok && data.dataUrl) {
-          const blob = dataUrlToBlob(data.dataUrl, targetExt === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf');
+          let blob = dataUrlToBlob(data.dataUrl, targetExt === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf');
+          if (type === 'excel-to-pdf') {
+            blob = await ensureBlobLandscape(blob);
+          }
           const url = URL.createObjectURL(blob);
           const engineName = data.engine || 'High-Fidelity Document Engine';
           return {
@@ -134,8 +165,11 @@ export async function convertDocumentDirect(
       clearTimeout(timeoutId);
 
       if (res.ok) {
-        const blob = await res.blob();
+        let blob = await res.blob();
         if (blob && blob.size > 0) {
+          if (type === 'excel-to-pdf') {
+            blob = await ensureBlobLandscape(blob);
+          }
           const url = URL.createObjectURL(blob);
           const processorHeader = res.headers.get('x-conversion-processor') || 'PyMuPDF + python-docx / ReportLab';
           return {

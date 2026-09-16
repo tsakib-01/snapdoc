@@ -348,23 +348,37 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                     (m_range.max_col - 1, m_range.max_row - 1)
                 ))
 
-            # 2. Extract Proportional Column Width Estimates based on actual formatted data length
-            raw_col_weights = [8.0] * max_col
+            # 2. Extract Proportional Column Width Estimates based on actual formatted data length and Excel dimensions
+            raw_col_weights = [10.0] * max_col
             for c_idx in range(1, max_col + 1):
                 col_letter = get_column_letter(c_idx)
                 dim_w = ws.column_dimensions[col_letter].width if col_letter in ws.column_dimensions else None
+                max_len = 4
+                for r_idx in range(1, max_row + 1):
+                    cell = ws.cell(row=r_idx, column=c_idx)
+                    formatted_str = _format_excel_cell(cell)
+                    max_len = max(max_len, len(formatted_str))
+                min_needed = float(max_len + 2.5)
                 if dim_w and dim_w > 0:
-                    raw_col_weights[c_idx - 1] = float(dim_w)
+                    raw_col_weights[c_idx - 1] = max(float(dim_w), min_needed)
                 else:
-                    max_len = 4
-                    for r_idx in range(1, max_row + 1):
-                        cell = ws.cell(row=r_idx, column=c_idx)
-                        formatted_str = _format_excel_cell(cell)
-                        max_len = max(max_len, len(formatted_str))
-                    raw_col_weights[c_idx - 1] = max(float(max_len + 3), 7.0)
+                    raw_col_weights[c_idx - 1] = max(min_needed, 6.0)
 
+            # Natural width in points (approx 7.2 pt per character width unit in Excel)
+            natural_col_widths = [w * 7.2 for w in raw_col_weights]
+            total_natural = sum(natural_col_widths)
             total_weight = sum(raw_col_weights)
-            col_widths = [(w / total_weight) * avail_width for w in raw_col_weights]
+
+            if total_natural <= avail_width:
+                ratio = avail_width / total_natural
+                if ratio < 1.35:
+                    col_widths = [(w / total_weight) * avail_width for w in raw_col_weights]
+                else:
+                    # For narrow spreadsheets (few columns), maintain natural Excel proportions with modest breathing room
+                    moderate_factor = min(1.3, ratio)
+                    col_widths = [w * moderate_factor for w in natural_col_widths]
+            else:
+                col_widths = [(w / total_weight) * avail_width for w in raw_col_weights]
 
             # 3. Extract Cell Styles & Content Metadata once
             cells_meta = []
@@ -377,9 +391,10 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                     raw_text = _format_excel_cell(cell)
                     clean_text = normalize_multilingual_text(raw_text)
 
-                    # Check font properties: boldness, size, font family
+                    # Check font properties: boldness, exact font size from Excel, font family
                     font_bold = bool(cell.font and cell.font.bold)
                     font_name = cell.font.name if (cell.font and cell.font.name) else "Segoe UI"
+                    base_font_size = float(cell.font.size) if (cell.font and cell.font.size) else 11.0
                     rl_font = resolve_reportlab_font(font_name, is_bold=font_bold)
 
                     # Dynamic Alignment: preserves right-alignment for numbers/currency, center for boolean, left for text
@@ -443,23 +458,30 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                     row_meta.append({
                         'text': safe_text,
                         'rl_font': rl_font,
+                        'base_font_size': base_font_size,
                         'font_color_hex': font_color_hex,
                         'align_enum': align_enum,
                     })
                 cells_meta.append(row_meta)
 
-            # 4. Iterative Auto-Fit: dynamically adjusts font size & padding to fit in exactly 1 page
+            # 4. Iterative Auto-Fit: preserves each cell's individual Excel font size, scaling down only if needed to fit in 1 page
             target_row_h = safe_usable_h / max(max_row, 1)
             best_table = None
 
-            for attempt in range(20):
-                scale = 1.0 - (attempt * 0.045)
-                font_size = max(4.0, min(10.0, target_row_h * 0.58 * scale))
-                leading = font_size * 1.12
-                v_pad = max(0.2, min(3.2, ((target_row_h * scale) - leading) / 2))
-                h_pad = max(1.0, min(4.0, (avail_width / max_col) * 0.07))
+            sheet_max_font = 11.0
+            for r_info in cells_meta:
+                for c_info in r_info:
+                    if c_info['base_font_size'] > sheet_max_font:
+                        sheet_max_font = c_info['base_font_size']
+
+            init_scale = min(1.0, (target_row_h * 0.72) / sheet_max_font)
+
+            for attempt in range(25):
+                scale = max(0.35, init_scale - (attempt * 0.03))
+                h_pad = max(1.0, min(4.5, (avail_width / max_col) * 0.05))
 
                 sheet_table_styles = list(base_table_styles)
+                v_pad = max(0.2, min(3.5, ((target_row_h * scale) - (10.0 * scale)) / 2))
                 sheet_table_styles.append(('TOPPADDING', (0, 0), (-1, -1), v_pad))
                 sheet_table_styles.append(('BOTTOMPADDING', (0, 0), (-1, -1), v_pad))
                 sheet_table_styles.append(('LEFTPADDING', (0, 0), (-1, -1), h_pad))
@@ -469,10 +491,12 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                 for r_idx, row_meta in enumerate(cells_meta, start=1):
                     row_cells = []
                     for c_idx, c_info in enumerate(row_meta, start=1):
+                        cell_font_size = max(4.0, c_info['base_font_size'] * scale)
+                        leading = max(cell_font_size * 1.15, cell_font_size + 1.2)
                         p_style = ParagraphStyle(
                             f'cell_{sheet_idx}_{attempt}_{r_idx}_{c_idx}',
                             fontName=c_info['rl_font'],
-                            fontSize=font_size,
+                            fontSize=cell_font_size,
                             leading=leading,
                             textColor=colors.HexColor(c_info['font_color_hex']),
                             alignment=c_info['align_enum']

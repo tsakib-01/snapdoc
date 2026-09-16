@@ -250,9 +250,9 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
     colOffsets.push(colOffsets[c] + colWidths[c]);
   }
 
-  // Iterative single-page row height and font size scaling
-  const rowHeight = Math.min(22, Math.max(8.0, (usableHeight - 6) / Math.max(rows.length, 1)));
-  const fontSize = Math.max(4.5, Math.min(8.5, rowHeight * 0.52));
+  // Iterative single-page row height and font size scaling (preserves standard 10-11pt Excel font size)
+  const rowHeight = Math.min(24, Math.max(8.0, (usableHeight - 6) / Math.max(rows.length, 1)));
+  const fontSize = Math.max(4.5, Math.min(11.0, rowHeight * 0.55));
 
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);

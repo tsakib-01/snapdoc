@@ -113,7 +113,7 @@ export default function CompressPdfTool() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">25% Reduction</span>
+                  <span className="font-bold text-xs text-base-content">Standard</span>
                   <span className="badge badge-xs badge-primary">High Quality</span>
                 </div>
                 <p className="text-[11px] text-base-content/60 mt-1">
@@ -131,7 +131,7 @@ export default function CompressPdfTool() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">50% Reduction</span>
+                  <span className="font-bold text-xs text-base-content">Compressed</span>
                   <span className="badge badge-xs badge-secondary">Balanced</span>
                 </div>
                 <p className="text-[11px] text-base-content/60 mt-1">
@@ -149,7 +149,7 @@ export default function CompressPdfTool() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">75% Reduction</span>
+                  <span className="font-bold text-xs text-base-content">Maximum</span>
                   <span className="badge badge-xs badge-neutral">Max Reduction</span>
                 </div>
                 <p className="text-[11px] text-base-content/60 mt-1">

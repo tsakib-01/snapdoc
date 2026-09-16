@@ -221,13 +221,38 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
   }
 
   const colCount = Math.max(...rows.map((r) => r.length), 1);
-  const isWide = colCount > 5;
 
-  // Use Landscape for wide tables (> 5 columns)
-  const pageSize = isWide ? [PageSizes.A4[1], PageSizes.A4[0]] : PageSizes.A4;
+  // Always use Landscape for spreadsheets so all columns and rows fit on a single page
+  const pageSize: [number, number] = [PageSizes.A4[1], PageSizes.A4[0]];
   const [pageWidth, pageHeight] = pageSize;
-  const margin = 35;
+  const margin = 24;
   const usableWidth = pageWidth - margin * 2;
+  const usableHeight = pageHeight - margin * 2;
+
+  // Proportional column widths based on maximum cell text length
+  const colWeights = new Array(colCount).fill(6);
+  for (let c = 0; c < colCount; c++) {
+    let maxLen = 4;
+    for (let r = 0; r < rows.length; r++) {
+      const val = rows[r][c];
+      if (val !== undefined && val !== null) {
+        maxLen = Math.max(maxLen, String(val).length);
+      }
+    }
+    colWeights[c] = Math.max(6, Math.min(35, maxLen + 2));
+  }
+  const totalWeight = colWeights.reduce((a, b) => a + b, 0);
+  const colWidths = colWeights.map((w) => (w / totalWeight) * usableWidth);
+
+  // Pre-calculate column X offsets
+  const colOffsets: number[] = [margin];
+  for (let c = 0; c < colCount - 1; c++) {
+    colOffsets.push(colOffsets[c] + colWidths[c]);
+  }
+
+  // Iterative single-page row height and font size scaling
+  const rowHeight = Math.min(22, Math.max(8.0, (usableHeight - 6) / Math.max(rows.length, 1)));
+  const fontSize = Math.max(4.5, Math.min(8.5, rowHeight * 0.52));
 
   const pdfDoc = await PDFDocument.create();
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -236,15 +261,12 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
   let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
   let currentY = pageHeight - margin;
 
-  const colWidth = usableWidth / colCount;
-  const rowHeight = 22;
-
   for (let rIdx = 0; rIdx < rows.length; rIdx++) {
     const row = rows[rIdx];
     const isHeader = rIdx === 0;
     const currentFont = isHeader ? boldFont : font;
 
-    if (currentY - rowHeight < margin) {
+    if (currentY - rowHeight < margin && rIdx > 0) {
       currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
       currentY = pageHeight - margin;
     }
@@ -253,7 +275,7 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
     if (isHeader) {
       currentPage.drawRectangle({
         x: margin,
-        y: currentY - rowHeight + 4,
+        y: currentY - rowHeight + 2,
         width: usableWidth,
         height: rowHeight,
         color: rgb(0.18, 0.35, 0.75), // Deep navy header
@@ -261,7 +283,7 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
     } else if (rIdx % 2 === 1) {
       currentPage.drawRectangle({
         x: margin,
-        y: currentY - rowHeight + 4,
+        y: currentY - rowHeight + 2,
         width: usableWidth,
         height: rowHeight,
         color: rgb(0.96, 0.97, 0.99), // Subtle zebra striping
@@ -270,8 +292,8 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
 
     // Draw horizontal grid line
     currentPage.drawLine({
-      start: { x: margin, y: currentY - rowHeight + 4 },
-      end: { x: margin + usableWidth, y: currentY - rowHeight + 4 },
+      start: { x: margin, y: currentY - rowHeight + 2 },
+      end: { x: margin + usableWidth, y: currentY - rowHeight + 2 },
       thickness: 0.5,
       color: rgb(0.85, 0.88, 0.92),
     });
@@ -279,16 +301,17 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
     for (let cIdx = 0; cIdx < colCount; cIdx++) {
       const cellVal = row[cIdx] !== undefined && row[cIdx] !== null ? String(row[cIdx]) : '';
       const safeText = sanitizeWinAnsiText(cellVal);
-      const cellX = margin + cIdx * colWidth + 6;
-      const cellY = currentY - 12;
+      const cellW = colWidths[cIdx];
+      const cellX = colOffsets[cIdx] + 3;
+      const cellY = currentY - (rowHeight * 0.68);
 
-      const maxChars = Math.max(8, Math.floor(colWidth / 6.5));
-      const truncated = safeText.length > maxChars ? safeText.substring(0, maxChars - 2) + '...' : safeText;
+      const maxChars = Math.max(4, Math.floor(cellW / (fontSize * 0.55)));
+      const truncated = safeText.length > maxChars ? safeText.substring(0, Math.max(1, maxChars - 1)) + '…' : safeText;
 
       currentPage.drawText(truncated, {
         x: cellX,
         y: cellY,
-        size: isWide ? 8 : 9,
+        size: fontSize,
         font: currentFont,
         color: isHeader ? rgb(1, 1, 1) : rgb(0.15, 0.15, 0.15),
       });

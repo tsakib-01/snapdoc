@@ -103,17 +103,16 @@ def _convert_with_excel_com(excel_path: str, output_pdf_path: str) -> bool:
         # Configure PageSetup for every worksheet in the workbook
         for ws in wb.Worksheets:
             try:
-                col_count = ws.UsedRange.Columns.Count if ws.UsedRange else 1
-                # Landscape for wide tables (> 6 columns)
-                ws.PageSetup.Orientation = 2 if col_count > 6 else 1
+                # Force Landscape so all columns and wide data fit across page
+                ws.PageSetup.Orientation = 2  # 2 = xlLandscape
                 ws.PageSetup.Zoom = False
                 ws.PageSetup.FitToPagesWide = 1
-                ws.PageSetup.FitToPagesTall = False
+                ws.PageSetup.FitToPagesTall = 1  # Fit strictly to 1 page tall
                 ws.PageSetup.CenterHorizontally = True
-                ws.PageSetup.LeftMargin = excel.InchesToPoints(0.4)
-                ws.PageSetup.RightMargin = excel.InchesToPoints(0.4)
-                ws.PageSetup.TopMargin = excel.InchesToPoints(0.4)
-                ws.PageSetup.BottomMargin = excel.InchesToPoints(0.4)
+                ws.PageSetup.LeftMargin = excel.InchesToPoints(0.25)
+                ws.PageSetup.RightMargin = excel.InchesToPoints(0.25)
+                ws.PageSetup.TopMargin = excel.InchesToPoints(0.25)
+                ws.PageSetup.BottomMargin = excel.InchesToPoints(0.25)
             except Exception:
                 pass
 
@@ -188,16 +187,13 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
         register_reportlab_multilingual_fonts()
         wb = openpyxl.load_workbook(excel_path, data_only=True)
 
-        # Detect orientation based on max columns across non-empty sheets
-        max_cols_found = 1
-        for ws in wb.worksheets:
-            if ws.max_column and ws.max_column > max_cols_found:
-                max_cols_found = ws.max_column
-
-        use_landscape = max_cols_found > 6
-        page_size = landscape(A4) if use_landscape else A4
-        margin = 0.4 * inch
+        # Force Landscape orientation for spreadsheets so all columns and data fit comfortably across page
+        page_size = landscape(A4)
+        margin = 0.25 * inch
         avail_width = page_size[0] - (2 * margin)
+        avail_height = page_size[1] - (2 * margin)
+        # Account for ReportLab Frame default padding (6pt top + 6pt bottom)
+        safe_usable_h = avail_height - 18.0
 
         pdf_doc = SimpleDocTemplate(
             output_pdf_path,
@@ -231,52 +227,47 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
             if not has_data:
                 continue
 
-            grid_data = []
-            table_styles = []
-
             # 1. Process Merged Cell Ranges
+            span_styles = []
             for m_range in ws.merged_cells.ranges:
-                table_styles.append((
+                span_styles.append((
                     'SPAN',
                     (m_range.min_col - 1, m_range.min_row - 1),
                     (m_range.max_col - 1, m_range.max_row - 1)
                 ))
 
-            # 2. Extract Raw Column Width Estimates
-            raw_col_weights = [10.0] * max_col
+            # 2. Extract Proportional Column Width Estimates based on actual data length
+            raw_col_weights = [8.0] * max_col
             for c_idx in range(1, max_col + 1):
                 col_letter = get_column_letter(c_idx)
                 dim_w = ws.column_dimensions[col_letter].width if col_letter in ws.column_dimensions else None
                 if dim_w and dim_w > 0:
                     raw_col_weights[c_idx - 1] = float(dim_w)
                 else:
-                    # Calculate max string length in column
-                    max_len = 5
+                    max_len = 4
                     for r_idx in range(1, max_row + 1):
                         v = ws.cell(row=r_idx, column=c_idx).value
                         if v is not None:
                             max_len = max(max_len, len(str(v)))
-                    raw_col_weights[c_idx - 1] = max(float(max_len + 3), 8.0)
+                    raw_col_weights[c_idx - 1] = max(float(max_len + 2), 6.0)
 
             total_weight = sum(raw_col_weights)
             col_widths = [(w / total_weight) * avail_width for w in raw_col_weights]
 
-            # 3. Process Cells
-            for r_idx in range(1, max_row + 1):
-                row_cells = []
-                is_empty_row = True
+            # 3. Extract Cell Styles & Content Metadata once
+            cells_meta = []
+            base_table_styles = list(span_styles)
 
+            for r_idx in range(1, max_row + 1):
+                row_meta = []
                 for c_idx in range(1, max_col + 1):
                     cell = ws.cell(row=r_idx, column=c_idx)
                     val = cell.value
                     raw_text = str(val if val is not None else "").strip()
                     clean_text = normalize_multilingual_text(raw_text)
-                    if clean_text:
-                        is_empty_row = False
 
                     # Check font properties: boldness, size, font family
                     font_bold = bool(cell.font and cell.font.bold)
-                    font_size = float(cell.font.size) if (cell.font and cell.font.size) else 10.0
                     font_name = cell.font.name if (cell.font and cell.font.name) else "Segoe UI"
                     rl_font = resolve_reportlab_font(font_name, is_bold=font_bold)
 
@@ -313,7 +304,7 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                         bg_hex = _extract_color_hex(fg)
 
                     if bg_hex and bg_hex != "#FFFFFF":
-                        table_styles.append(('BACKGROUND', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), colors.HexColor(bg_hex)))
+                        base_table_styles.append(('BACKGROUND', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), colors.HexColor(bg_hex)))
 
                     # Extract Font Color & Contrast
                     explicit_font_hex = None
@@ -323,7 +314,6 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                     if explicit_font_hex:
                         font_color_hex = explicit_font_hex
                     else:
-                        # Auto contrast based on background color
                         lum = _get_luminance(bg_hex) if bg_hex else 255.0
                         font_color_hex = "#FFFFFF" if lum < 130 else "#0F172A"
 
@@ -339,39 +329,69 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                             if side_obj and side_obj.style and side_obj.style != 'none':
                                 border_col_hex = _extract_color_hex(side_obj.color, default_hex='#CBD5E1')
                                 line_width = 1.2 if side_obj.style in ['medium', 'thick', 'double'] else 0.5
-                                table_styles.append((
-                                    cmd,
-                                    (c_idx - 1, r_idx - 1),
-                                    (c_idx - 1, r_idx - 1),
-                                    line_width,
-                                    colors.HexColor(border_col_hex)
+                                base_table_styles.append((
+                                     cmd,
+                                     (c_idx - 1, r_idx - 1),
+                                     (c_idx - 1, r_idx - 1),
+                                     line_width,
+                                     colors.HexColor(border_col_hex)
                                 ))
 
-                    # Cell Alignment and Padding
-                    table_styles.append(('ALIGN', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), rl_align))
-                    table_styles.append(('VALIGN', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), rl_valign))
-                    table_styles.append(('TOPPADDING', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), 5))
-                    table_styles.append(('BOTTOMPADDING', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), 5))
-                    table_styles.append(('LEFTPADDING', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), 5))
-                    table_styles.append(('RIGHTPADDING', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), 5))
+                    # Cell Alignment
+                    base_table_styles.append(('ALIGN', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), rl_align))
+                    base_table_styles.append(('VALIGN', (c_idx - 1, r_idx - 1), (c_idx - 1, r_idx - 1), rl_valign))
 
                     safe_text = clean_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                    p_style = ParagraphStyle(
-                        f'cell_style_{sheet_idx}_{r_idx}_{c_idx}',
-                        fontName=rl_font,
-                        fontSize=font_size,
-                        leading=font_size * 1.25,
-                        textColor=colors.HexColor(font_color_hex),
-                        alignment=align_enum
-                    )
-                    row_cells.append(Paragraph(safe_text, p_style))
+                    row_meta.append({
+                        'text': safe_text,
+                        'rl_font': rl_font,
+                        'font_color_hex': font_color_hex,
+                        'align_enum': align_enum,
+                    })
+                cells_meta.append(row_meta)
 
-                grid_data.append(row_cells)
+            # 4. Iterative Auto-Fit: dynamically adjusts font size & padding to fit in exactly 1 page
+            target_row_h = safe_usable_h / max(max_row, 1)
+            best_table = None
 
-            if grid_data:
+            for attempt in range(20):
+                scale = 1.0 - (attempt * 0.045)
+                font_size = max(4.0, min(10.0, target_row_h * 0.58 * scale))
+                leading = font_size * 1.12
+                v_pad = max(0.2, min(3.2, ((target_row_h * scale) - leading) / 2))
+                h_pad = max(1.0, min(4.0, (avail_width / max_col) * 0.07))
+
+                sheet_table_styles = list(base_table_styles)
+                sheet_table_styles.append(('TOPPADDING', (0, 0), (-1, -1), v_pad))
+                sheet_table_styles.append(('BOTTOMPADDING', (0, 0), (-1, -1), v_pad))
+                sheet_table_styles.append(('LEFTPADDING', (0, 0), (-1, -1), h_pad))
+                sheet_table_styles.append(('RIGHTPADDING', (0, 0), (-1, -1), h_pad))
+
+                grid_data = []
+                for r_idx, row_meta in enumerate(cells_meta, start=1):
+                    row_cells = []
+                    for c_idx, c_info in enumerate(row_meta, start=1):
+                        p_style = ParagraphStyle(
+                            f'cell_{sheet_idx}_{attempt}_{r_idx}_{c_idx}',
+                            fontName=c_info['rl_font'],
+                            fontSize=font_size,
+                            leading=leading,
+                            textColor=colors.HexColor(c_info['font_color_hex']),
+                            alignment=c_info['align_enum']
+                        )
+                        row_cells.append(Paragraph(c_info['text'], p_style))
+                    grid_data.append(row_cells)
+
                 t = Table(grid_data, colWidths=col_widths)
-                t.setStyle(TableStyle(table_styles))
-                story.append(t)
+                t.setStyle(TableStyle(sheet_table_styles))
+                w, h = t.wrap(avail_width, avail_height)
+                best_table = t
+
+                if h <= safe_usable_h:
+                    break
+
+            if best_table:
+                story.append(best_table)
 
             if sheet_idx < len(valid_sheets) - 1:
                 story.append(PageBreak())

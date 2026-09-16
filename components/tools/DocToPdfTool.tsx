@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileCode, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, FileText, Table } from 'lucide-react';
+import { FileCode, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, FileText, Table, Sparkles } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { formatBytes } from '@/lib/utils/formatters';
 
@@ -183,6 +183,15 @@ export default function DocToPdfTool({
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
+
+          {file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) && (
+            <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+              <Sparkles className="w-4 h-4 shrink-0 text-emerald-500" />
+              <span>
+                <strong>Smart Auto-Fit Active:</strong> Spreadsheet will be formatted in <strong>Landscape</strong> orientation and automatically scaled to fit completely onto a <strong>single page</strong> without breaking.
+              </span>
+            </div>
+          )}
 
           {error && (
             <div className="alert alert-error text-xs rounded-2xl">

@@ -5,6 +5,7 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import os from 'os';
 import { convertWithRemoteApi } from '@/services/remoteConversionService';
+import { compressPdfNative } from './nativePdfCompressor';
 
 const execFileAsync = promisify(execFile);
 
@@ -25,7 +26,17 @@ export async function compressPdfDocument(
   let compressedBytes: Uint8Array | null = null;
   let pageCount = 1;
 
-  // 1. Attempt local Python PyMuPDF + Pillow compression engine (highest efficiency, same as professional sites)
+  // 1. Layer 1: Native In-Process Node.js Sharp + PDF-Lib Engine (Runs natively on Vercel Serverless & Local)
+  try {
+    const nativeRes = await compressPdfNative(pdfBuffer, level);
+    if (nativeRes && nativeRes.buffer && nativeRes.buffer.length < originalSize) {
+      compressedBytes = new Uint8Array(nativeRes.buffer);
+    }
+  } catch (nativeErr) {
+    console.warn('Native PDF compression skipped:', nativeErr);
+  }
+
+  // 2. Layer 2: Attempt local Python PyMuPDF engine if available (extra font subsetting & stream deflation)
   try {
     const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pdf-compress-'));
     const inputPath = path.join(tempDir, 'input.pdf');
@@ -42,7 +53,9 @@ export async function compressPdfDocument(
 
     const outBuf = await fs.readFile(outputPath);
     if (outBuf && outBuf.length > 0) {
-      compressedBytes = new Uint8Array(outBuf);
+      if (!compressedBytes || outBuf.length < compressedBytes.length) {
+        compressedBytes = new Uint8Array(outBuf);
+      }
     }
 
     // Clean up temp files
@@ -52,11 +65,14 @@ export async function compressPdfDocument(
       await fs.rmdir(tempDir);
     } catch (_) {}
   } catch (pyErr: any) {
-    console.warn('Local Python PDF compressor skipped/failed, trying remote microservice:', pyErr?.message);
+    // Expected on Vercel where Python is not in Node container
   }
 
-  // 2. Attempt remote Python microservice if local python was unavailable or didn't compress
-  if (!compressedBytes || compressedBytes.length >= originalSize) {
+  // 3. Layer 3: Remote Python microservice fallback if reduction is small and Python was unavailable
+  const currentBest = compressedBytes ? compressedBytes.length : originalSize;
+  const currentReduction = ((originalSize - currentBest) / originalSize) * 100;
+
+  if (currentReduction < 10) {
     try {
       const remoteRes = await convertWithRemoteApi(
         'compress-pdf',
@@ -65,7 +81,7 @@ export async function compressPdfDocument(
         { level }
       );
       if (remoteRes && remoteRes.buffer && remoteRes.buffer.length > 0) {
-        if (remoteRes.buffer.length < (compressedBytes?.length || originalSize)) {
+        if (remoteRes.buffer.length < currentBest) {
           compressedBytes = new Uint8Array(remoteRes.buffer);
         }
       }
@@ -74,7 +90,7 @@ export async function compressPdfDocument(
     }
   }
 
-  // 3. Fallback to pdf-lib stream & object cleanup if python was unavailable
+  // 4. Layer 4: Fallback to basic pdf-lib stream & object cleanup if no compression occurred
   if (!compressedBytes) {
     try {
       const pdfDoc = await PDFDocument.load(pdfBuffer, {
@@ -101,7 +117,7 @@ export async function compressPdfDocument(
     }
   }
 
-  // Determine final page count if not already obtained
+  // Determine final page count
   try {
     const docForCount = await PDFDocument.load(compressedBytes || pdfBuffer, {
       ignoreEncryption: true,
@@ -128,5 +144,3 @@ export async function compressPdfDocument(
     isAlreadyMaxCompressed,
   };
 }
-
-

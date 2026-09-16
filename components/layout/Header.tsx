@@ -112,6 +112,9 @@ export default function Header() {
                 </ul>
               </div>
 
+              <Link href="/guides" className="btn btn-ghost btn-sm font-medium text-base-content/80 hover:text-base-content">
+                Guides
+              </Link>
               <Link href="/tools" className="btn btn-ghost btn-sm font-medium text-base-content/80 hover:text-base-content">
                 All Tools
               </Link>
@@ -184,13 +187,20 @@ export default function Header() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-base-200">
+            <div className="pt-2 border-t border-base-200 flex gap-2">
+              <Link
+                href="/guides"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="btn btn-outline btn-sm flex-1"
+              >
+                Guides
+              </Link>
               <Link
                 href="/tools"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="btn btn-primary btn-sm w-full"
+                className="btn btn-primary btn-sm flex-1"
               >
-                Browse All Tools
+                All Tools
               </Link>
             </div>
           </div>

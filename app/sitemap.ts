@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { TOOLS } from '@/lib/config/tools';
+import { GUIDES } from '@/lib/config/guides';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://snapdoc.app';
@@ -14,6 +15,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/tools`,
+      lastModified,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/guides`,
       lastModified,
       changeFrequency: 'daily',
       priority: 0.9,
@@ -45,5 +52,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: tool.popular ? 0.9 : 0.8,
   }));
 
-  return [...staticRoutes, ...toolRoutes];
+  const guideRoutes: MetadataRoute.Sitemap = GUIDES.map((guide) => ({
+    url: `${baseUrl}/guides/${guide.slug}`,
+    lastModified: new Date(guide.updatedAt),
+    changeFrequency: 'weekly',
+    priority: guide.featured ? 0.85 : 0.8,
+  }));
+
+  return [...staticRoutes, ...toolRoutes, ...guideRoutes];
 }

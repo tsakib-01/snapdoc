@@ -104,6 +104,7 @@ export default function Footer() {
               <li><Link href="/pdf-scanner" className="hover:text-primary transition-colors">Camera Scanner</Link></li>
               <li><Link href="/compress-pdf" className="hover:text-primary transition-colors">Compress PDF</Link></li>
               <li><Link href="/compress-jpg-to-10kb" className="hover:text-primary transition-colors">JPG to 10KB</Link></li>
+              <li><Link href="/guides" className="hover:text-primary transition-colors text-primary font-medium">Guides & Tutorials</Link></li>
               <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
             </ul>

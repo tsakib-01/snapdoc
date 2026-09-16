@@ -1,7 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { ChevronRight, CheckCircle, Sparkles } from 'lucide-react';
+import { ChevronRight, CheckCircle, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
 import { ToolMeta, TOOLS } from '@/lib/config/tools';
+import { getRelatedGuidesForTool } from '@/lib/config/guides';
 import FAQSection from './FAQSection';
 import AdSlot from './AdSlot';
 import ToolCard from './ToolCard';
@@ -17,6 +18,8 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
   const relatedTools = TOOLS.filter(
     (t) => t.id !== tool.id && (t.category === tool.category || t.popular)
   ).slice(0, 3);
+
+  const relatedGuides = getRelatedGuidesForTool(tool.slug, 3);
 
   const baseUrl = 'https://snapdoc.app';
   const toolUrl = `${baseUrl}/${tool.slug}`;
@@ -202,6 +205,50 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
 
         {/* FAQ Accordion */}
         {tool.faqs.length > 0 && <FAQSection faqs={tool.faqs} />}
+
+        {/* Helpful Guides & Tutorials */}
+        {relatedGuides.length > 0 && (
+          <div className="pt-8 border-t border-base-300 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                <span>Helpful Guides & Tutorials</span>
+              </h3>
+              <Link
+                href="/guides"
+                className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+              >
+                <span>View all guides</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {relatedGuides.map((guide) => (
+                <Link
+                  key={guide.slug}
+                  href={`/guides/${guide.slug}`}
+                  className="p-5 rounded-2xl bg-base-100 border border-base-300 hover:border-primary/40 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                >
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-base-content/50">
+                      {guide.categoryLabel}
+                    </span>
+                    <h4 className="font-bold text-sm text-base-content group-hover:text-primary transition-colors leading-snug">
+                      {guide.title}
+                    </h4>
+                    <p className="text-xs text-base-content/65 line-clamp-2">
+                      {guide.shortDescription}
+                    </p>
+                  </div>
+                  <div className="pt-3 text-xs font-semibold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span>Read guide</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Related Tools */}
         {relatedTools.length > 0 && (

@@ -1,6 +1,8 @@
 import os
 import uuid
 import csv
+import re
+import datetime
 import subprocess
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -174,6 +176,114 @@ def _convert_with_libreoffice(excel_path: str, output_pdf_path: str) -> bool:
             continue
     return False
 
+def _format_excel_cell(cell) -> str:
+    """
+    High-fidelity cell value formatter:
+    Preserves exact currency symbols ($ € £ ¥ ₹ ৳), percentages (%),
+    thousands separators (1,250.00), negatives (-$45.00), and dates.
+    """
+    val = cell.value
+    if val is None:
+        return ""
+
+    fmt = str(cell.number_format or '')
+
+    # 1. Dates and datetimes
+    if isinstance(val, (datetime.datetime, datetime.date)):
+        if 'h' in fmt.lower() or 's' in fmt.lower():
+            return val.strftime('%Y-%m-%d %H:%M')
+        return val.strftime('%Y-%m-%d')
+
+    # 2. Numbers (floats, ints)
+    if isinstance(val, (int, float)) and not isinstance(val, bool):
+        # Percentage formatting
+        if '%' in fmt:
+            pct_val = val * 100.0
+            if '0.00' in fmt or '.00' in fmt:
+                return f"{pct_val:.2f}%"
+            elif '0.0' in fmt or '.0' in fmt:
+                return f"{pct_val:.1f}%"
+            return f"{pct_val:.0f}%"
+
+        # Check for currency symbols in format string
+        curr_sym = None
+        for sym in ['$', '€', '£', '¥', '₹', '৳']:
+            if sym in fmt:
+                curr_sym = sym
+                break
+
+        has_comma = ',' in fmt or curr_sym is not None
+        dec_places = 2 if ('0.00' in fmt or '.00' in fmt or (curr_sym and '.' in fmt)) else (1 if '0.0' in fmt else 0)
+
+        # If currency format but no explicit decimals, default to 2
+        if curr_sym and dec_places == 0 and '$' in fmt:
+            dec_places = 2
+
+        sign = '-' if val < 0 else ''
+        abs_val = abs(val)
+
+        if has_comma:
+            if dec_places > 0:
+                formatted_num = f"{abs_val:,.{dec_places}f}"
+            else:
+                formatted_num = f"{int(round(abs_val)):,}"
+        else:
+            if dec_places > 0:
+                formatted_num = f"{abs_val:.{dec_places}f}"
+            else:
+                if isinstance(val, float) and not val.is_integer():
+                    formatted_num = f"{abs_val}"
+                else:
+                    formatted_num = f"{int(round(abs_val))}"
+
+        if curr_sym:
+            return f"{sign}{curr_sym}{formatted_num}"
+        elif sign:
+            return f"-{formatted_num}"
+        return formatted_num
+
+    return str(val).strip()
+
+def _resolve_cell_alignment(cell, text: str):
+    """
+    Resolves alignment matching Excel standard behavior:
+    1. Explicit horizontal alignment if specified in Excel.
+    2. Numbers, currency ($ € £), percentages (%), and dates default to RIGHT.
+    3. Booleans default to CENTER.
+    4. Text defaults to LEFT.
+    """
+    h_align_raw = (cell.alignment.horizontal if cell.alignment else None)
+    if h_align_raw:
+        h_str = str(h_align_raw).lower()
+        if h_str in ["center", "centercontinuous"]:
+            return TA_CENTER, "CENTER"
+        elif h_str == "right":
+            return TA_RIGHT, "RIGHT"
+        elif h_str == "justify":
+            return TA_JUSTIFY, "JUSTIFY"
+        elif h_str == "left":
+            return TA_LEFT, "LEFT"
+
+    val = cell.value
+    # Numbers and dates are RIGHT-aligned in Excel
+    if isinstance(val, (int, float, datetime.date, datetime.datetime)) and not isinstance(val, bool):
+        return TA_RIGHT, "RIGHT"
+
+    # Currency strings or percentage strings are RIGHT-aligned
+    trimmed = text.strip()
+    if trimmed:
+        first_char = trimmed[1] if (trimmed.startswith('-') and len(trimmed) > 1) else trimmed[0]
+        if first_char in ['$', '€', '£', '¥', '₹', '৳'] or trimmed.endswith('%'):
+            return TA_RIGHT, "RIGHT"
+        if re.match(r'^[+-]?[\$€£¥₹৳]?[0-9,]+(\.[0-9]+)?%?$', trimmed):
+            return TA_RIGHT, "RIGHT"
+
+    # Booleans are CENTERED
+    if isinstance(val, bool):
+        return TA_CENTER, "CENTER"
+
+    return TA_LEFT, "LEFT"
+
 def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> bool:
     """
     High-Fidelity Python-native Excel to PDF Converter:
@@ -238,7 +348,7 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                     (m_range.max_col - 1, m_range.max_row - 1)
                 ))
 
-            # 2. Extract Proportional Column Width Estimates based on actual data length
+            # 2. Extract Proportional Column Width Estimates based on actual formatted data length
             raw_col_weights = [8.0] * max_col
             for c_idx in range(1, max_col + 1):
                 col_letter = get_column_letter(c_idx)
@@ -248,10 +358,10 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                 else:
                     max_len = 4
                     for r_idx in range(1, max_row + 1):
-                        v = ws.cell(row=r_idx, column=c_idx).value
-                        if v is not None:
-                            max_len = max(max_len, len(str(v)))
-                    raw_col_weights[c_idx - 1] = max(float(max_len + 2), 6.0)
+                        cell = ws.cell(row=r_idx, column=c_idx)
+                        formatted_str = _format_excel_cell(cell)
+                        max_len = max(max_len, len(formatted_str))
+                    raw_col_weights[c_idx - 1] = max(float(max_len + 3), 7.0)
 
             total_weight = sum(raw_col_weights)
             col_widths = [(w / total_weight) * avail_width for w in raw_col_weights]
@@ -264,8 +374,7 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                 row_meta = []
                 for c_idx in range(1, max_col + 1):
                     cell = ws.cell(row=r_idx, column=c_idx)
-                    val = cell.value
-                    raw_text = str(val if val is not None else "").strip()
+                    raw_text = _format_excel_cell(cell)
                     clean_text = normalize_multilingual_text(raw_text)
 
                     # Check font properties: boldness, size, font family
@@ -273,21 +382,8 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                     font_name = cell.font.name if (cell.font and cell.font.name) else "Segoe UI"
                     rl_font = resolve_reportlab_font(font_name, is_bold=font_bold)
 
-                    # Check Alignment
-                    h_align_raw = (cell.alignment.horizontal if cell.alignment else None) or "left"
-                    h_align_str = str(h_align_raw).lower()
-                    if h_align_str in ["center", "centercontinuous"]:
-                        align_enum = TA_CENTER
-                        rl_align = "CENTER"
-                    elif h_align_str == "right":
-                        align_enum = TA_RIGHT
-                        rl_align = "RIGHT"
-                    elif h_align_str == "justify":
-                        align_enum = TA_JUSTIFY
-                        rl_align = "JUSTIFY"
-                    else:
-                        align_enum = TA_LEFT
-                        rl_align = "LEFT"
+                    # Dynamic Alignment: preserves right-alignment for numbers/currency, center for boolean, left for text
+                    align_enum, rl_align = _resolve_cell_alignment(cell, clean_text)
 
                     # Vertical Alignment
                     v_align_raw = (cell.alignment.vertical if cell.alignment else None) or "center"
@@ -332,11 +428,11 @@ def _convert_with_python_reportlab(excel_path: str, output_pdf_path: str) -> boo
                                 border_col_hex = _extract_color_hex(side_obj.color, default_hex='#CBD5E1')
                                 line_width = 1.2 if side_obj.style in ['medium', 'thick', 'double'] else 0.5
                                 base_table_styles.append((
-                                    cmd,
-                                    (c_idx - 1, r_idx - 1),
-                                    (c_idx - 1, r_idx - 1),
-                                    line_width,
-                                    colors.HexColor(border_col_hex)
+                                     cmd,
+                                     (c_idx - 1, r_idx - 1),
+                                     (c_idx - 1, r_idx - 1),
+                                     line_width,
+                                     colors.HexColor(border_col_hex)
                                 ))
 
                     # Cell Alignment
@@ -441,6 +537,19 @@ def _prepare_excel_for_landscape(excel_path: str) -> str:
             ws.page_setup.fitToWidth = 1
             ws.page_setup.fitToHeight = 1
 
+            # Auto-expand column dimensions to prevent '########' in LibreOffice Calc
+            if ws.max_column and ws.max_row:
+                for c_idx in range(1, ws.max_column + 1):
+                    col_letter = get_column_letter(c_idx)
+                    existing_w = ws.column_dimensions[col_letter].width
+                    max_len = 8
+                    for r_idx in range(1, min(ws.max_row + 1, 150)):
+                        cell = ws.cell(row=r_idx, column=c_idx)
+                        formatted_str = _format_excel_cell(cell)
+                        max_len = max(max_len, len(formatted_str))
+                    target_w = max(float(existing_w or 0), float(max_len + 4), 12.0)
+                    ws.column_dimensions[col_letter].width = target_w
+
         out_dir = os.path.dirname(os.path.abspath(excel_path))
         temp_path = os.path.join(out_dir, f"prep_landscape_{uuid.uuid4().hex[:8]}.xlsx")
         wb.save(temp_path)
@@ -450,7 +559,7 @@ def _prepare_excel_for_landscape(excel_path: str) -> str:
         return excel_path
 
 def _is_pdf_landscape(pdf_path: str) -> bool:
-    """Returns True if the generated PDF is in Landscape orientation."""
+    """Returns True if the generated PDF is in Landscape orientation and has no column overflow errors."""
     try:
         from pypdf import PdfReader
         if not os.path.exists(pdf_path) or os.path.getsize(pdf_path) == 0:
@@ -464,7 +573,13 @@ def _is_pdf_landscape(pdf_path: str) -> bool:
         h = float(page.mediabox.height)
         if rot in [90, 270]:
             w, h = h, w
-        return w > h
+        if w <= h:
+            return False
+        # If LibreOffice produced '####', it means numbers overflowed columns, so reject it and use ReportLab
+        txt = page.extract_text() or ''
+        if '####' in txt:
+            return False
+        return True
     except Exception:
         return False
 

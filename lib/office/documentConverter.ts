@@ -208,7 +208,7 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
       const firstSheetName = workbook.SheetNames[0];
       if (firstSheetName) {
         const worksheet = workbook.Sheets[firstSheetName];
-        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' }) as (string | number)[][];
+        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false }) as (string | number)[][];
       }
     } catch {
       const text = bufferOrCsv.toString('utf-8');
@@ -302,11 +302,21 @@ export async function convertExcelToPdf(bufferOrCsv: Buffer | string): Promise<U
       const cellVal = row[cIdx] !== undefined && row[cIdx] !== null ? String(row[cIdx]) : '';
       const safeText = sanitizeWinAnsiText(cellVal);
       const cellW = colWidths[cIdx];
-      const cellX = colOffsets[cIdx] + 3;
       const cellY = currentY - (rowHeight * 0.68);
 
       const maxChars = Math.max(4, Math.floor(cellW / (fontSize * 0.55)));
       const truncated = safeText.length > maxChars ? safeText.substring(0, Math.max(1, maxChars - 1)) + '…' : safeText;
+      const textWidth = currentFont.widthOfTextAtSize(truncated, fontSize);
+
+      // Alignment: numbers and currency aligned to RIGHT, status centered, text to LEFT
+      let cellX = colOffsets[cIdx] + 4;
+      const trimmed = safeText.trim();
+      const isNumericOrCurrency = /^[+-]?[\$€£¥₹৳]?[0-9,]+(\.[0-9]+)?%?$/.test(trimmed);
+      if (!isHeader && isNumericOrCurrency) {
+        cellX = Math.max(colOffsets[cIdx] + 2, colOffsets[cIdx] + cellW - textWidth - 4);
+      } else if (!isHeader && /^(active|inactive|pending|yes|no|true|false|completed|audited|verified)$/i.test(trimmed)) {
+        cellX = colOffsets[cIdx] + Math.max(2, (cellW - textWidth) / 2);
+      }
 
       currentPage.drawText(truncated, {
         x: cellX,

@@ -67,14 +67,18 @@ function drawCurvedText(
     currentAngle += chAngle / 2;
 
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(currentAngle);
     if (isTop) {
-      // Top Arc: centered at 12 o'clock (UP)
-      ctx.translate(0, -radius);
+      // Top Arc: centered at 12 o'clock, reading left-to-right
+      const charX = cx + radius * Math.sin(currentAngle);
+      const charY = cy - radius * Math.cos(currentAngle);
+      ctx.translate(charX, charY);
+      ctx.rotate(currentAngle);
     } else {
-      // Bottom Arc: centered at 6 o'clock (DOWN), upright orientation
-      ctx.translate(0, radius);
+      // Bottom Arc: centered at 6 o'clock, reading left-to-right upright
+      const charX = cx + radius * Math.sin(currentAngle);
+      const charY = cy + radius * Math.cos(currentAngle);
+      ctx.translate(charX, charY);
+      ctx.rotate(-currentAngle);
     }
     ctx.fillText(ch, 0, 0);
     ctx.restore();

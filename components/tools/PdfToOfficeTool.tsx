@@ -1,27 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Copy, Check, Eye, Sparkles, Layout } from 'lucide-react';
+import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Copy, Check, Eye } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
-import { createWordDocx, createExcelWorkbook } from '@/lib/office/officeExportHelper';
 import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { formatBytes } from '@/lib/utils/formatters';
 
 interface PdfToOfficeToolProps {
-  targetFormat?: 'word' | 'excel' | 'txt' | 'ocr';
+  targetFormat?: 'excel' | 'txt' | 'ocr';
   title?: string;
   subtitle?: string;
 }
 
 export default function PdfToOfficeTool({
-  targetFormat = 'word',
-  title = 'Convert PDF to Word / Text',
+  targetFormat = 'excel',
+  title = 'Convert PDF to Excel / Text',
   subtitle = 'Extract text and content from your PDF documents directly in the browser.',
 }: PdfToOfficeToolProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [format, setFormat] = useState<'word' | 'excel' | 'txt' | 'ocr'>(targetFormat);
-  const [wordMode, setWordMode] = useState<'visual' | 'text'>('visual');
+  const [format, setFormat] = useState<'excel' | 'txt' | 'ocr'>(targetFormat);
   const [pages, setPages] = useState<PdfPageThumbnail[]>([]);
   const [extractedText, setExtractedText] = useState<string>('');
   const [processing, setProcessing] = useState<boolean>(false);
@@ -63,14 +61,6 @@ export default function PdfToOfficeTool({
     try {
       if (format === 'excel') {
         const result = await convertDocumentDirect('pdf-to-excel', file);
-        const a = document.createElement('a');
-        a.href = result.url;
-        a.download = result.filename;
-        a.click();
-        setProcessing(false);
-        return;
-      } else if (format === 'word') {
-        const result = await convertDocumentDirect('pdf-to-word', file);
         const a = document.createElement('a');
         a.href = result.url;
         a.download = result.filename;
@@ -146,59 +136,6 @@ export default function PdfToOfficeTool({
             </button>
           </div>
 
-          {/* Word Conversion Mode Toggle */}
-          {format === 'word' && (
-            <div className="p-4 rounded-2xl bg-base-200/50 border border-base-300 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
-                  <Layout className="w-3.5 h-3.5 text-primary" />
-                  Word Document Output Mode
-                </span>
-                <span className="text-[11px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full font-medium border border-emerald-200 dark:border-emerald-800">
-                  {wordMode === 'visual' ? '100% Exact Layout Guaranteed' : 'Editable Plain Text'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setWordMode('visual')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    wordMode === 'visual'
-                      ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                      : 'border-base-300 bg-base-100 hover:bg-base-200/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs text-base-content">
-                    <Sparkles className="w-3.5 h-3.5 text-primary" />
-                    <span>Exact Visual Layout (.doc)</span>
-                  </div>
-                  <p className="text-[11px] text-base-content/60 mt-1">
-                    Preserves exact Bengali/complex fonts, two columns, questions, tables, and colors without broken letters.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setWordMode('text')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    wordMode === 'text'
-                      ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                      : 'border-base-300 bg-base-100 hover:bg-base-200/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-bold text-xs text-base-content">
-                    <FileText className="w-3.5 h-3.5 text-primary" />
-                    <span>Editable Raw Text (.doc)</span>
-                  </div>
-                  <p className="text-[11px] text-base-content/60 mt-1">
-                    Converts extractable Unicode paragraphs into regular editable text.
-                  </p>
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Extracted Text Content preview */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -231,22 +168,16 @@ export default function PdfToOfficeTool({
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-base-200">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setFormat('word')}
-                className={`btn btn-xs rounded-xl ${format === 'word' ? 'btn-primary' : 'btn-ghost'}`}
-              >
-                Word (.doc)
-              </button>
-              <button
-                onClick={() => setFormat('txt')}
-                className={`btn btn-xs rounded-xl ${format === 'txt' ? 'btn-primary' : 'btn-ghost'}`}
-              >
-                Text (.txt)
-              </button>
-              <button
                 onClick={() => setFormat('excel')}
                 className={`btn btn-xs rounded-xl ${format === 'excel' ? 'btn-primary' : 'btn-ghost'}`}
               >
-                CSV / Excel
+                Excel (.xlsx)
+              </button>
+              <button
+                onClick={() => setFormat('txt')}
+                className={`btn btn-xs rounded-xl ${format === 'txt' || format === 'ocr' ? 'btn-primary' : 'btn-ghost'}`}
+              >
+                Text (.txt)
               </button>
             </div>
 
@@ -256,11 +187,9 @@ export default function PdfToOfficeTool({
             >
               <Download className="w-4 h-4" />
               <span>
-                {format === 'word'
-                  ? wordMode === 'visual'
-                    ? 'Download Word (Exact Layout)'
-                    : 'Download Word (.doc)'
-                  : `Download Extracted ${format.toUpperCase()}`}
+                {format === 'excel'
+                  ? 'Download Extracted Excel (.xlsx)'
+                  : 'Download Extracted Text (.txt)'}
               </span>
             </button>
           </div>

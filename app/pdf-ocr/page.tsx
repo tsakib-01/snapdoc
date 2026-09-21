@@ -25,14 +25,14 @@ export default function PdfOcrPage() {
     keywords: ['pdf ocr', 'scanned pdf to text', 'extract text from pdf', 'searchable pdf'],
     features: [
       'Extracts text streams and embedded character data',
-      'Download as .txt or .doc Word file',
+      'Download as .txt or Excel spreadsheet',
       'One-click Copy to clipboard',
       'Zero storage guarantee'
     ],
     howTo: [
       { step: '1', text: 'Upload your scanned PDF document.' },
       { step: '2', text: 'View the recognized text in the editor.' },
-      { step: '3', text: 'Copy text or download as a text/word file.' }
+      { step: '3', text: 'Copy text or download as a text file.' }
     ],
     faqs: [
       {

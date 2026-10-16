@@ -179,20 +179,21 @@ export default function ResultCard({
             <button
               type="button"
               onClick={handleDownload}
-              className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-4 sm:px-6 flex-1 sm:flex-none justify-center"
+              className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-3 sm:px-6 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
             >
               <Download className="w-4 h-4 shrink-0" />
-              <span className="truncate">Download File</span>
+              <span className="inline sm:hidden">Download</span>
+              <span className="hidden sm:inline">Download File</span>
             </button>
 
             {dataUrl && (
               <button
                 type="button"
                 onClick={handleOpenPreview}
-                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-4 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center"
+                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-3 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
               >
                 <Eye className="w-4 h-4 shrink-0" />
-                <span className="truncate">Preview</span>
+                <span>Preview</span>
               </button>
             )}
           </div>
@@ -200,7 +201,7 @@ export default function ResultCard({
           <button
             type="button"
             onClick={onReset}
-            className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center"
+            className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap"
           >
             <RotateCcw className="w-4 h-4 shrink-0" />
             <span className="truncate">{resetLabel || 'Process Another'}</span>

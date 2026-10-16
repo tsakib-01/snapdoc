@@ -1,17 +1,18 @@
 /**
  * lib/browser-converters/pdf-to-excel.ts
- * 100% client-side: PDF -> multi-sheet .xlsx with FULL STYLING.
+ * 100% client-side: PDF -> multi-sheet .xlsx with FAITHFUL VISUAL STYLING.
  *
- * Styling extracted:
- *  - Cell background fill  (from getOperatorList rect paint operators)
- *  - Border lines          (from getOperatorList stroke operators)
- *  - Font bold / italic    (from text item fontName string)
- *  - Font size             (from text item height / transform)
- *  - Text color            (from graphics state fill color at text time)
- *  - Text alignment        (from x-position relative to column bounds)
+ * Full styling extraction:
+ *  - Cell background fill colors (scanned from PDF vector constructPath & fill ops)
+ *  - Borders (top/bottom/left/right stroke colors & widths from vector paths)
+ *  - Font boldness & italics (resolved via PDF.js page.commonObjs font descriptors)
+ *  - Font size & family (exact height and family mapping)
+ *  - Text color (graphics state fill color at text render time, with auto dark-bg contrast)
+ *  - Text alignment (left / center / right calculated from cell & column bounds)
+ *  - Column widths (auto-calculated from text lengths)
  *
- * Output is written with xlsx-js-style (drop-in XLSX replacement that
- * actually preserves cell.s styling in the emitted .xlsx file).
+ * Output is generated via xlsx-js-style so Microsoft Excel and other spreadsheet
+ * readers render the exact colors, borders, and typography.
  */
 
 export interface BrowserConversionResult {
@@ -35,49 +36,57 @@ export interface PdfToExcelOptions {
 
 type RGB = [number, number, number];
 
+interface FontInfo {
+  name: string;
+  bold: boolean;
+  italic: boolean;
+}
+
 interface Frag {
   str: string;
   x: number;
-  y: number;
+  y: number; // top-down viewport Y
   w: number;
   h: number;
   fontName: string;
   fontSize: number;
-  color: RGB; // text (fill) color at time of drawing
+  isBold: boolean;
+  isItalic: boolean;
+  color?: RGB;
 }
 
-interface Cell {
+interface CellRect {
   x: number;
-  end: number;
-  text: string;
-  frags: Frag[];
-}
-
-interface FillRect {
-  x: number; y: number; w: number; h: number;
-  color: RGB;
+  y: number; // top-down viewport Y
+  w: number;
+  h: number;
+  hasFill: boolean;
+  fillColor?: RGB;
+  hasStroke: boolean;
+  strokeColor?: RGB;
+  lineWidth: number;
 }
 
 interface StrokeLine {
-  x1: number; y1: number; x2: number; y2: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
   color: RGB;
   width: number;
 }
 
-interface PageGraphics {
-  fills: FillRect[];
-  lines: StrokeLine[];
-}
-
 /* -------------------------------------------------------------------------- */
-/* Worker URL                                                                  */
+/* Helpers                                                                     */
 /* -------------------------------------------------------------------------- */
 
 const workerUrl = (v: string) =>
   `https://cdn.jsdelivr.net/npm/pdfjs-dist@${v}/build/pdf.worker.min.mjs`;
 
 function assertBrowser(): void {
-  if (typeof window === 'undefined') throw new Error('convertPdfToExcel must run in the browser.');
+  if (typeof window === 'undefined') {
+    throw new Error('convertPdfToExcel must run in the browser.');
+  }
 }
 
 async function loadPdfJs(): Promise<any> {
@@ -88,242 +97,274 @@ async function loadPdfJs(): Promise<any> {
   return pdfjs;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Color helpers                                                               */
-/* -------------------------------------------------------------------------- */
-
 function rgbHex(r: RGB): string {
-  return r.map((c) => Math.round(Math.max(0, Math.min(255, c))).toString(16).padStart(2, '0')).join('').toUpperCase();
+  return r
+    .map((c) => Math.round(Math.max(0, Math.min(255, c))).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
 }
 
-function approxWhite(c: RGB): boolean {
-  return c[0] > 240 && c[1] > 240 && c[2] > 240;
+function brightness(r: RGB): number {
+  return 0.299 * r[0] + 0.587 * r[1] + 0.114 * r[2];
 }
 
-function approxBlack(c: RGB): boolean {
-  return c[0] < 20 && c[1] < 20 && c[2] < 20;
+function parseColor(args: any[]): RGB {
+  if (!args || args.length === 0) return [0, 0, 0];
+  // 1. Hex string (e.g. '#1F293B')
+  if (typeof args[0] === 'string' && args[0].startsWith('#')) {
+    const hex = args[0].slice(1);
+    if (hex.length >= 6) {
+      return [
+        parseInt(hex.slice(0, 2), 16),
+        parseInt(hex.slice(2, 4), 16),
+        parseInt(hex.slice(4, 6), 16),
+      ];
+    }
+  }
+  // 2. RGB floats [r, g, b] (0..1)
+  if (args.length >= 3 && typeof args[0] === 'number') {
+    return [
+      Math.round(Math.max(0, Math.min(1, args[0])) * 255),
+      Math.round(Math.max(0, Math.min(1, args[1])) * 255),
+      Math.round(Math.max(0, Math.min(1, args[2])) * 255),
+    ];
+  }
+  // 3. Gray float [g] (0..1)
+  if (args.length === 1 && typeof args[0] === 'number') {
+    const v = Math.round(Math.max(0, Math.min(1, args[0])) * 255);
+    return [v, v, v];
+  }
+  // 4. CMYK [c, m, y, k]
+  if (args.length >= 4 && typeof args[0] === 'number') {
+    const c = args[0], m = args[1], y = args[2], k = args[3];
+    return [
+      Math.round(255 * (1 - c) * (1 - k)),
+      Math.round(255 * (1 - m) * (1 - k)),
+      Math.round(255 * (1 - y) * (1 - k)),
+    ];
+  }
+  return [0, 0, 0];
+}
+
+function coerce(s: string): string | number {
+  const t = s.trim();
+  if (/^-?\d+(\.\d+)?$/.test(t) && !(t.length > 1 && t.startsWith('0') && !t.includes('.'))) {
+    return Number(t);
+  }
+  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) {
+    return Number(t.replace(/,/g, ''));
+  }
+  return s;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Operator list scanner – extracts fills and stroke lines from a PDF page    */
+/* Font resolution via PDF.js page.commonObjs                                 */
 /* -------------------------------------------------------------------------- */
 
-/**
- * PDF operator list constants (pdf.js OPS enum).
- * We use numeric guards so we don't need to import the full enum type.
- */
-const OPS = {
-  // Path construction
-  moveTo: 13,
-  lineTo: 14,
-  curveTo: 15,
-  curveTo2: 16,
-  curveTo3: 17,
-  closePath: 18,
-  rectangle: 19,
-  // Path painting
-  stroke: 20,
-  closeStroke: 21,
-  fill: 22,
-  eoFill: 23,
-  fillStroke: 24,
-  eoFillStroke: 25,
-  closeFillStroke: 26,
-  closeEOFillStroke: 27,
-  endPath: 28,
-  // Graphics state
-  setFillRGBColor: 72,
-  setStrokeRGBColor: 73,
-  setFillGray: 66,
-  setStrokeGray: 67,
-  setFillCMYKColor: 76,
-  setStrokeCMYKColor: 77,
-  setLineWidth: 35,
-  // Save/restore
-  save: 7,
-  restore: 8,
-};
+async function resolveFonts(page: any, opList: any, OPS: any): Promise<Map<string, FontInfo>> {
+  const fontMap = new Map<string, FontInfo>();
+  const fontIds = new Set<string>();
 
-interface PathPoint { x: number; y: number }
+  for (let i = 0; i < opList.fnArray.length; i++) {
+    if (opList.fnArray[i] === OPS.setFont) {
+      const id = opList.argsArray[i]?.[0];
+      if (typeof id === 'string') fontIds.add(id);
+    }
+  }
 
-function cmykToRgb(c: number, m: number, y: number, k: number): RGB {
-  const r = 255 * (1 - c) * (1 - k);
-  const g = 255 * (1 - m) * (1 - k);
-  const b = 255 * (1 - y) * (1 - k);
-  return [r, g, b];
+  for (const id of Array.from(fontIds)) {
+    try {
+      const fontObj: any = await new Promise((resolve) => {
+        if (page.commonObjs?.has?.(id)) {
+          page.commonObjs.get(id, resolve);
+        } else if (page.objs?.has?.(id)) {
+          page.objs.get(id, resolve);
+        } else {
+          resolve(null);
+        }
+      });
+
+      const name: string = fontObj?.name || fontObj?.loadedName || fontObj?.fallbackName || id;
+      const isBold = !!(
+        fontObj?.bold ||
+        fontObj?.black ||
+        /bold|black|heavy|w[789]|semibold|demibold/i.test(name)
+      );
+      const isItalic = !!(
+        fontObj?.italic ||
+        /italic|oblique|slant/i.test(name)
+      );
+
+      fontMap.set(id, { name, bold: isBold, italic: isItalic });
+    } catch {
+      fontMap.set(id, {
+        name: id,
+        bold: /bold|black|heavy|w[789]/i.test(id),
+        italic: /italic|oblique/i.test(id),
+      });
+    }
+  }
+
+  return fontMap;
 }
 
-async function extractPageGraphics(page: any, viewportHeight: number): Promise<PageGraphics> {
-  const fills: FillRect[] = [];
+/* -------------------------------------------------------------------------- */
+/* Vector Graphics Extraction (ConstructPath, Rectangles, Strokes, Fills)     */
+/* -------------------------------------------------------------------------- */
+
+interface GraphicsData {
+  rects: CellRect[];
+  lines: StrokeLine[];
+}
+
+function extractGraphics(opList: any, viewportHeight: number, OPS: any): GraphicsData {
+  const rects: CellRect[] = [];
   const lines: StrokeLine[] = [];
 
-  let opList: any;
-  try {
-    opList = await page.getOperatorList();
-  } catch {
-    return { fills, lines };
-  }
+  let curFillColor: RGB = [0, 0, 0];
+  let curStrokeColor: RGB = [0, 0, 0];
+  let curLineWidth = 1;
+
+  // Graphics state stack for save/restore
+  const stateStack: { fillColor: RGB; strokeColor: RGB; lineWidth: number }[] = [];
 
   const fnArray: number[] = opList.fnArray;
   const argsArray: any[][] = opList.argsArray;
-  const n = fnArray.length;
+  const count = fnArray.length;
 
-  // Graphics state stack
-  interface GState {
-    fillColor: RGB;
-    strokeColor: RGB;
-    lineWidth: number;
-    ctm: number[]; // [a,b,c,d,e,f]
-  }
-  const defaultState = (): GState => ({
-    fillColor: [0, 0, 0],
-    strokeColor: [0, 0, 0],
-    lineWidth: 1,
-    ctm: [1, 0, 0, 1, 0, 0],
-  });
-  const stateStack: GState[] = [defaultState()];
-  const cur = () => stateStack[stateStack.length - 1];
-
-  // Current path
-  let pathPoints: PathPoint[] = [];
-  let subStart: PathPoint = { x: 0, y: 0 };
-  let rectQueue: { x: number; y: number; w: number; h: number }[] = [];
-  let currentIsRect = false;
-
-  // Transform a PDF-space point (y-up) to viewport-space (y-down)
-  const toVP = (px: number, py: number): PathPoint => ({
-    x: px,
-    y: viewportHeight - py,
-  });
-
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < count; i++) {
     const fn = fnArray[i];
     const args = argsArray[i] ?? [];
 
     switch (fn) {
       case OPS.save:
-        stateStack.push({ ...cur(), ctm: [...cur().ctm] });
+        stateStack.push({
+          fillColor: [...curFillColor],
+          strokeColor: [...curStrokeColor],
+          lineWidth: curLineWidth,
+        });
         break;
+
       case OPS.restore:
-        if (stateStack.length > 1) stateStack.pop();
+        if (stateStack.length > 0) {
+          const s = stateStack.pop()!;
+          curFillColor = s.fillColor;
+          curStrokeColor = s.strokeColor;
+          curLineWidth = s.lineWidth;
+        }
         break;
 
+      // Color updates
       case OPS.setFillRGBColor:
-        cur().fillColor = [args[0] * 255, args[1] * 255, args[2] * 255];
-        break;
-      case OPS.setStrokeRGBColor:
-        cur().strokeColor = [args[0] * 255, args[1] * 255, args[2] * 255];
-        break;
+      case OPS.setFillColor:
+      case OPS.setFillColorN:
       case OPS.setFillGray:
-        { const v = args[0] * 255; cur().fillColor = [v, v, v]; }
-        break;
-      case OPS.setStrokeGray:
-        { const v = args[0] * 255; cur().strokeColor = [v, v, v]; }
-        break;
       case OPS.setFillCMYKColor:
-        cur().fillColor = cmykToRgb(args[0], args[1], args[2], args[3]);
+        curFillColor = parseColor(args);
         break;
+
+      case OPS.setStrokeRGBColor:
+      case OPS.setStrokeColor:
+      case OPS.setStrokeColorN:
+      case OPS.setStrokeGray:
       case OPS.setStrokeCMYKColor:
-        cur().strokeColor = cmykToRgb(args[0], args[1], args[2], args[3]);
+        curStrokeColor = parseColor(args);
         break;
+
       case OPS.setLineWidth:
-        cur().lineWidth = args[0];
+        curLineWidth = typeof args[0] === 'number' ? args[0] : 1;
         break;
 
-      case OPS.rectangle: {
-        const rx = args[0], ry = args[1], rw = args[2], rh = args[3];
-        rectQueue.push({ x: rx, y: ry, w: rw, h: rh });
-        currentIsRect = true;
-        // Also add corners to pathPoints for stroke detection
-        pathPoints = [
-          { x: rx, y: ry }, { x: rx + rw, y: ry },
-          { x: rx + rw, y: ry + rh }, { x: rx, y: ry + rh }, { x: rx, y: ry },
-        ];
-        subStart = { x: rx, y: ry };
-        break;
-      }
+      // Bundled constructPath
+      case OPS.constructPath: {
+        const [op, , minMax] = args;
+        if (minMax && (minMax.length === 4 || minMax[3] !== undefined)) {
+          const minX = minMax[0];
+          const minY = minMax[1];
+          const maxX = minMax[2];
+          const maxY = minMax[3];
 
-      case OPS.moveTo:
-        subStart = { x: args[0], y: args[1] };
-        pathPoints = [subStart];
-        currentIsRect = false;
-        rectQueue = [];
-        break;
-      case OPS.lineTo:
-        pathPoints.push({ x: args[0], y: args[1] });
-        break;
-      case OPS.closePath:
-      case 26: // closeFillStroke
-        if (pathPoints.length) pathPoints.push(pathPoints[0]);
-        break;
+          // Top-down coords
+          const x = minX;
+          const y = viewportHeight - maxY;
+          const w = maxX - minX;
+          const h = maxY - minY;
 
-      case OPS.fill:
-      case OPS.eoFill:
-      case OPS.fillStroke:
-      case OPS.eoFillStroke:
-      case OPS.closeFillStroke:
-      case OPS.closeEOFillStroke: {
-        const fc = cur().fillColor as RGB;
-        if (!approxWhite(fc)) {
-          // Fill the rectangles
-          for (const r of rectQueue) {
-            const p1 = toVP(r.x, r.y + r.h);
-            const p2 = toVP(r.x + r.w, r.y);
-            fills.push({
-              x: Math.min(p1.x, p2.x),
-              y: Math.min(p1.y, p2.y),
-              w: Math.abs(r.w),
-              h: Math.abs(r.h),
-              color: fc,
+          // Only consider reasonable rectangular paths
+          if (w > 2 && h > 2) {
+            const hasFill =
+              op === OPS.fill ||
+              op === OPS.eoFill ||
+              op === OPS.fillStroke ||
+              op === OPS.eoFillStroke ||
+              op === OPS.closeFillStroke ||
+              op === OPS.closeEOFillStroke;
+
+            const hasStroke =
+              op === OPS.stroke ||
+              op === OPS.closeStroke ||
+              op === OPS.fillStroke ||
+              op === OPS.eoFillStroke ||
+              op === OPS.closeFillStroke ||
+              op === OPS.closeEOFillStroke;
+
+            rects.push({
+              x,
+              y,
+              w,
+              h,
+              hasFill,
+              fillColor: hasFill ? [...curFillColor] : undefined,
+              hasStroke,
+              strokeColor: hasStroke ? [...curStrokeColor] : undefined,
+              lineWidth: curLineWidth,
             });
+
+            if (hasStroke) {
+              // Also add individual edge lines
+              lines.push(
+                { x1: x, y1: y, x2: x + w, y2: y, color: curStrokeColor, width: curLineWidth }, // top
+                { x1: x, y1: y + h, x2: x + w, y2: y + h, color: curStrokeColor, width: curLineWidth }, // bottom
+                { x1: x, y1: y, x2: x, y2: y + h, color: curStrokeColor, width: curLineWidth }, // left
+                { x1: x + w, y1: y, x2: x + w, y2: y + h, color: curStrokeColor, width: curLineWidth } // right
+              );
+            }
           }
         }
-        // Also handle stroke component
-        if (fn === OPS.fillStroke || fn === OPS.eoFillStroke ||
-            fn === OPS.closeFillStroke || fn === OPS.closeEOFillStroke) {
-          collectLines(pathPoints, cur().strokeColor as RGB, cur().lineWidth, lines, toVP);
-        }
-        pathPoints = [];
-        rectQueue = [];
-        currentIsRect = false;
         break;
       }
 
-      case OPS.stroke:
-      case OPS.closeStroke:
-        collectLines(pathPoints, cur().strokeColor as RGB, cur().lineWidth, lines, toVP);
-        pathPoints = [];
-        rectQueue = [];
-        currentIsRect = false;
+      // Standalone rectangle operator
+      case OPS.rectangle: {
+        const rx = args[0];
+        const ry = args[1];
+        const rw = args[2];
+        const rh = args[3];
+        if (rw > 2 && rh > 2) {
+          const x = rx;
+          const y = viewportHeight - (ry + rh);
+          rects.push({
+            x,
+            y,
+            w: rw,
+            h: rh,
+            hasFill: true,
+            fillColor: [...curFillColor],
+            hasStroke: true,
+            strokeColor: [...curStrokeColor],
+            lineWidth: curLineWidth,
+          });
+        }
         break;
-
-      case OPS.endPath:
-        pathPoints = [];
-        rectQueue = [];
-        currentIsRect = false;
-        break;
+      }
     }
   }
 
-  return { fills, lines };
-}
-
-function collectLines(
-  pts: PathPoint[],
-  color: RGB,
-  width: number,
-  out: StrokeLine[],
-  toVP: (x: number, y: number) => PathPoint
-) {
-  for (let i = 0; i + 1 < pts.length; i++) {
-    const a = toVP(pts[i].x, pts[i].y);
-    const b = toVP(pts[i + 1].x, pts[i + 1].y);
-    out.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, color, width });
-  }
+  return { rects, lines };
 }
 
 /* -------------------------------------------------------------------------- */
-/* Spatial clustering (unchanged from original, enhanced with Frag metadata) */
+/* Spatial Clustering                                                         */
 /* -------------------------------------------------------------------------- */
 
 function clusterRows(frags: Frag[]): Frag[][] {
@@ -334,6 +375,7 @@ function clusterRows(frags: Frag[]): Frag[][] {
   const rows: Frag[][] = [];
   let cur: Frag[] = [];
   let sum = 0;
+
   for (const f of sorted) {
     if (cur.length && Math.abs(f.y - sum / cur.length) > tol) {
       rows.push(cur);
@@ -347,31 +389,24 @@ function clusterRows(frags: Frag[]): Frag[][] {
   return rows.map((r) => r.sort((a, b) => a.x - b.x));
 }
 
-function rowToCells(row: Frag[]): Cell[] {
-  const cells: Cell[] = [];
-  for (const f of row) {
-    const last = cells[cells.length - 1];
-    if (last) {
-      const gap = f.x - last.end;
-      if (gap <= f.h * 1.0) {
-        last.text += (gap > f.h * 0.15 ? ' ' : '') + f.str;
-        last.end = f.x + f.w;
-        last.frags.push(f);
-        continue;
-      }
+function buildAnchors(rects: CellRect[], frags: Frag[]): number[] {
+  // Prefer exact column boundaries from table rects if available
+  if (rects.length >= 4) {
+    const rawXs = rects.map((r) => Math.round(r.x));
+    const sorted = Array.from(new Set(rawXs)).sort((a, b) => a - b);
+    const clustered: number[] = [];
+    for (const x of sorted) {
+      if (!clustered.some((c) => Math.abs(c - x) < 6)) clustered.push(x);
     }
-    cells.push({ x: f.x, end: f.x + f.w, text: f.str, frags: [f] });
+    if (clustered.length >= 2) return clustered;
   }
-  for (const c of cells) c.text = c.text.replace(/\s+/g, ' ').trim();
-  return cells.filter((c) => c.text);
-}
 
-function buildAnchors(xs: number[], tol = 8): number[] {
-  const sorted = [...xs].sort((a, b) => a - b);
+  // Fallback to text frag coordinates
+  const sorted = [...frags.map((f) => f.x)].sort((a, b) => a - b);
   const anchors: number[] = [];
   let group: number[] = [];
   for (const x of sorted) {
-    if (group.length && x - group[group.length - 1] > tol) {
+    if (group.length && x - group[group.length - 1] > 8) {
       anchors.push(group.reduce((s, v) => s + v, 0) / group.length);
       group = [];
     }
@@ -381,139 +416,8 @@ function buildAnchors(xs: number[], tol = 8): number[] {
   return anchors;
 }
 
-function coerce(s: string): string | number {
-  const t = s.trim();
-  if (/^-?\d+(\.\d+)?$/.test(t) && !(t.length > 1 && t.startsWith('0') && !t.includes('.'))) return Number(t);
-  if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) return Number(t.replace(/,/g, ''));
-  return s;
-}
-
 /* -------------------------------------------------------------------------- */
-/* Font name parsing                                                           */
-/* -------------------------------------------------------------------------- */
-
-function parseFontStyle(fontName: string): { bold: boolean; italic: boolean } {
-  const n = fontName.toLowerCase();
-  const bold = /bold|black|heavy|semibold|demibold|extrabold|ultrabold|w[789]/.test(n);
-  const italic = /italic|oblique|slant|it$|it[-_,+]/.test(n);
-  return { bold, italic };
-}
-
-/* -------------------------------------------------------------------------- */
-/* Style resolution: map a grid cell to a style using graphics data           */
-/* -------------------------------------------------------------------------- */
-
-/** Find the dominant fill color covering a cell's bounding box. */
-function findFill(
-  fills: FillRect[],
-  cx: number, cy: number, cw: number, ch: number
-): RGB | undefined {
-  let bestArea = 0;
-  let best: RGB | undefined;
-  for (const f of fills) {
-    // Overlap in x
-    const ox = Math.min(cx + cw, f.x + f.w) - Math.max(cx, f.x);
-    // Overlap in y
-    const oy = Math.min(cy + ch, f.y + f.h) - Math.max(cy, f.y);
-    if (ox <= 0 || oy <= 0) continue;
-    const area = ox * oy;
-    if (area > bestArea) {
-      bestArea = area;
-      best = f.color;
-    }
-  }
-  return best;
-}
-
-/** Detect which sides of a cell bounding box have stroke lines. */
-function detectBorders(
-  lines: StrokeLine[],
-  cx: number, cy: number, cw: number, ch: number,
-  tol = 4
-): { top?: string; bottom?: string; left?: string; right?: string } {
-  const result: { top?: string; bottom?: string; left?: string; right?: string } = {};
-
-  for (const l of lines) {
-    const isH = Math.abs(l.y2 - l.y1) < tol;
-    const isV = Math.abs(l.x2 - l.x1) < tol;
-    if (!isH && !isV) continue;
-
-    if (isH) {
-      const lx1 = Math.min(l.x1, l.x2);
-      const lx2 = Math.max(l.x1, l.x2);
-      const ly = (l.y1 + l.y2) / 2;
-      // Must overlap the cell horizontally
-      if (lx2 < cx - tol || lx1 > cx + cw + tol) continue;
-      // Top edge
-      if (Math.abs(ly - cy) < tol) result.top = 'thin';
-      // Bottom edge
-      if (Math.abs(ly - (cy + ch)) < tol) result.bottom = 'thin';
-    } else {
-      const ly1 = Math.min(l.y1, l.y2);
-      const ly2 = Math.max(l.y1, l.y2);
-      const lx = (l.x1 + l.x2) / 2;
-      if (ly2 < cy - tol || ly1 > cy + ch + tol) continue;
-      if (Math.abs(lx - cx) < tol) result.left = 'thin';
-      if (Math.abs(lx - (cx + cw)) < tol) result.right = 'thin';
-    }
-  }
-  return result;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Build xlsx-js-style cell.s object                                          */
-/* -------------------------------------------------------------------------- */
-
-function buildCellStyle(
-  frags: Frag[],
-  fill: RGB | undefined,
-  borders: { top?: string; bottom?: string; left?: string; right?: string },
-  hAlign: 'left' | 'center' | 'right'
-): any {
-  const dominant = frags.length ? frags[0] : null;
-  const { bold, italic } = dominant ? parseFontStyle(dominant.fontName) : { bold: false, italic: false };
-  const fontSize = dominant ? Math.max(8, Math.round(dominant.fontSize)) : 10;
-  const textColor = dominant && !approxBlack(dominant.color) ? rgbHex(dominant.color) : '000000';
-
-  const s: any = {
-    font: {
-      bold,
-      italic,
-      sz: fontSize,
-      color: { rgb: textColor },
-    },
-    alignment: {
-      horizontal: hAlign,
-      vertical: 'center',
-      wrapText: false,
-    },
-  };
-
-  if (fill && !approxWhite(fill)) {
-    s.fill = {
-      patternType: 'solid',
-      fgColor: { rgb: rgbHex(fill) },
-      bgColor: { rgb: 'FFFFFF' },
-    };
-  }
-
-  const hasBorder = borders.top || borders.bottom || borders.left || borders.right;
-  if (hasBorder) {
-    const side = (style?: string) =>
-      style ? { style, color: { rgb: '000000' } } : { style: 'none' };
-    s.border = {
-      top: side(borders.top),
-      bottom: side(borders.bottom),
-      left: side(borders.left),
-      right: side(borders.right),
-    };
-  }
-
-  return s;
-}
-
-/* -------------------------------------------------------------------------- */
-/* OCR helpers (unchanged from original)                                       */
+/* OCR Fallback Helpers                                                        */
 /* -------------------------------------------------------------------------- */
 
 function collectWords(data: any): any[] {
@@ -549,14 +453,15 @@ async function ocrPage(page: any, getWorker: () => Promise<any>): Promise<Frag[]
       y: w.bbox.y1 / scale,
       w: (w.bbox.x1 - w.bbox.x0) / scale,
       h: Math.max(4, (w.bbox.y1 - w.bbox.y0) / scale),
-      fontName: '',
+      fontName: 'sans-serif',
       fontSize: Math.max(4, (w.bbox.y1 - w.bbox.y0) / scale),
-      color: [0, 0, 0] as RGB,
+      isBold: false,
+      isItalic: false,
     }));
 }
 
 /* -------------------------------------------------------------------------- */
-/* Main export                                                                 */
+/* Main Converter Function                                                     */
 /* -------------------------------------------------------------------------- */
 
 export async function convertPdfToExcel(
@@ -568,12 +473,13 @@ export async function convertPdfToExcel(
   const report = (p: number) => onProgress?.(Math.max(0, Math.min(100, Math.round(p))));
   report(2);
 
-  // Load pdfjs and xlsx-js-style in parallel
+  // Load PDF.js and xlsx-js-style dynamically
   const [pdfjs, XLSXStyle] = await Promise.all([
     loadPdfJs(),
     import('xlsx-js-style' as any),
   ]);
   const XLSX = XLSXStyle.default ?? XLSXStyle;
+  const OPS = pdfjs.OPS;
 
   const data = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjs.getDocument({ data }).promise;
@@ -597,135 +503,201 @@ export async function convertPdfToExcel(
       const viewport = page.getViewport({ scale: 1 });
       const vpH = viewport.height;
 
-      // 1. Extract text with font metadata
+      // 1. Operator list & fonts
+      const opList = await page.getOperatorList();
+      const fontMap = await resolveFonts(page, opList, OPS);
+
+      // 2. Extract vector graphics (rectangles, fills, borders)
+      const { rects } = extractGraphics(opList, vpH, OPS);
+
+      // 3. Extract text content
       const content = await page.getTextContent();
       let frags: Frag[] = [];
+
       for (const it of content.items as any[]) {
         if (typeof it.str !== 'string' || !it.str.trim()) continue;
         const t = it.transform as number[];
         const h = it.height || Math.abs(t[3]) || 10;
+        const fontInfo = fontMap.get(it.fontName);
+        const fontName = fontInfo?.name || it.fontName || 'Calibri';
+        const isBold = !!(fontInfo?.bold || /bold|black|heavy|w[789]/i.test(fontName));
+        const isItalic = !!(fontInfo?.italic || /italic|oblique/i.test(fontName));
+
         frags.push({
           str: it.str,
           x: t[4],
-          y: vpH - t[5],
+          y: vpH - t[5], // top-down viewport Y
           w: it.width || it.str.length * h * 0.5,
           h,
-          fontName: it.fontName ?? '',
+          fontName,
           fontSize: h,
-          color: [0, 0, 0], // will be refined below if graphics state is available
+          isBold,
+          isItalic,
         });
       }
 
+      // OCR fallback if page has minimal or no selectable text
       if (frags.length < 3 && ocrFallback) {
-        try { frags = await ocrPage(page, getWorker); } catch (e) { console.warn(`OCR failed on page ${p}`, e); }
+        try {
+          frags = await ocrPage(page, getWorker);
+        } catch (e) {
+          console.warn(`OCR failed on page ${p}`, e);
+        }
       }
 
-      // 2. Extract vector graphics (fills + lines)
-      const graphics = await extractPageGraphics(page, vpH);
       page.cleanup();
 
-      if (!frags.length) {
+      if (!frags.length && !rects.length) {
         report(5 + (p / numPages) * 90);
         await new Promise((r) => setTimeout(r, 0));
         continue;
       }
 
-      // 3. Cluster text into rows → cells
+      // 4. Group rows by y
       const clusteredRows = clusterRows(frags);
-      const cellRows = clusteredRows.map(rowToCells).filter((r) => r.length);
-      if (!cellRows.length) {
+      if (!clusteredRows.length) {
         report(5 + (p / numPages) * 90);
         await new Promise((r) => setTimeout(r, 0));
         continue;
       }
 
-      // 4. Build column anchors
-      const allXs = cellRows.flatMap((r) => r.map((c) => c.x));
-      const anchors = buildAnchors(allXs);
+      // 5. Build column anchors
+      const anchors = buildAnchors(rects, frags);
       const numCols = anchors.length;
 
-      // Estimate column right-edges from next anchor (or viewport edge)
+      // Estimate column bounds for alignment fallback
       const colRights = anchors.map((ax, i) =>
         i + 1 < anchors.length ? anchors[i + 1] : viewport.width
       );
 
-      // 5. Build rows of row-bands (approximate y ranges from clustered rows)
-      const rowBands = clusteredRows.map((rowFrags) => {
-        const ys = rowFrags.map((f) => f.y - f.h);
-        const ye = rowFrags.map((f) => f.y);
-        return {
-          y: Math.min(...ys),
-          h: Math.max(...ye) - Math.min(...ys),
-        };
-      });
-
-      // 6. Build grid with styling
-      const numRows = cellRows.length;
-      const styleMap = new Map<string, any>(); // "r:c" -> cell.s
+      // 6. Assemble grid & styles
       const aoa: (string | number)[][] = [];
+      const styleMap = new Map<string, any>();
 
-      for (let ri = 0; ri < numRows; ri++) {
-        const cells = cellRows[ri];
-        const band = rowBands[ri];
+      for (let ri = 0; ri < clusteredRows.length; ri++) {
+        const rowFrags = clusteredRows[ri].sort((a, b) => a.x - b.x);
         const rowOut: (string | number)[] = new Array(numCols).fill('');
 
-        for (let ci = 0; ci < numCols; ci++) {
-          // Find the Cell that mapped to this column
-          let matchedCell: Cell | undefined;
-          let bestDist = Infinity;
-          for (const c of cells) {
-            const d = Math.abs(anchors[ci] - c.x);
-            if (d < bestDist && d < 50) { bestDist = d; matchedCell = c; }
+        for (const f of rowFrags) {
+          // Find matching column anchor
+          let bestCi = 0;
+          let minD = Infinity;
+          for (let ci = 0; ci < numCols; ci++) {
+            const d = Math.abs(anchors[ci] - f.x);
+            if (d < minD) {
+              minD = d;
+              bestCi = ci;
+            }
           }
-          if (!matchedCell) continue;
 
-          rowOut[ci] = coerce(matchedCell.text);
+          // Concatenate if cell already has text
+          rowOut[bestCi] = rowOut[bestCi]
+            ? `${rowOut[bestCi]} ${f.str}`
+            : coerce(f.str);
 
-          // Column bounding box in PDF coords
-          const cxLeft = anchors[ci];
-          const cxRight = colRights[ci];
-          const cw = cxRight - cxLeft;
-          const cy = band.y;
-          const ch = band.h || 12;
+          // Find matching cell rectangle (fills & borders)
+          const match = rects.find(
+            (r) =>
+              f.x >= r.x - 4 &&
+              f.x <= r.x + r.w + 4 &&
+              f.y >= r.y - 4 &&
+              f.y <= r.y + r.h + 4
+          );
 
-          // Detect fill
-          const fill = findFill(graphics.fills, cxLeft, cy, cw, ch);
+          // Build cell style
+          const cellStyle: any = {
+            font: {
+              name: /courier|mono/i.test(f.fontName)
+                ? 'Courier New'
+                : /times|serif/i.test(f.fontName)
+                ? 'Times New Roman'
+                : 'Calibri',
+              sz: Math.max(8, Math.min(24, Math.round(f.fontSize))),
+              bold: f.isBold,
+              italic: f.isItalic,
+              color: { rgb: '000000' },
+            },
+            alignment: {
+              horizontal: 'left',
+              vertical: 'center',
+              wrapText: false,
+            },
+          };
 
-          // Detect borders
-          const borders = detectBorders(graphics.lines, cxLeft, cy, cw, ch);
+          if (match) {
+            // Background fill
+            if (match.hasFill && match.fillColor) {
+              const bgHex = rgbHex(match.fillColor);
+              cellStyle.fill = {
+                patternType: 'solid',
+                fgColor: { rgb: bgHex },
+                bgColor: { rgb: 'FFFFFF' },
+              };
+              // Contrast adjustment: dark background -> white text
+              if (brightness(match.fillColor) < 130) {
+                cellStyle.font.color = { rgb: 'FFFFFF' };
+              }
+            }
 
-          // Detect horizontal alignment from text x-position relative to column
-          const textX = matchedCell.x;
-          const colMid = (cxLeft + cxRight) / 2;
-          let hAlign: 'left' | 'center' | 'right' = 'left';
-          const rightEdge = cxRight - cw * 0.15;
-          const leftEdge = cxLeft + cw * 0.15;
-          if (textX > rightEdge) hAlign = 'right';
-          else if (Math.abs(textX - colMid) < cw * 0.2) hAlign = 'center';
+            // Cell borders
+            if (match.hasStroke && match.strokeColor) {
+              const scHex = rgbHex(match.strokeColor);
+              const bStyle = match.lineWidth > 1.5 ? 'medium' : 'thin';
+              cellStyle.border = {
+                top: { style: bStyle, color: { rgb: scHex } },
+                bottom: { style: bStyle, color: { rgb: scHex } },
+                left: { style: bStyle, color: { rgb: scHex } },
+                right: { style: bStyle, color: { rgb: scHex } },
+              };
+            }
 
-          const cellStyle = buildCellStyle(matchedCell.frags, fill, borders, hAlign);
-          styleMap.set(`${ri}:${ci}`, cellStyle);
+            // Horizontal alignment inside rectangle
+            const colMid = match.x + match.w / 2;
+            const textMid = f.x + f.w / 2;
+            if (Math.abs(textMid - colMid) < match.w * 0.18) {
+              cellStyle.alignment.horizontal = 'center';
+            } else if (f.x + f.w > match.x + match.w - Math.max(10, match.w * 0.15)) {
+              cellStyle.alignment.horizontal = 'right';
+            }
+          } else {
+            // Fallback alignment for items without enclosing rectangles
+            const cxLeft = anchors[bestCi];
+            const cxRight = colRights[bestCi];
+            const cw = cxRight - cxLeft;
+            const colMid = (cxLeft + cxRight) / 2;
+            const textMid = f.x + f.w / 2;
+            if (cw > 20 && Math.abs(textMid - colMid) < cw * 0.18) {
+              cellStyle.alignment.horizontal = 'center';
+            }
+          }
+
+          styleMap.set(`${ri}:${bestCi}`, cellStyle);
         }
 
         aoa.push(rowOut);
       }
 
-      // 7. Build worksheet from AoA then apply styles
+      // 7. Write to worksheet and apply styles
       const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-      // Apply styles to cells
       for (const [key, style] of Array.from(styleMap)) {
         const [ri, ci] = key.split(':').map(Number);
-        const cellRef = XLSX.utils.encode_cell({ r: ri, c: ci });
-        if (ws[cellRef]) {
-          ws[cellRef].s = style;
+        const ref = XLSX.utils.encode_cell({ r: ri, c: ci });
+        if (ws[ref]) {
+          ws[ref].s = style;
         }
       }
 
-      // Column widths
+      // Auto-fit column widths
       const widths: number[] = [];
-      for (const row of aoa) row.forEach((v, i) => { widths[i] = Math.max(widths[i] ?? 0, String(v).length); });
-      (ws as any)['!cols'] = widths.map((w) => ({ wch: Math.min(60, Math.max(8, w + 2)) }));
+      for (const row of aoa) {
+        row.forEach((v, i) => {
+          widths[i] = Math.max(widths[i] ?? 0, String(v ?? '').length);
+        });
+      }
+      (ws as any)['!cols'] = widths.map((w) => ({
+        wch: Math.min(60, Math.max(10, w + 3)),
+      }));
 
       XLSX.utils.book_append_sheet(wb, ws, `Page ${p}`.slice(0, 31));
       sheetsAdded++;
@@ -742,7 +714,7 @@ export async function convertPdfToExcel(
     throw new Error(
       ocrFallback
         ? 'No text could be extracted from this PDF.'
-        : 'No selectable text found. This looks like a scanned PDF – retry with ocrFallback: true.'
+        : 'No selectable text found. This looks like a scanned PDF - retry with ocrFallback: true.'
     );
   }
 

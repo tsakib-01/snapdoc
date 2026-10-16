@@ -148,7 +148,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
             {children}
           </div>
         ) : (
-          <div className={`w-full bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card ${isWide ? 'p-1.5 sm:p-4 lg:p-6' : 'p-3 sm:p-6 lg:p-8'} transition-all`}>
+          <div className={`w-full bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card ${isWide ? 'p-1.5 sm:p-4 lg:p-6' : 'p-3 sm:p-6 lg:p-8'}`}>
             {children}
           </div>
         )}

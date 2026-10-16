@@ -7,17 +7,45 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark') ||
+    const currentAttr = (document.documentElement.getAttribute('data-theme') as 'light' | 'dark') || null;
+    const savedTheme =
+      (localStorage.getItem('theme') as 'light' | 'dark') ||
+      currentAttr ||
       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    if (currentAttr !== savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
   }, []);
 
   const toggleTheme = () => {
+    // Temporarily freeze all CSS transitions across the entire DOM during the theme switch
+    const css = document.createElement('style');
+    css.appendChild(
+      document.createTextNode(
+        `*, *::before, *::after {
+          -webkit-transition: none !important;
+          -moz-transition: none !important;
+          -o-transition: none !important;
+          -ms-transition: none !important;
+          transition: none !important;
+        }`
+      )
+    );
+    document.head.appendChild(css);
+
     const nextTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(nextTheme);
     localStorage.setItem('theme', nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
+
+    // Force synchronous style recalculation
+    window.getComputedStyle(document.body);
+
+    // Re-enable normal UI interactions after the theme paint is complete
+    setTimeout(() => {
+      document.head.removeChild(css);
+    }, 50);
   };
 
   return (

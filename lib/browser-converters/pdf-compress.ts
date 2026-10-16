@@ -1,10 +1,21 @@
 /**
  * lib/browser-converters/pdf-compress.ts
- * 100% client-side PDF compression using pdf-lib + Canvas:
- *   1. Downsample & re-encode embedded JPEG (DCTDecode) images via canvas.
- *   2. Strip metadata / XMP.
- *   3. Re-save with object streams (stream deflation of the PDF structure).
- * Text and vector content are NOT rasterized, so they stay sharp and selectable.
+ * 100% client-side PDF compression engine:
+ *
+ * Multi-Stage Compression Pipeline:
+ *   Stage 1 (Structural / Lossless Optimization):
+ *     - Strips redundant metadata, catalog tags, and document info.
+ *     - Downsamples & re-encodes embedded DCTDecode image streams.
+ *     - Deflates object streams using PDF 1.5 object stream compression.
+ *     - If Stage 1 achieves significant size reduction (>= target threshold),
+ *       it returns immediately to preserve 100% vector sharpness and text.
+ *
+ *   Stage 2 (Adaptive Visual Compression Fallback):
+ *     - Used when Stage 1 yields little or no reduction (e.g. PDFs with FlateDecode,
+ *       lossless raster images, scanned documents, Canva/Word exports, or complex vectors).
+ *     - High-DPI canvas rendering with tuned JPEG encoding per quality preset.
+ *     - Rebuilds the PDF and overlays an invisible text layer so text remains
+ *       fully selectable and searchable.
  */
 
 export interface BrowserConversionResult {
@@ -23,19 +34,32 @@ export interface PdfCompressOptions {
 }
 
 const PRESETS = {
-  low: { maxDim: 1000, jpeg: 0.5 },
-  medium: { maxDim: 1600, jpeg: 0.7 },
-  high: { maxDim: 2400, jpeg: 0.85 },
+  low: { maxDim: 1200, jpeg: 0.50, scale: 1.25 },     // ~75% compression target
+  medium: { maxDim: 1600, jpeg: 0.68, scale: 1.50 },  // ~50% compression target
+  high: { maxDim: 2200, jpeg: 0.82, scale: 1.80 },    // ~25% compression target
 } as const;
 
-const MIN_IMAGE_BYTES = 20 * 1024; // ignore tiny images, not worth re-encoding
-const MIN_GAIN = 0.9; // only replace if new data is < 90% of the original
+const MIN_IMAGE_BYTES = 4 * 1024; // process any image >= 4KB
+const MIN_GAIN = 0.98; // keep re-encoded image if it yields any gain
 
 function assertBrowser(): void {
-  if (typeof window === 'undefined') throw new Error('compressPdf must run in the browser.');
+  if (typeof window === 'undefined') {
+    throw new Error('compressPdf must run in the browser.');
+  }
 }
 
 const tick = () => new Promise<void>((r) => setTimeout(r, 0));
+
+const workerUrl = (v: string) =>
+  `https://cdn.jsdelivr.net/npm/pdfjs-dist@${v}/build/pdf.worker.min.mjs`;
+
+async function loadPdfJs(): Promise<any> {
+  const pdfjs: any = await import('pdfjs-dist');
+  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl(pdfjs.version);
+  }
+  return pdfjs;
+}
 
 function canvasToJpeg(canvas: HTMLCanvasElement, q: number): Promise<Uint8Array | null> {
   return new Promise((resolve) => {
@@ -47,33 +71,27 @@ function canvasToJpeg(canvas: HTMLCanvasElement, q: number): Promise<Uint8Array 
   });
 }
 
-export async function compressPdf(
-  file: File,
-  options: PdfCompressOptions = {}
-): Promise<BrowserConversionResult> {
-  assertBrowser();
-  const { quality = 'medium', onProgress } = options;
-  const preset = PRESETS[quality] ?? PRESETS.medium;
-  const report = (p: number) => onProgress?.(Math.max(0, Math.min(100, Math.round(p))));
-  report(2);
+/* -------------------------------------------------------------------------- */
+/* Stage 1: Structural & Embedded Image Optimization                          */
+/* -------------------------------------------------------------------------- */
 
-  const { PDFDocument, PDFName, PDFRawStream, PDFNumber, PDFArray, PDFBool } = await import('pdf-lib');
-  const originalBytes = new Uint8Array(await file.arrayBuffer());
+async function structuralCompress(
+  originalBytes: Uint8Array,
+  quality: 'low' | 'medium' | 'high',
+  onProgress?: (pct: number) => void
+): Promise<Uint8Array | null> {
+  const preset = PRESETS[quality] ?? PRESETS.medium;
+  const { PDFDocument, PDFName, PDFRawStream, PDFNumber, PDFArray, PDFBool } =
+    await import('pdf-lib');
 
   let pdfDoc;
   try {
     pdfDoc = await PDFDocument.load(originalBytes, { updateMetadata: false });
-  } catch (e: any) {
-    throw new Error(
-      /encrypt/i.test(String(e?.message))
-        ? 'This PDF is password-protected. Remove the password first.'
-        : `Could not read PDF: ${e?.message ?? e}`
-    );
+  } catch {
+    return null;
   }
   const ctx = pdfDoc.context;
-  report(8);
 
-  // ---- helpers bound to the pdf-lib classes ----
   const filterName = (dict: any): string | null => {
     const f = dict.get(PDFName.of('Filter'));
     if (f instanceof PDFName) return f.toString();
@@ -84,11 +102,12 @@ export async function compressPdf(
     return null;
   };
 
-  // JPEGs in CMYK (or with a /Decode array) would change colour when round-tripped via canvas.
   const isSafeColor = (dict: any): boolean => {
     if (dict.get(PDFName.of('Decode'))) return false;
     const cs = dict.lookup(PDFName.of('ColorSpace'));
-    if (cs instanceof PDFName) return cs.toString() === '/DeviceRGB' || cs.toString() === '/DeviceGray';
+    if (cs instanceof PDFName) {
+      return cs.toString() === '/DeviceRGB' || cs.toString() === '/DeviceGray';
+    }
     if (cs instanceof PDFArray) {
       const first = cs.lookup(0);
       if (first instanceof PDFName && first.toString() === '/ICCBased') {
@@ -100,7 +119,7 @@ export async function compressPdf(
     return false;
   };
 
-  // ---- 1. Collect candidate JPEG images ----
+  // 1. Collect candidate JPEG images
   const candidates: { ref: any; stream: any }[] = [];
   for (const [ref, obj] of ctx.enumerateIndirectObjects()) {
     if (!(obj instanceof PDFRawStream)) continue;
@@ -114,7 +133,7 @@ export async function compressPdf(
     candidates.push({ ref, stream: obj });
   }
 
-  // ---- 2. Downsample + re-encode ----
+  // 2. Downsample and re-encode candidate images
   for (let i = 0; i < candidates.length; i++) {
     const { ref, stream } = candidates[i];
     try {
@@ -126,7 +145,7 @@ export async function compressPdf(
       const jpegBlob = new Blob([stream.contents], { type: 'image/jpeg' });
       let bmp: ImageBitmap;
       try {
-        bmp = await createImageBitmap(jpegBlob, { imageOrientation: 'none' } as any); // PDF ignores EXIF
+        bmp = await createImageBitmap(jpegBlob, { imageOrientation: 'none' } as any);
       } catch {
         bmp = await createImageBitmap(jpegBlob);
       }
@@ -158,21 +177,20 @@ export async function compressPdf(
         Filter: 'DCTDecode',
         Length: out.length,
       });
-      // Keep transparency links (their own dimensions may differ - allowed by the PDF spec).
+
       for (const key of ['SMask', 'Mask']) {
         const v = d.get(PDFName.of(key));
         if (v) newDict.set(PDFName.of(key), v);
       }
       ctx.assign(ref, PDFRawStream.of(newDict, out));
-    } catch (e) {
-      console.warn('Skipped an image during compression:', e);
+    } catch {
+      // Continue to next image
     }
-    report(8 + ((i + 1) / candidates.length) * 82);
+    onProgress?.(10 + Math.round(((i + 1) / Math.max(1, candidates.length)) * 20));
     await tick();
   }
-  report(90);
 
-  // ---- 3. Strip metadata ----
+  // 3. Strip metadata
   try {
     pdfDoc.setTitle('');
     pdfDoc.setAuthor('');
@@ -181,17 +199,192 @@ export async function compressPdf(
     pdfDoc.setProducer('');
     pdfDoc.setCreator('');
     pdfDoc.catalog.delete(PDFName.of('Metadata'));
-  } catch { /* non-fatal */ }
+  } catch {
+    // Non-fatal
+  }
 
-  // ---- 4. Save with object streams ----
-  const saved = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
-  const pageCount = pdfDoc.getPageCount();
+  // 4. Save with object streams
+  try {
+    const saved = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+    return saved;
+  } catch {
+    return null;
+  }
+}
 
-  // Never hand back something bigger than the input.
-  const useOriginal = saved.length >= originalBytes.length;
-  const finalBytes = useOriginal ? originalBytes : saved;
-  const blob = new Blob([finalBytes as any], { type: 'application/pdf' });
-  const reduction = Math.max(0, (1 - blob.size / file.size) * 100);
+/* -------------------------------------------------------------------------- */
+/* Stage 2: Adaptive Visual Canvas Compression (with Selectable Text Overlay) */
+/* -------------------------------------------------------------------------- */
+
+async function rasterizeCompress(
+  fileBytes: Uint8Array,
+  quality: 'low' | 'medium' | 'high',
+  onProgress?: (pct: number) => void
+): Promise<Uint8Array | null> {
+  try {
+    const [pdfjs, { PDFDocument, StandardFonts, rgb }] = await Promise.all([
+      loadPdfJs(),
+      import('pdf-lib'),
+    ]);
+
+    const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
+    const numPages = pdf.numPages;
+    if (numPages === 0) return null;
+
+    const newDoc = await PDFDocument.create();
+    let font: any = null;
+    try {
+      font = await newDoc.embedFont(StandardFonts.Helvetica);
+    } catch {
+      // Font embedding optional for text overlay
+    }
+
+    const preset = PRESETS[quality] ?? PRESETS.medium;
+
+    for (let p = 1; p <= numPages; p++) {
+      const page = await pdf.getPage(p);
+      const vp = page.getViewport({ scale: preset.scale });
+      const origVp = page.getViewport({ scale: 1 });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(vp.width);
+      canvas.height = Math.ceil(vp.height);
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      await page.render({ canvasContext: ctx, viewport: vp, canvas }).promise;
+
+      // Extract text content for selectable text overlay
+      let textItems: any[] = [];
+      try {
+        const tc = await page.getTextContent();
+        textItems = tc.items || [];
+      } catch {
+        // Optional
+      }
+
+      const jpegBytes = await canvasToJpeg(canvas, preset.jpeg);
+      canvas.width = canvas.height = 0; // Release memory
+
+      if (!jpegBytes) {
+        page.cleanup();
+        continue;
+      }
+
+      const img = await newDoc.embedJpg(jpegBytes);
+      const newPage = newDoc.addPage([origVp.width, origVp.height]);
+      newPage.drawImage(img, {
+        x: 0,
+        y: 0,
+        width: origVp.width,
+        height: origVp.height,
+      });
+
+      // Overlay invisible selectable text
+      if (font && textItems.length > 0) {
+        for (const it of textItems) {
+          if (!it.str || typeof it.str !== 'string' || !it.str.trim()) continue;
+          try {
+            const tx = it.transform[4];
+            const ty = it.transform[5];
+            const fs = it.height || Math.abs(it.transform[3]) || 10;
+            const cleanStr = it.str.replace(/[^\x20-\x7E\xA0-\xFF]/g, ' ');
+            if (cleanStr.trim()) {
+              newPage.drawText(cleanStr, {
+                x: tx,
+                y: ty,
+                size: Math.max(4, Math.min(72, fs)),
+                font,
+                color: rgb(0, 0, 0),
+                opacity: 0,
+              });
+            }
+          } catch {
+            // Ignore individual text character draw failure
+          }
+        }
+      }
+
+      page.cleanup();
+      onProgress?.(35 + Math.round((p / numPages) * 55));
+      await tick();
+    }
+
+    await pdf.destroy?.();
+    const saved = await newDoc.save({ useObjectStreams: true, addDefaultPage: false });
+    return saved;
+  } catch (e) {
+    console.warn('Adaptive rasterize compression skipped:', e);
+    return null;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Main compressPdf Entry Point                                               */
+/* -------------------------------------------------------------------------- */
+
+export async function compressPdf(
+  file: File,
+  options: PdfCompressOptions = {}
+): Promise<BrowserConversionResult> {
+  assertBrowser();
+  const { quality = 'medium', onProgress } = options;
+  const report = (p: number) => onProgress?.(Math.max(0, Math.min(100, Math.round(p))));
+  report(5);
+
+  const originalBytes = new Uint8Array(await file.arrayBuffer());
+
+  // 1. Run Stage 1: In-place structural compression
+  report(10);
+  let pass1Bytes: Uint8Array | null = null;
+  try {
+    pass1Bytes = await structuralCompress(originalBytes, quality, (p) => report(p));
+  } catch (e) {
+    console.warn('Stage 1 structural compression failed:', e);
+  }
+
+  const pass1Size = pass1Bytes ? pass1Bytes.length : originalBytes.length;
+  const pass1Reduction = ((1 - pass1Size / originalBytes.length) * 100);
+
+  // Target threshold determining whether Stage 2 fallback is needed:
+  // If Stage 1 achieved a strong reduction, we keep it to maintain 100% vector fidelity.
+  const targetThreshold = quality === 'low' ? 35 : quality === 'medium' ? 20 : 12;
+
+  let pass2Bytes: Uint8Array | null = null;
+  if (pass1Reduction < targetThreshold) {
+    report(35);
+    pass2Bytes = await rasterizeCompress(originalBytes, quality, (p) => report(p));
+  }
+
+  // Select the smallest valid result
+  let bestBytes: any = originalBytes;
+  let bestSize = originalBytes.length;
+
+  if (pass1Bytes && pass1Bytes.length < bestSize) {
+    bestBytes = pass1Bytes;
+    bestSize = pass1Bytes.length;
+  }
+
+  if (pass2Bytes && pass2Bytes.length < bestSize) {
+    bestBytes = pass2Bytes;
+    bestSize = pass2Bytes.length;
+  }
+
+  report(95);
+
+  // Determine page count
+  let pageCount = 1;
+  try {
+    const { PDFDocument } = await import('pdf-lib');
+    const doc = await PDFDocument.load(bestBytes, { updateMetadata: false });
+    pageCount = doc.getPageCount();
+  } catch {
+    // Non-fatal fallback
+  }
+
+  const blob = new Blob([bestBytes as any], { type: 'application/pdf' });
+  const reduction = Math.max(0, (1 - blob.size / originalBytes.length) * 100);
   report(100);
 
   return {

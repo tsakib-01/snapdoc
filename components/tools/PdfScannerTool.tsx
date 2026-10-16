@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload } from 'lucide-react';
+import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
 import ResultCard from '@/components/ui/ResultCard';
 import { PDFDocument } from 'pdf-lib';
 
 export default function PdfScannerTool() {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [processing, setProcessing] = useState<boolean>(false);
@@ -138,6 +139,11 @@ export default function PdfScannerTool() {
 
   const removePhoto = (index: number) => {
     setCapturedImages((prev) => prev.filter((_, i) => i !== index));
+    if (previewImageIndex === index) {
+      setPreviewImageIndex(null);
+    } else if (previewImageIndex !== null && previewImageIndex > index) {
+      setPreviewImageIndex(previewImageIndex - 1);
+    }
   };
 
   const handleGeneratePdf = async () => {
@@ -220,6 +226,7 @@ export default function PdfScannerTool() {
   const handleReset = () => {
     stopCamera();
     setCapturedImages([]);
+    setPreviewImageIndex(null);
     setResultData(null);
     setError(null);
   };
@@ -350,20 +357,119 @@ export default function PdfScannerTool() {
               </h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {capturedImages.map((img, idx) => (
-                  <div key={idx} className="relative group rounded-xl overflow-hidden border border-base-300 aspect-[1/1.3] bg-base-200">
+                  <div
+                    key={idx}
+                    onClick={() => setPreviewImageIndex(idx)}
+                    className="relative group rounded-xl overflow-hidden border border-base-300 aspect-[1/1.3] bg-base-200 cursor-pointer hover:border-primary/60 hover:shadow-md transition-all"
+                  >
                     <img src={img} alt={`Page ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                      <span className="btn btn-circle btn-xs bg-black/60 text-white border-none shadow-sm">
+                        <Eye className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
                     <button
-                      onClick={() => removePhoto(idx)}
-                      className="absolute top-2 right-2 btn btn-circle btn-xs btn-error opacity-0 group-hover:opacity-100 transition-opacity"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removePhoto(idx);
+                      }}
+                      title="Delete Page"
+                      className="absolute top-2 right-2 btn btn-circle btn-xs btn-error opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-sm z-10"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
-                    <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-bold">
+                    <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-bold pointer-events-none">
                       Page {idx + 1}
                     </span>
                   </div>
                 ))}
               </div>
+
+              {/* Full Photo Preview Modal */}
+              {previewImageIndex !== null && capturedImages[previewImageIndex] && (
+                <div
+                  className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+                  onClick={() => setPreviewImageIndex(null)}
+                >
+                  <div
+                    className="relative bg-base-100 rounded-3xl p-4 sm:p-5 max-w-2xl w-full max-h-[90vh] flex flex-col gap-3 shadow-2xl border border-base-300"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Modal Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-base-200">
+                      <div className="flex items-center gap-2">
+                        <span className="badge badge-sm badge-primary font-bold">
+                          Page {previewImageIndex + 1} of {capturedImages.length}
+                        </span>
+                        <span className="text-xs text-base-content/60 hidden sm:inline">Preview Scanned Page</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {capturedImages.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImageIndex((prev) => (prev! > 0 ? prev! - 1 : capturedImages.length - 1))}
+                              className="btn btn-ghost btn-xs btn-circle"
+                              title="Previous Page"
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewImageIndex((prev) => (prev! < capturedImages.length - 1 ? prev! + 1 : 0))}
+                              className="btn btn-ghost btn-xs btn-circle"
+                              title="Next Page"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(previewImageIndex)}
+                          className="btn btn-ghost btn-xs text-error hover:bg-error/10 gap-1 rounded-lg"
+                          title="Delete Page"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline text-xs">Delete</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImageIndex(null)}
+                          className="btn btn-ghost btn-xs btn-circle"
+                          title="Close"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Modal Image Viewport */}
+                    <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden flex items-center justify-center p-2 min-h-[300px]">
+                      <img
+                        src={capturedImages[previewImageIndex]}
+                        alt={`Scanned Page ${previewImageIndex + 1}`}
+                        className="max-h-[68vh] max-w-full object-contain rounded-xl shadow-sm"
+                      />
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-[11px] text-base-content/50">
+                        Check if text is sharp and clearly visible
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewImageIndex(null)}
+                        className="btn btn-sm btn-ghost border border-base-300 rounded-xl px-4"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end pt-2">
                 <button

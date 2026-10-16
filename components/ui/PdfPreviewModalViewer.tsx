@@ -29,29 +29,46 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
 
     async function initPdf() {
       try {
-        const pdfjs = await loadPdfJs();
+        let pdfjs: any = null;
+        try {
+          pdfjs = await import('pdfjs-dist');
+          if (!pdfjs.GlobalWorkerOptions?.workerSrc) {
+            pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+          }
+        } catch {
+          pdfjs = await loadPdfJs();
+        }
+
         if (!pdfjs) {
-          throw new Error('PDF viewer engine could not be initialized.');
+          setUseIframeFallback(true);
+          setLoading(false);
+          return;
         }
 
         // Fetch the data as ArrayBuffer to support blob: and data: URLs reliably
         const response = await fetch(dataUrl);
         const arrayBuffer = await response.arrayBuffer();
+        const originalBytes = new Uint8Array(arrayBuffer);
 
         let doc: any;
         try {
-          const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
+          // Pass a cloned slice so worker detachment does not destroy originalBytes
+          const loadingTask = pdfjs.getDocument({ data: originalBytes.slice() });
           doc = await loadingTask.promise;
         } catch (workerErr) {
-          console.warn('PDF.js worker initialization failed, retrying with disableWorker:', workerErr);
-          if (pdfjs.GlobalWorkerOptions) {
-            pdfjs.GlobalWorkerOptions.workerSrc = '';
+          console.warn('PDF.js worker initialization failed, retrying with fallback:', workerErr);
+          try {
+            const fallbackTask = pdfjs.getDocument({
+              data: originalBytes.slice(),
+              disableWorker: true,
+            });
+            doc = await fallbackTask.promise;
+          } catch (fallbackErr) {
+            console.warn('PDF.js canvas fallback failed, activating browser iframe viewer:', fallbackErr);
+            setUseIframeFallback(true);
+            setLoading(false);
+            return;
           }
-          const fallbackTask = pdfjs.getDocument({
-            data: new Uint8Array(arrayBuffer),
-            disableWorker: true,
-          });
-          doc = await fallbackTask.promise;
         }
 
         if (!isCancelled) {
@@ -63,7 +80,8 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
       } catch (err: any) {
         console.error('Error loading PDF in viewer:', err);
         if (!isCancelled) {
-          setError(err.message || 'Could not load PDF document.');
+          // If JS rendering throws, fall back to native browser iframe viewer
+          setUseIframeFallback(true);
           setLoading(false);
         }
       }

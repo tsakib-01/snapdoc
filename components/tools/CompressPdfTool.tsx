@@ -193,10 +193,10 @@ export default function CompressPdfTool() {
                     }`}
                   >
                     <div>
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="flex flex-wrap items-center justify-between gap-y-1.5 gap-x-2 mb-2.5">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {level.icon}
-                          <span className="font-extrabold text-sm sm:text-base text-base-content leading-tight">
+                          <span className="font-extrabold text-sm sm:text-base text-base-content">
                             {level.title}
                           </span>
                         </div>

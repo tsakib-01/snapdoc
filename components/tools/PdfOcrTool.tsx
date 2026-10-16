@@ -15,10 +15,12 @@ import {
   Globe,
   AlertCircle,
   Eye,
-  CheckCircle2,
+  FileCheck2,
+  X,
   BookOpen,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
+import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { formatBytes } from '@/lib/utils/formatters';
 import { processPdfOcr, PdfOcrResult } from '@/lib/browser-converters/pdf-ocr';
 
@@ -44,6 +46,7 @@ export default function PdfOcrTool() {
   const [copied, setCopied] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<string>('');
+  const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
   const handleFileSelected = (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) return;
@@ -250,17 +253,19 @@ export default function PdfOcrTool() {
           <div className="p-6 sm:p-8 rounded-3xl bg-base-100 border border-primary/30 shadow-xl space-y-5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-base-200">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner">
-                  <CheckCircle2 className="w-6 h-6" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0 shadow-md">
+                  <FileCheck2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="badge badge-sm badge-success font-bold text-[10px] text-white uppercase">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500 text-white whitespace-nowrap shrink-0 shadow-sm">
                       OCR Completed
                     </span>
-                    <span className="text-xs text-base-content/50">Searchable & Selectable</span>
+                    <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">
+                      Searchable & Selectable
+                    </span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-extrabold text-base-content mt-1">
+                  <h3 className="text-base sm:text-xl font-extrabold text-base-content mt-1">
                     Text extracted & searchable PDF generated!
                   </h3>
                 </div>
@@ -290,6 +295,15 @@ export default function PdfOcrTool() {
                 <FileSearch className="w-4 h-4" />
                 <span>Download Searchable PDF</span>
               </a>
+
+              <button
+                type="button"
+                onClick={() => setShowPreviewModal(true)}
+                className="btn btn-ghost border border-base-300 btn-md rounded-2xl gap-2 font-bold px-5 text-base-content hover:bg-base-200 w-full sm:w-auto"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Preview</span>
+              </button>
 
               <button
                 type="button"
@@ -418,6 +432,49 @@ export default function PdfOcrTool() {
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? 'Copied to Clipboard' : 'Copy Full Text'}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Searchable PDF Preview Modal */}
+      {showPreviewModal && result?.searchablePdfUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+          onClick={() => setShowPreviewModal(false)}
+        >
+          <div
+            className="relative bg-base-100 rounded-3xl p-4 sm:p-5 max-w-4xl w-full h-[85vh] flex flex-col gap-3 shadow-2xl border border-base-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-base-200">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileSearch className="w-5 h-5 text-primary shrink-0" />
+                <h5 className="font-bold text-sm sm:text-base text-base-content truncate">
+                  {result.filename}
+                </h5>
+                <span className="badge badge-sm font-semibold">{result.pageCount} Pages</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={result.searchablePdfUrl}
+                  download={result.filename}
+                  className="btn btn-xs btn-primary font-bold gap-1 rounded-lg text-white"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowPreviewModal(false)}
+                  className="btn btn-ghost btn-xs btn-circle"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden flex items-center justify-center p-2">
+              <PdfPreviewModalViewer dataUrl={result.searchablePdfUrl} filename={result.filename} />
             </div>
           </div>
         </div>

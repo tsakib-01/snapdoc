@@ -5,6 +5,7 @@ import { Loader2, Minimize2, AlertCircle, FileText, CheckCircle2, Sliders, Downl
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { compressPdf } from '@/lib/browser-converters/pdf-compress';
 
 export default function CompressPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
@@ -23,33 +24,27 @@ export default function CompressPdfTool() {
     const file = files[0];
     const originalSize = file.size;
 
+    const qualityMap: Record<string, 'high' | 'medium' | 'low'> = {
+      '25': 'high',
+      '50': 'medium',
+      '75': 'low',
+    };
+
     try {
       setProgressText('Analyzing PDF structure...');
 
-      // Send to server-side compression endpoint
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('level', compressionLevel);
-
-      setProgressText('Optimizing streams and compressing PDF...');
-      const res = await fetch('/api/compress-pdf', {
-        method: 'POST',
-        body: formData,
+      const data = await compressPdf(file, {
+        quality: qualityMap[compressionLevel] || 'medium',
+        onProgress: (pct) => setProgressText(`Optimizing PDF streams & images (${pct}%)...`),
       });
 
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to compress PDF.');
-      }
-
-      const isAlreadyMaxCompressed = !!data.isAlreadyMaxCompressed || (data.compressedSize >= originalSize);
-      const finalSize = isAlreadyMaxCompressed ? originalSize : data.compressedSize;
-      const reductionPercentage = isAlreadyMaxCompressed ? 0 : data.reductionPercentage;
+      const isAlreadyMaxCompressed = (data.reductionPercentage ?? 0) <= 0 || data.size >= originalSize;
+      const finalSize = isAlreadyMaxCompressed ? originalSize : data.size;
+      const reductionPercentage = isAlreadyMaxCompressed ? 0 : (data.reductionPercentage ?? 0);
 
       setResult({
         success: true,
-        filename: data.filename || file.name.replace(/\.pdf$/i, isAlreadyMaxCompressed ? '_optimal.pdf' : '_compressed.pdf'),
+        filename: data.filename,
         originalSize,
         compressedSize: finalSize,
         reductionPercentage,

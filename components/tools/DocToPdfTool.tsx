@@ -7,6 +7,7 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 
 import { convertDocumentDirect } from '@/lib/conversionEngine';
+import { convertExcelToPdf } from '@/lib/browser-converters/excel-to-pdf';
 
 interface DocToPdfToolProps {
   initialFormat?: 'txt' | 'csv' | 'html' | 'word' | 'excel';
@@ -64,9 +65,9 @@ export default function DocToPdfTool({
           file.name.toLowerCase().endsWith('.csv') ||
           initialFormat === 'excel')
       ) {
-        const result = await convertDocumentDirect('excel-to-pdf', file);
+        const result = await convertExcelToPdf(file);
         setResultData({
-          dataUrl: result.url,
+          dataUrl: result.dataUrl,
           filename: result.filename,
           size: result.size,
         });

@@ -5,6 +5,8 @@ import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, 
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { convertDocumentDirect } from '@/lib/conversionEngine';
+import { convertPdfToExcel } from '@/lib/browser-converters/pdf-to-excel';
+import { convertTextToExcel } from '@/lib/browser-converters/text-to-excel';
 import { formatBytes } from '@/lib/utils/formatters';
 
 interface PdfToOfficeToolProps {
@@ -60,9 +62,11 @@ export default function PdfToOfficeTool({
 
     try {
       if (format === 'excel') {
-        const result = await convertDocumentDirect('pdf-to-excel', file);
+        const result = targetFormat === 'ocr' && extractedText
+          ? await convertTextToExcel(extractedText)
+          : await convertPdfToExcel(file, { ocrFallback: true });
         const a = document.createElement('a');
-        a.href = result.url;
+        a.href = result.dataUrl;
         a.download = result.filename;
         a.click();
         setProcessing(false);

@@ -865,12 +865,9 @@ export default function MergePdfTool() {
             {/* Top file summary card */}
             <div className="rounded-2xl bg-blue-50/60 dark:bg-base-200/50 border border-blue-100/80 dark:border-base-300 p-4 sm:p-5 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-                {/* Acrobat PDF Icon */}
-                <div className="w-12 h-14 rounded-xl bg-gradient-to-b from-[#ff2a55] to-[#e11d48] text-white flex flex-col items-center justify-between py-1 px-1 shadow-md shadow-red-500/20 shrink-0">
-                  <svg viewBox="0 0 32 32" className="w-7 h-7 fill-white mt-0.5">
-                    <path d="M22.8 15.6c-.6-.7-1.7-1.4-3.2-1.8-.7-.2-1.3-.4-1.9-.5-.5-1.5-1.1-3.3-1.6-4.8.4-1.6.6-3 .5-3.8 0-.9-.3-1.5-1-1.5-.4 0-.8.3-.9.7-.3 1.2.1 3 .9 5.3-.5 1.5-1.2 3.3-1.9 5.1-1.6.9-3.2 2-4.4 3.1-1.4 1.3-1.9 2.5-1.4 3.3.4.6 1.1.7 1.8.4 1.7-.8 3.5-2.7 5.1-5.3 1.6.3 3.1.6 4.3.7 1.3 1.3 2.7 2.1 3.7 2.1.8 0 1.3-.5 1.4-1.2.1-.8-.5-1.5-1.3-1.7zm-14.7 6.4c-.2 0-.4-.1-.5-.2 0-.2.3-.8 1.4-1.8 1-.9 2.1-1.7 3.3-2.4-1.7 2.3-3.1 3.9-4.2 4.4zm6.6-13.6c.3-.8.4-1.4.3-1.6 0 0 0-.1.1-.1 0 0 .1 0 .1.1.1.3-.1 1.2-.5 1.6zm-1.1 5.9c.5-1.3.9-2.6 1.3-3.8.4 1.1.8 2.3 1.3 3.4-.8-.1-1.7-.1-2.6.4zm8.6 3.6c-.3.4-.8.6-1.4.6-.7 0-1.5-.4-2.3-1.1 1.2.2 2.2.4 2.8.5.6.2.9 0 .9 0z"/>
-                  </svg>
-                  <span className="text-[9px] font-black tracking-widest uppercase leading-none pb-0.5">PDF</span>
+                {/* Red PDF Document Icon */}
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-500 flex items-center justify-center shrink-0 shadow-xs">
+                  <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
                 </div>
 
                 {/* File Meta */}

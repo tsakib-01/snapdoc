@@ -19,6 +19,12 @@ import {
   RotateCcw,
   Sparkles,
   CheckCircle2,
+  Check,
+  Eye,
+  HardDrive,
+  Calendar,
+  Layers,
+  Download,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
@@ -42,6 +48,8 @@ export default function MergePdfTool() {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [zoomItem, setZoomItem] = useState<PdfMergeItem | null>(null);
+  const [showResultPreviewModal, setShowResultPreviewModal] = useState<boolean>(false);
+  const [createdTimestamp, setCreatedTimestamp] = useState<string>('');
 
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [result, setResult] = useState<any | null>(null);
@@ -164,6 +172,19 @@ export default function MergePdfTool() {
     setResult(null);
     setError(null);
     setZoomItem(null);
+    setShowResultPreviewModal(false);
+    setCreatedTimestamp('');
+  };
+
+  // Download merged file
+  const handleDownload = () => {
+    if (!result?.dataUrl) return;
+    const link = document.createElement('a');
+    link.href = result.dataUrl;
+    link.download = result.filename || 'merged-file.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Drag and drop reordering
@@ -254,9 +275,22 @@ export default function MergePdfTool() {
       const blob = new Blob([mergedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
       const blobUrl = URL.createObjectURL(blob);
 
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const timeStr = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+      setCreatedTimestamp(`${dateStr} • ${timeStr}`);
+
       setResult({
         success: true,
-        filename: 'merged_document.pdf',
+        filename: 'merged-file.pdf',
         pageCount,
         originalSize: totalOriginalSize,
         fileSize: mergedBytes.length,
@@ -303,7 +337,23 @@ export default function MergePdfTool() {
           throw new Error(data.error || 'Merge failed');
         }
 
-        setResult(data);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const timeStr = now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        setCreatedTimestamp(`${dateStr} • ${timeStr}`);
+
+        setResult({
+          ...data,
+          filename: data.filename || 'merged-file.pdf',
+        });
       } catch (err: any) {
         setError(err.message || clientErr.message || 'Error occurred while merging PDFs.');
       } finally {
@@ -795,32 +845,179 @@ export default function MergePdfTool() {
       {/* Result Display */}
       {result && (
         <div className="space-y-6 animate-in fade-in duration-200">
-          <div className="p-8 rounded-3xl bg-base-200/50 border border-base-300 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-red-500/15 text-red-500 flex items-center justify-center shadow-xs">
-              <FileText className="w-8 h-8" />
+          {/* Header Area matching screenshot */}
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+              <Check className="w-6 h-6 stroke-[3]" />
             </div>
             <div>
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-success" />
-                <h4 className="font-bold text-lg text-base-content">
-                  PDF Documents Merged Successfully
-                </h4>
-              </div>
-              <p className="text-xs text-base-content/60 mt-1">
-                Merged {items.length} files • {result.pageCount} Pages • {formatBytes(result.fileSize)}
+              <h3 className="font-extrabold text-xl sm:text-2xl text-base-content leading-tight">
+                Your PDF has been merged successfully!
+              </h3>
+              <p className="text-xs sm:text-sm text-base-content/60 mt-1">
+                Your files have been combined into one PDF. You can now download it or perform other actions below.
               </p>
             </div>
           </div>
 
-          <ResultCard
-            originalSize={totalOriginalSize}
-            newSize={result.fileSize}
-            filename="merged_document.pdf"
-            dataUrl={result.dataUrl}
-            format="PDF"
-            extraInfo={`${result.pageCount} Pages`}
-            onReset={handleReset}
-          />
+          {/* White Card Container */}
+          <div className="w-full rounded-3xl bg-base-100 border border-base-300 p-5 sm:p-7 space-y-6 shadow-sm">
+            {/* Top file summary card */}
+            <div className="rounded-2xl bg-blue-50/60 dark:bg-base-200/50 border border-blue-100/80 dark:border-base-300 p-4 sm:p-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                {/* Acrobat PDF Icon */}
+                <div className="w-12 h-14 rounded-xl bg-gradient-to-b from-[#ff2a55] to-[#e11d48] text-white flex flex-col items-center justify-between py-1 px-1 shadow-md shadow-red-500/20 shrink-0">
+                  <svg viewBox="0 0 32 32" className="w-7 h-7 fill-white mt-0.5">
+                    <path d="M22.8 15.6c-.6-.7-1.7-1.4-3.2-1.8-.7-.2-1.3-.4-1.9-.5-.5-1.5-1.1-3.3-1.6-4.8.4-1.6.6-3 .5-3.8 0-.9-.3-1.5-1-1.5-.4 0-.8.3-.9.7-.3 1.2.1 3 .9 5.3-.5 1.5-1.2 3.3-1.9 5.1-1.6.9-3.2 2-4.4 3.1-1.4 1.3-1.9 2.5-1.4 3.3.4.6 1.1.7 1.8.4 1.7-.8 3.5-2.7 5.1-5.3 1.6.3 3.1.6 4.3.7 1.3 1.3 2.7 2.1 3.7 2.1.8 0 1.3-.5 1.4-1.2.1-.8-.5-1.5-1.3-1.7zm-14.7 6.4c-.2 0-.4-.1-.5-.2 0-.2.3-.8 1.4-1.8 1-.9 2.1-1.7 3.3-2.4-1.7 2.3-3.1 3.9-4.2 4.4zm6.6-13.6c.3-.8.4-1.4.3-1.6 0 0 0-.1.1-.1 0 0 .1 0 .1.1.1.3-.1 1.2-.5 1.6zm-1.1 5.9c.5-1.3.9-2.6 1.3-3.8.4 1.1.8 2.3 1.3 3.4-.8-.1-1.7-.1-2.6.4zm8.6 3.6c-.3.4-.8.6-1.4.6-.7 0-1.5-.4-2.3-1.1 1.2.2 2.2.4 2.8.5.6.2.9 0 .9 0z"/>
+                  </svg>
+                  <span className="text-[9px] font-black tracking-widest uppercase leading-none pb-0.5">PDF</span>
+                </div>
+
+                {/* File Meta */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-bold text-base sm:text-lg text-base-content truncate">
+                      {result.filename || 'merged-file.pdf'}
+                    </h4>
+                    <span className="badge badge-sm bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-none font-bold">
+                      Ready
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-base-content/60 mt-0.5">
+                    {result.pageCount} {result.pageCount === 1 ? 'page' : 'pages'}  •  {formatBytes(result.fileSize)}  •  PDF
+                  </p>
+                </div>
+              </div>
+
+              {/* Merged from X files pill */}
+              <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-base-100 border border-base-200 shadow-xs shrink-0">
+                <Layers className="w-5 h-5 text-primary" />
+                <div className="text-left">
+                  <div className="text-[10px] text-base-content/50 uppercase font-bold tracking-wider leading-none">Merged from</div>
+                  <div className="font-extrabold text-xs sm:text-sm text-base-content mt-0.5 leading-none">{items.length} files</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-6"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download File</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowResultPreviewModal(true)}
+                className="btn btn-outline border-base-300 hover:bg-base-200 btn-md rounded-xl font-semibold gap-2 px-5 text-base-content"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Preview</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReset}
+                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Merge Another</span>
+              </button>
+            </div>
+
+            {/* File Details */}
+            <div className="pt-4 border-t border-base-200 space-y-3.5">
+              <h5 className="font-bold text-sm sm:text-base text-base-content">File Details</h5>
+              <div className="space-y-2.5 text-xs sm:text-sm font-medium">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
+                    <FileText className="w-4 h-4 text-base-content/40" />
+                    <span>File name</span>
+                  </span>
+                  <span className="text-base-content/40">:</span>
+                  <span className="font-semibold text-base-content truncate">{result.filename || 'merged-file.pdf'}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
+                    <HardDrive className="w-4 h-4 text-base-content/40" />
+                    <span>File size</span>
+                  </span>
+                  <span className="text-base-content/40">:</span>
+                  <span className="font-semibold text-base-content">{formatBytes(result.fileSize)}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
+                    <Layers className="w-4 h-4 text-base-content/40" />
+                    <span>Pages</span>
+                  </span>
+                  <span className="text-base-content/40">:</span>
+                  <span className="font-semibold text-base-content">{result.pageCount} pages</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
+                    <Calendar className="w-4 h-4 text-base-content/40" />
+                    <span>Created</span>
+                  </span>
+                  <span className="text-base-content/40">:</span>
+                  <span className="font-semibold text-base-content">{createdTimestamp}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Result Fullscreen PDF Preview Modal */}
+      {showResultPreviewModal && result?.dataUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+          onClick={() => setShowResultPreviewModal(false)}
+        >
+          <div
+            className="relative bg-base-100 rounded-3xl p-4 sm:p-5 max-w-4xl w-full h-[85vh] flex flex-col gap-3 shadow-2xl border border-base-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-base-200">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                <h5 className="font-bold text-sm sm:text-base text-base-content truncate">
+                  {result.filename || 'merged-file.pdf'}
+                </h5>
+                <span className="badge badge-sm font-semibold">{result.pageCount} Pages</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="btn btn-xs btn-primary font-bold gap-1 rounded-lg"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowResultPreviewModal(false)}
+                  className="btn btn-ghost btn-xs btn-circle"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden">
+              <iframe
+                src={result.dataUrl}
+                className="w-full h-full border-none rounded-2xl"
+                title="Merged PDF Preview"
+              />
+            </div>
+          </div>
         </div>
       )}
 

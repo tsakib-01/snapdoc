@@ -8,19 +8,23 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get('file') as File | null;
+    const filesList = formData.getAll('files') as File[];
+    const singleFile = formData.get('file') as File | null;
+    const allFiles = filesList.length > 0 ? filesList : (singleFile ? [singleFile] : []);
     const pagesJson = formData.get('pages') as string;
     const separateFiles = formData.get('separateFiles') === 'true';
 
-    if (!file) {
+    if (allFiles.length === 0) {
       return NextResponse.json({ error: 'No PDF file uploaded.' }, { status: 400 });
     }
 
-    if (file.size > MAX_PDF_FILE_SIZE) {
-      return NextResponse.json({ error: 'File exceeds maximum 50MB size limit.' }, { status: 400 });
+    for (const f of allFiles) {
+      if (f.size > MAX_PDF_FILE_SIZE) {
+        return NextResponse.json({ error: `File "${f.name}" exceeds maximum 50MB size limit.` }, { status: 400 });
+      }
     }
 
-    let pages: { pageIndex: number; rotation?: number }[] = [];
+    let pages: { fileIndex?: number; pageIndex: number; rotation?: number; isBlank?: boolean }[] = [];
     if (pagesJson) {
       try {
         pages = JSON.parse(pagesJson);
@@ -33,11 +37,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please select at least one page to process.' }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
-    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const inputBuffers = await Promise.all(
+      allFiles.map(async (f) => Buffer.from(await f.arrayBuffer()))
+    );
+    const baseName = allFiles[0].name.replace(/\.[^/.]+$/, '');
 
-    const result = await organizePdfDocument(inputBuffer, {
+    const result = await organizePdfDocument(inputBuffers, {
       pages,
       separateFiles,
       baseName,
@@ -47,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      originalName: file.name,
+      originalName: allFiles[0].name,
       filename: result.filename,
       mimeType: result.mimeType,
       size: result.data.length,

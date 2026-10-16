@@ -30,12 +30,15 @@ import { formatBytes } from '@/lib/utils/formatters';
 
 export interface VisualPageItem {
   id: string;
-  originalIndex: number; // 0-based index in original file
+  fileIndex: number; // 0-based index of source file
+  originalIndex: number; // 0-based index in original file (-1 for blank)
   pageNumber: number; // 1-based display index
   dataUrl: string;
   rotation: number; // 0, 90, 180, 270
   selected: boolean;
   aspectRatio: number;
+  isBlank?: boolean;
+  docName?: string;
 }
 
 interface VisualPdfOrganizerToolProps {
@@ -49,7 +52,8 @@ export default function VisualPdfOrganizerTool({
   title = 'Organize & Split PDF',
   description = 'Visually reorder by dragging pages, rotate, delete, extract or split PDF pages with live thumbnail previews.',
 }: VisualPdfOrganizerToolProps) {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const file = files[0] || null;
   const [pages, setPages] = useState<VisualPageItem[]>([]);
   const [loadingThumbnails, setLoadingThumbnails] = useState(false);
   const [thumbnailProgress, setThumbnailProgress] = useState({ loaded: 0, total: 0 });
@@ -84,9 +88,9 @@ export default function VisualPdfOrganizerTool({
   const [zoomPage, setZoomPage] = useState<VisualPageItem | null>(null);
   const addFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle file selection
+  // Handle initial file selection
   const handleFileSelected = async (selectedFile: File) => {
-    setFile(selectedFile);
+    setFiles([selectedFile]);
     setError(null);
     setResultData(null);
     setLoadingThumbnails(true);
@@ -100,13 +104,15 @@ export default function VisualPdfOrganizerTool({
       });
 
       const initialPages: VisualPageItem[] = thumbnails.map((thumb, idx) => ({
-        id: `page-${idx}-${Date.now()}`,
+        id: `page-0-${idx}-${Date.now()}`,
+        fileIndex: 0,
         originalIndex: idx,
         pageNumber: idx + 1,
         dataUrl: thumb.dataUrl,
         rotation: 0,
         selected: initialMode === 'delete' ? false : true,
         aspectRatio: thumb.aspectRatio,
+        docName: selectedFile.name,
       }));
 
       setPages(initialPages);
@@ -118,12 +124,58 @@ export default function VisualPdfOrganizerTool({
     }
   };
 
+  // Handle adding new document pages without deleting existing ones
+  const handleAddDocumentPages = async (newFile: File) => {
+    setError(null);
+    setLoadingThumbnails(true);
+    setThumbnailProgress({ loaded: 0, total: 0 });
+
+    try {
+      const { thumbnails } = await extractPdfThumbnails(newFile, {
+        onProgress: (loaded, total) => {
+          setThumbnailProgress({ loaded, total });
+        },
+      });
+
+      const nextFileIndex = files.length;
+      setFiles((prev) => [...prev, newFile]);
+
+      const additionalPages: VisualPageItem[] = thumbnails.map((thumb, idx) => ({
+        id: `page-${nextFileIndex}-${idx}-${Date.now()}`,
+        fileIndex: nextFileIndex,
+        originalIndex: idx,
+        pageNumber: pages.length + idx + 1,
+        dataUrl: thumb.dataUrl,
+        rotation: 0,
+        selected: initialMode === 'delete' ? false : true,
+        aspectRatio: thumb.aspectRatio,
+        docName: newFile.name,
+      }));
+
+      setPages((prev) => {
+        const combined = [...prev, ...additionalPages];
+        return combined.map((item, idx) => ({
+          ...item,
+          pageNumber: idx + 1,
+        }));
+      });
+    } catch (err: any) {
+      console.error('Thumbnail error adding document:', err);
+      setError('Could not render pages from the added PDF. Please ensure the file is a valid, unencrypted PDF.');
+    } finally {
+      setLoadingThumbnails(false);
+    }
+  };
+
   const handleReset = () => {
-    setFile(null);
+    setFiles([]);
     setPages([]);
     setResultData(null);
     setError(null);
     setSplitCustomCuts(new Set());
+    if (addFileInputRef.current) {
+      addFileInputRef.current.value = '';
+    }
   };
 
   // Drag and drop reordering
@@ -246,12 +298,15 @@ export default function VisualPdfOrganizerTool({
 
     const newPage: VisualPageItem = {
       id: `blank-${Date.now()}-${Math.random()}`,
-      originalIndex: insertIndex,
+      fileIndex: -1,
+      originalIndex: -1,
+      isBlank: true,
       pageNumber: insertIndex + 1,
       dataUrl: blankDataUrl,
       rotation: 0,
       selected: true,
       aspectRatio: 842 / 595,
+      docName: 'Blank Page',
     };
 
     setPages((prev) => {
@@ -296,7 +351,7 @@ export default function VisualPdfOrganizerTool({
 
   // Execute processing
   const handleProcess = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
 
     setProcessing(true);
     setError(null);
@@ -305,8 +360,10 @@ export default function VisualPdfOrganizerTool({
       const pagesToInclude = pages
         .filter((p) => (initialMode === 'delete' ? !p.selected : p.selected))
         .map((p) => ({
+          fileIndex: p.fileIndex ?? 0,
           pageIndex: p.originalIndex,
           rotation: p.rotation,
+          isBlank: p.isBlank ?? false,
         }));
 
       if (pagesToInclude.length === 0) {
@@ -314,7 +371,10 @@ export default function VisualPdfOrganizerTool({
       }
 
       const formData = new FormData();
-      formData.append('file', file);
+      files.forEach((f) => formData.append('files', f));
+      if (files[0]) {
+        formData.append('file', files[0]);
+      }
       formData.append('pages', JSON.stringify(pagesToInclude));
 
       const isSeparate = toolTab === 'split' || separatePdfs;
@@ -822,8 +882,8 @@ export default function VisualPdfOrganizerTool({
                         <p className="font-bold text-sm text-base-content">
                           Page {page.pageNumber}
                         </p>
-                        <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-medium">
-                          {shortDocName}
+                        <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-medium truncate max-w-[150px]">
+                          {page.docName ? (page.docName.length > 18 ? page.docName.slice(0, 15) + '...' : page.docName) : shortDocName}
                         </span>
                       </div>
                     </div>
@@ -860,7 +920,8 @@ export default function VisualPdfOrganizerTool({
         className="hidden"
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {
-            handleFileSelected(e.target.files[0]);
+            handleAddDocumentPages(e.target.files[0]);
+            e.target.value = '';
           }
         }}
       />

@@ -2,8 +2,10 @@ import { PDFDocument, degrees } from 'pdf-lib';
 import JSZip from 'jszip';
 
 export interface PageActionConfig {
+  fileIndex?: number; // 0-indexed file index in input buffers array
   pageIndex: number; // 0-indexed original page
   rotation?: number; // 0, 90, 180, 270
+  isBlank?: boolean; // if true, creates a blank page
 }
 
 export interface OrganizePdfOptions {
@@ -13,7 +15,7 @@ export interface OrganizePdfOptions {
 }
 
 export async function organizePdfDocument(
-  pdfBuffer: Buffer,
+  pdfBuffers: Buffer | Buffer[],
   options: OrganizePdfOptions
 ): Promise<{
   data: Uint8Array;
@@ -21,7 +23,10 @@ export async function organizePdfDocument(
   filename: string;
   pageCount: number;
 }> {
-  const srcDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
+  const buffers = Array.isArray(pdfBuffers) ? pdfBuffers : [pdfBuffers];
+  const srcDocs = await Promise.all(
+    buffers.map((buf) => PDFDocument.load(buf, { ignoreEncryption: true }))
+  );
   const baseName = options.baseName || 'organized_document';
 
   if (options.pages.length === 0) {
@@ -33,16 +38,23 @@ export async function organizePdfDocument(
     const zip = new JSZip();
 
     for (let i = 0; i < options.pages.length; i++) {
-      const { pageIndex, rotation } = options.pages[i];
+      const { fileIndex = 0, pageIndex, rotation, isBlank } = options.pages[i];
       const singleDoc = await PDFDocument.create();
-      const [copiedPage] = await singleDoc.copyPages(srcDoc, [pageIndex]);
 
-      if (rotation && rotation !== 0) {
-        const currentRot = copiedPage.getRotation().angle;
-        copiedPage.setRotation(degrees((currentRot + rotation) % 360));
+      if (isBlank || fileIndex < 0 || pageIndex < 0) {
+        singleDoc.addPage([595, 842]);
+      } else {
+        const srcDoc = srcDocs[fileIndex] || srcDocs[0];
+        const [copiedPage] = await singleDoc.copyPages(srcDoc, [pageIndex]);
+
+        if (rotation && rotation !== 0) {
+          const currentRot = copiedPage.getRotation().angle;
+          copiedPage.setRotation(degrees((currentRot + rotation) % 360));
+        }
+
+        singleDoc.addPage(copiedPage);
       }
 
-      singleDoc.addPage(copiedPage);
       const pageBytes = await singleDoc.save();
       zip.file(`${baseName}_page_${i + 1}.pdf`, pageBytes);
     }
@@ -60,15 +72,21 @@ export async function organizePdfDocument(
   const outDoc = await PDFDocument.create();
 
   for (let i = 0; i < options.pages.length; i++) {
-    const { pageIndex, rotation } = options.pages[i];
-    const [copiedPage] = await outDoc.copyPages(srcDoc, [pageIndex]);
+    const { fileIndex = 0, pageIndex, rotation, isBlank } = options.pages[i];
 
-    if (rotation && rotation !== 0) {
-      const currentRot = copiedPage.getRotation().angle;
-      copiedPage.setRotation(degrees((currentRot + rotation) % 360));
+    if (isBlank || fileIndex < 0 || pageIndex < 0) {
+      outDoc.addPage([595, 842]);
+    } else {
+      const srcDoc = srcDocs[fileIndex] || srcDocs[0];
+      const [copiedPage] = await outDoc.copyPages(srcDoc, [pageIndex]);
+
+      if (rotation && rotation !== 0) {
+        const currentRot = copiedPage.getRotation().angle;
+        copiedPage.setRotation(degrees((currentRot + rotation) % 360));
+      }
+
+      outDoc.addPage(copiedPage);
     }
-
-    outDoc.addPage(copiedPage);
   }
 
   const outBytes = await outDoc.save();

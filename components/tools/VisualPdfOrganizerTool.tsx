@@ -25,6 +25,7 @@ import {
   GripVertical,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
+import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 
@@ -928,37 +929,40 @@ export default function VisualPdfOrganizerTool({
 
       {/* Success Result View */}
       {resultData && (
-        <div className="max-w-xl mx-auto p-8 rounded-3xl bg-base-100 border border-base-300 shadow-xl text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center shadow-lg shadow-success/10">
-            <CheckCircle2 className="w-8 h-8" />
+        <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="p-6 sm:p-8 rounded-3xl bg-base-200/50 border border-base-300 flex flex-col items-center justify-center text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-success/15 text-success flex items-center justify-center shadow-xs">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <div>
+              <h4 className="font-bold text-lg sm:text-xl text-base-content">
+                {initialMode === 'delete'
+                  ? 'PDF Pages Deleted Successfully'
+                  : initialMode === 'extract'
+                  ? 'PDF Pages Extracted Successfully'
+                  : initialMode === 'rotate'
+                  ? 'PDF Pages Rotated Successfully'
+                  : initialMode === 'split'
+                  ? 'PDF Document Split Successfully'
+                  : 'PDF Document Organized Successfully'}
+              </h4>
+              <p className="text-xs text-base-content/60 mt-1">
+                {resultData.filename.endsWith('.zip')
+                  ? `Archived into ZIP package • ${formatBytes(resultData.size)}`
+                  : `Result contains ${resultData.pageCount} ${resultData.pageCount === 1 ? 'page' : 'pages'} • ${formatBytes(resultData.size)}`}
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <h3 className="text-2xl font-extrabold text-base-content">
-              Your PDF is Ready!
-            </h3>
-            <p className="text-xs text-base-content/60">
-              Successfully processed {resultData.pageCount} pages ({formatBytes(resultData.size)}).
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={resultData.dataUrl}
-              download={resultData.filename}
-              className="btn btn-primary w-full sm:w-auto gap-2 px-8 shadow-lg shadow-primary/25"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download {resultData.filename.endsWith('.zip') ? 'ZIP' : 'PDF'}</span>
-            </a>
-
-            <button
-              onClick={handleReset}
-              className="btn btn-ghost w-full sm:w-auto text-xs"
-            >
-              Organize Another File
-            </button>
-          </div>
+          <ResultCard
+            originalSize={files.reduce((acc, f) => acc + f.size, 0)}
+            newSize={resultData.size}
+            filename={resultData.filename}
+            dataUrl={resultData.dataUrl}
+            format={resultData.filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
+            extraInfo={`${resultData.pageCount} Pages`}
+            onReset={handleReset}
+          />
         </div>
       )}
 

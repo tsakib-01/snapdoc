@@ -785,12 +785,7 @@ export default function MergePdfTool() {
                   <span>Merging PDFs...</span>
                 </>
               ) : (
-                <>
-                  <div className="w-7 h-7 rounded-lg bg-white shadow-xs flex items-center justify-center shrink-0">
-                    <FileText className="w-4 h-4 text-red-500 fill-red-500/10" />
-                  </div>
-                  <span className="text-base sm:text-lg font-bold">Merge PDFs</span>
-                </>
+                <span className="text-base sm:text-lg font-bold">Merge PDFs</span>
               )}
             </button>
           </div>

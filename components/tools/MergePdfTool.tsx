@@ -25,6 +25,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { PDFDocument } from 'pdf-lib';
 
 export interface PdfMergeItem {
   id: string;
@@ -155,6 +156,11 @@ export default function MergePdfTool() {
 
   // Reset entire tool
   const handleReset = () => {
+    if (result?.dataUrl && result.dataUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(result.dataUrl);
+      } catch {}
+    }
     setItems([]);
     setResult(null);
     setError(null);
@@ -214,27 +220,96 @@ export default function MergePdfTool() {
     setIsProcessing(true);
     setResult(null);
 
+    // 1. Client-Side High Performance Merge via pdf-lib
+    // Running in the browser avoids the 4.5MB server upload limit (HTTP 413 "Request Entity Too Large")
+    // and seamlessly preserves all international languages (Arabic, Chinese, Japanese, Hebrew, Cyrillic, Hindi, etc.)
+    // because page dictionary objects, fonts, and CMaps are copied losslessly without re-encoding.
     try {
-      const formData = new FormData();
-      items.forEach((item) => {
-        formData.append('files', item.file);
-      });
+      const mergedDoc = await PDFDocument.create();
 
-      const res = await fetch('/api/merge-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      for (const item of items) {
+        try {
+          const arrayBuffer = await item.file.arrayBuffer();
+          const srcDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+          const pageIndices = srcDoc.getPageIndices();
+          if (pageIndices.length === 0) continue;
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Merge failed');
+          const copiedPages = await mergedDoc.copyPages(srcDoc, pageIndices);
+          copiedPages.forEach((page) => mergedDoc.addPage(page));
+        } catch (fileErr: any) {
+          console.error(`Error loading PDF "${item.file.name}":`, fileErr);
+          const msg = fileErr?.message || '';
+          if (msg.toLowerCase().includes('password') || msg.toLowerCase().includes('encrypt')) {
+            throw new Error(`"${item.file.name}" is password-protected or encrypted. Please remove the password before merging.`);
+          }
+          throw new Error(`Unable to read "${item.file.name}". Please ensure it is a valid, uncorrupted PDF document.`);
+        }
       }
 
-      setResult(data);
-    } catch (err: any) {
-      setError(err.message || 'Error occurred while merging PDFs.');
-    } finally {
+      const pageCount = mergedDoc.getPageCount();
+      if (pageCount === 0) {
+        throw new Error('No readable pages found across the selected PDF files.');
+      }
+
+      const mergedBytes = await mergedDoc.save();
+      const blob = new Blob([mergedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      setResult({
+        success: true,
+        filename: 'merged_document.pdf',
+        pageCount,
+        originalSize: totalOriginalSize,
+        fileSize: mergedBytes.length,
+        dataUrl: blobUrl,
+      });
       setIsProcessing(false);
+      return;
+    } catch (clientErr: any) {
+      console.warn('Client merge error, checking server fallback:', clientErr);
+
+      if (
+        clientErr?.message?.includes('password-protected') ||
+        clientErr?.message?.includes('valid, uncorrupted PDF document')
+      ) {
+        setError(clientErr.message);
+        setIsProcessing(false);
+        return;
+      }
+
+      // 2. Fallback to API if client environment encounters an unexpected issue
+      try {
+        const formData = new FormData();
+        items.forEach((item) => {
+          formData.append('files', item.file);
+        });
+
+        const res = await fetch('/api/merge-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const textResponse = await res.text();
+        let data: any = null;
+        try {
+          data = JSON.parse(textResponse);
+        } catch {
+          if (res.status === 413 || textResponse.toLowerCase().includes('entity too large')) {
+            throw new Error('The combined PDF files exceed the maximum upload limit. Please try merging smaller files or fewer documents at once.');
+          }
+          throw new Error('Server returned an unexpected response. Please try again.');
+        }
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Merge failed');
+        }
+
+        setResult(data);
+      } catch (err: any) {
+        setError(err.message || clientErr.message || 'Error occurred while merging PDFs.');
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 

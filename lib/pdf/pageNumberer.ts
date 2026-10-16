@@ -7,15 +7,31 @@ export interface PageNumberOptions {
   startNumber?: number; // default 1
   fontSize?: number; // default 10
   margin?: number; // default 25
-  textColor?: { r: number; g: number; b: number }; // default rgb(0.3, 0.3, 0.3)
+  fontColor?: string; // hex string e.g. '#000000'
+  backgroundColor?: string; // hex string e.g. '#ffffff' or 'transparent'
+  textColor?: { r: number; g: number; b: number }; // backwards compatibility
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map((x) => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return { r: 0, g: 0, b: 0 };
+  return {
+    r: ((num >> 16) & 255) / 255,
+    g: ((num >> 8) & 255) / 255,
+    b: (num & 255) / 255,
+  };
 }
 
 export async function addPageNumbersToPdf(
-  pdfBuffer: Buffer,
+  pdfBuffer: Buffer | Uint8Array | ArrayBuffer,
   options: PageNumberOptions = {}
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const totalPages = pdfDoc.getPageCount();
 
   const position = options.position || 'bottom-center';
@@ -24,9 +40,19 @@ export async function addPageNumbersToPdf(
   const startNum = Math.max(1, options.startNumber || 1);
   const fontSize = options.fontSize || 10;
   const margin = options.margin || 25;
-  const color = options.textColor
-    ? rgb(options.textColor.r, options.textColor.g, options.textColor.b)
-    : rgb(0.2, 0.2, 0.2);
+
+  let color = rgb(0.2, 0.2, 0.2);
+  if (options.fontColor) {
+    const parsed = hexToRgb(options.fontColor);
+    color = rgb(parsed.r, parsed.g, parsed.b);
+  } else if (options.textColor) {
+    color = rgb(options.textColor.r, options.textColor.g, options.textColor.b);
+  }
+
+  const bgRgb =
+    options.backgroundColor && options.backgroundColor !== 'transparent'
+      ? hexToRgb(options.backgroundColor)
+      : null;
 
   const pages = pdfDoc.getPages();
 
@@ -62,6 +88,18 @@ export async function addPageNumbersToPdf(
       y = height - textHeight - margin;
     } else {
       y = margin;
+    }
+
+    if (bgRgb) {
+      const padX = 6;
+      const padY = 3;
+      page.drawRectangle({
+        x: x - padX,
+        y: y - fontSize * 0.25 - padY,
+        width: textWidth + padX * 2,
+        height: fontSize + padY * 2,
+        color: rgb(bgRgb.r, bgRgb.g, bgRgb.b),
+      });
     }
 
     page.drawText(text, {

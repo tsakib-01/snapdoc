@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
     const startPage = parseInt(formData.get('startPage') as string, 10) || 1;
     const startNumber = parseInt(formData.get('startNumber') as string, 10) || 1;
     const fontSize = parseInt(formData.get('fontSize') as string, 10) || 10;
+    const fontColor = (formData.get('fontColor') as string) || '#000000';
+    const backgroundColor = (formData.get('backgroundColor') as string) || 'transparent';
 
     if (!file) {
       return NextResponse.json({ error: 'No PDF file uploaded.' }, { status: 400 });
@@ -32,6 +34,8 @@ export async function POST(req: NextRequest) {
       startPage,
       startNumber,
       fontSize,
+      fontColor,
+      backgroundColor,
     });
 
     const baseName = file.name.replace(/\.[^/.]+$/, '');

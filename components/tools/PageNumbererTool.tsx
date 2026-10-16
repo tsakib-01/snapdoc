@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Hash, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Eye, FileText } from 'lucide-react';
+import { Hash, RotateCcw, ArrowRight, Eye, FileText, Minus, Plus } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { addPageNumbersToPdf } from '@/lib/pdf/pageNumberer';
 
 export default function PageNumbererTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -17,7 +18,10 @@ export default function PageNumbererTool() {
   const [format, setFormat] = useState<string>('page-n-of-total');
   const [startPage, setStartPage] = useState<number>(1);
   const [startNumber, setStartNumber] = useState<number>(1);
-  const [fontSize, setFontSize] = useState<number>(10);
+  const [fontSize, setFontSize] = useState<number>(11);
+  const [fontColor, setFontColor] = useState<string>('#000000');
+  const [bgColor, setBgColor] = useState<string>('transparent');
+
   const [processing, setProcessing] = useState<boolean>(false);
   const [resultData, setResultData] = useState<{
     dataUrl: string;
@@ -51,32 +55,61 @@ export default function PageNumbererTool() {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('position', position);
-      formData.append('format', format);
-      formData.append('startPage', startPage.toString());
-      formData.append('startNumber', startNumber.toString());
-      formData.append('fontSize', fontSize.toString());
-
-      const res = await fetch('/api/page-numbers-pdf', {
-        method: 'POST',
-        body: formData,
+      // 1. Direct client-side processing using pdf-lib:
+      // Instant, 100% private, works offline, and eliminates mobile network "failed to fetch"
+      const arrayBuffer = await file.arrayBuffer();
+      const numberedBytes = await addPageNumbersToPdf(arrayBuffer, {
+        position: position as any,
+        format: format as any,
+        startPage,
+        startNumber,
+        fontSize,
+        fontColor,
+        backgroundColor: bgColor,
       });
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to number PDF.');
-      }
+      const blob = new Blob([numberedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const dataUrl = URL.createObjectURL(blob);
+      const baseName = file.name.replace(/\.[^/.]+$/, '');
 
       setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
+        dataUrl,
+        filename: `${baseName}_numbered.pdf`,
+        size: blob.size,
       });
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error adding page numbers.');
+      console.warn('Client-side processing fallback to API:', err);
+      // Fallback to server route if client environment encounters an unexpected issue
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('position', position);
+        formData.append('format', format);
+        formData.append('startPage', startPage.toString());
+        formData.append('startNumber', startNumber.toString());
+        formData.append('fontSize', fontSize.toString());
+        formData.append('fontColor', fontColor);
+        formData.append('backgroundColor', bgColor);
+
+        const res = await fetch('/api/page-numbers-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to number PDF.');
+        }
+
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+        });
+      } catch (apiErr: any) {
+        console.error(apiErr);
+        setError(apiErr.message || err.message || 'Error adding page numbers.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -133,7 +166,7 @@ export default function PageNumbererTool() {
     <div className="w-full max-w-5xl mx-auto space-y-6">
       {(!file || loadingThumbnails) && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
           title="Upload PDF to Add Page Numbers"
@@ -186,10 +219,20 @@ export default function PageNumbererTool() {
                     className="w-full h-full object-contain pointer-events-none"
                   />
 
-                  {/* Stamp Badge */}
+                  {/* Stamp Badge with Live Font Size, Font Color, and Background Color */}
                   {getSampleText(currentPage) && (
                     <div
-                      className={`absolute px-2.5 py-1 rounded bg-primary text-white font-mono text-xs font-bold shadow-md pointer-events-none transition-all duration-200 ${getPositionClasses()}`}
+                      style={{
+                        fontSize: `${Math.max(8, fontSize)}px`,
+                        color: fontColor,
+                        backgroundColor: bgColor === 'transparent' ? 'transparent' : bgColor,
+                        borderColor: bgColor === 'transparent' ? undefined : bgColor,
+                      }}
+                      className={`absolute px-2 py-0.5 rounded font-mono font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
+                        bgColor === 'transparent'
+                          ? 'border border-dashed border-primary/50 bg-primary/5 backdrop-blur-[1px]'
+                          : 'shadow-md border'
+                      }`}
                     >
                       {getSampleText(currentPage)}
                     </div>
@@ -248,7 +291,7 @@ export default function PageNumbererTool() {
                 </div>
 
                 {/* Format & Options */}
-                <div className="space-y-3 p-4 rounded-2xl bg-base-200/40 border border-base-300">
+                <div className="space-y-3.5 p-4 rounded-2xl bg-base-200/40 border border-base-300">
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-base-content/70">
                       Numbering Format
@@ -289,19 +332,116 @@ export default function PageNumbererTool() {
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-base-content/70">
-                      <span>Font Size</span>
-                      <span className="font-bold text-primary">{fontSize}pt</span>
+                  {/* Font Size with Plus / Minus buttons and Slider */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center text-xs text-base-content/70">
+                      <span className="font-medium">Font Size</span>
+                      <span className="font-bold text-primary px-2 py-0.5 rounded-md bg-primary/10">
+                        {fontSize}pt
+                      </span>
                     </div>
-                    <input
-                      type="range"
-                      min="8"
-                      max="18"
-                      value={fontSize}
-                      onChange={(e) => setFontSize(parseInt(e.target.value))}
-                      className="range range-xs range-primary"
-                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFontSize((prev) => Math.max(6, prev - 1))}
+                        className="btn btn-xs btn-outline border-base-300 rounded-lg w-8 h-8 p-0 text-base font-bold shrink-0 hover:bg-base-200"
+                        title="Decrease font size (-1)"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        type="range"
+                        min="6"
+                        max="32"
+                        value={fontSize}
+                        onChange={(e) => setFontSize(parseInt(e.target.value) || 10)}
+                        className="range range-xs range-primary flex-1 cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFontSize((prev) => Math.min(36, prev + 1))}
+                        className="btn btn-xs btn-outline border-base-300 rounded-lg w-8 h-8 p-0 text-base font-bold shrink-0 hover:bg-base-200"
+                        title="Increase font size (+1)"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 1 Row 2 Columns: 1. Change Font Color and 2. Change Background Color */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    {/* 1. Change Font Color */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-base-content/70 font-medium flex items-center justify-between">
+                        <span>Font Color</span>
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border border-base-300 shadow-2xs shrink-0"
+                          style={{ backgroundColor: fontColor }}
+                        />
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="color"
+                          value={fontColor}
+                          onChange={(e) => setFontColor(e.target.value)}
+                          className="w-8 h-8 rounded-lg cursor-pointer border border-base-300 p-0.5 bg-base-100 shrink-0"
+                          title="Custom font color picker"
+                        />
+                        <select
+                          value={fontColor}
+                          onChange={(e) => setFontColor(e.target.value)}
+                          className="select select-bordered select-xs w-full rounded-xl text-xs font-medium"
+                        >
+                          <option value="#000000">Black</option>
+                          <option value="#374151">Dark Gray</option>
+                          <option value="#ffffff">White</option>
+                          <option value="#2563eb">Blue</option>
+                          <option value="#dc2626">Red</option>
+                          <option value="#16a34a">Green</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* 2. Change Background Color */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-base-content/70 font-medium flex items-center justify-between">
+                        <span>Background Color</span>
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border border-base-300 shadow-2xs shrink-0"
+                          style={{ backgroundColor: bgColor === 'transparent' ? '#ffffff' : bgColor }}
+                        />
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        {bgColor !== 'transparent' ? (
+                          <input
+                            type="color"
+                            value={bgColor}
+                            onChange={(e) => setBgColor(e.target.value)}
+                            className="w-8 h-8 rounded-lg cursor-pointer border border-base-300 p-0.5 bg-base-100 shrink-0"
+                            title="Custom background color picker"
+                          />
+                        ) : (
+                          <div
+                            className="w-8 h-8 rounded-lg border border-dashed border-base-300 flex items-center justify-center shrink-0 text-xs text-base-content/40 font-mono"
+                            title="Transparent background"
+                          >
+                            Ø
+                          </div>
+                        )}
+                        <select
+                          value={bgColor}
+                          onChange={(e) => setBgColor(e.target.value)}
+                          className="select select-bordered select-xs w-full rounded-xl text-xs font-medium"
+                        >
+                          <option value="transparent">Transparent (None)</option>
+                          <option value="#ffffff">White Badge</option>
+                          <option value="#000000">Black Badge</option>
+                          <option value="#2563eb">Blue Badge</option>
+                          <option value="#f1f5f9">Light Gray</option>
+                          <option value="#fef08a">Yellow Highlight</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -321,7 +461,7 @@ export default function PageNumbererTool() {
                 >
                   {processing ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="loading loading-spinner loading-xs" />
                       <span>Numbering PDF...</span>
                     </>
                   ) : (
@@ -356,4 +496,3 @@ export default function PageNumbererTool() {
     </div>
   );
 }
-

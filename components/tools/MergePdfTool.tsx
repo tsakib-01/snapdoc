@@ -3,7 +3,6 @@
 import React, { useState, useRef } from 'react';
 import {
   Loader2,
-  Layers,
   ArrowLeft,
   ArrowRight,
   MoveUp,
@@ -346,10 +345,10 @@ export default function MergePdfTool() {
       {/* Active Workspace */}
       {items.length > 0 && !result && (
         <div className="w-full space-y-5 animate-in fade-in duration-200">
-          {/* Top Integrated Action Bar (Styled like VisualPdfOrganizerTool) */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+          {/* Top Integrated Action Bar */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
             {/* Left: Tool Title & Summary Badges */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <button
                 type="button"
                 onClick={handleReset}
@@ -359,7 +358,7 @@ export default function MergePdfTool() {
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-extrabold text-sm sm:text-base text-base-content">
                   Merge PDFs
                 </span>
@@ -374,8 +373,8 @@ export default function MergePdfTool() {
               </div>
             </div>
 
-            {/* Right: Actions (Add PDF, View Modes, Merge CTA) */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Right: Actions (Add PDF, Reverse, View Modes) */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => addFileInputRef.current?.click()}
@@ -389,7 +388,7 @@ export default function MergePdfTool() {
               <button
                 type="button"
                 onClick={handleReverseOrder}
-                className="btn btn-ghost btn-sm rounded-xl text-xs text-base-content/70 gap-1"
+                className="btn btn-ghost btn-sm rounded-xl text-xs text-base-content/70 gap-1 hover:bg-base-300/50"
                 title="Reverse document order"
                 disabled={items.length < 2}
               >
@@ -424,29 +423,6 @@ export default function MergePdfTool() {
                   <List className="w-3.5 h-3.5" />
                 </button>
               </div>
-
-              {/* Finish / Merge CTA */}
-              <button
-                type="button"
-                onClick={handleProcess}
-                disabled={isProcessing || items.length < 2 || !allThumbnailsLoaded}
-                className="btn btn-primary btn-sm px-5 font-bold shadow-md shadow-primary/20 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all text-white"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Merging...</span>
-                  </>
-                ) : (
-                  <>
-                    <Layers className="w-4 h-4" />
-                    <span>
-                      Merge {items.length >= 2 ? `${items.length} PDFs` : 'PDFs'}
-                      {allThumbnailsLoaded && totalPagesCount > 0 ? ` (${totalPagesCount} Pages)` : ''}
-                    </span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
 
@@ -801,21 +777,19 @@ export default function MergePdfTool() {
               type="button"
               onClick={handleProcess}
               disabled={isProcessing || items.length < 2 || !allThumbnailsLoaded}
-              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-3 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
             >
               {isProcessing ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Merging {items.length} PDF Documents...
+                  <span>Merging PDFs...</span>
                 </>
               ) : (
                 <>
-                  <Layers className="w-5 h-5" />
-                  {items.length < 2
-                    ? 'Please upload at least 2 PDF documents to merge'
-                    : `Merge ${items.length} PDF Documents ${
-                        allThumbnailsLoaded && totalPagesCount > 0 ? `(${totalPagesCount} Pages total)` : ''
-                      }`}
+                  <div className="w-7 h-7 rounded-lg bg-white shadow-xs flex items-center justify-center shrink-0">
+                    <FileText className="w-4 h-4 text-red-500 fill-red-500/10" />
+                  </div>
+                  <span className="text-base sm:text-lg font-bold">Merge PDFs</span>
                 </>
               )}
             </button>
@@ -827,8 +801,8 @@ export default function MergePdfTool() {
       {result && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <div className="p-8 rounded-3xl bg-base-200/50 border border-base-300 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shadow-xs">
-              <Layers className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-red-500/15 text-red-500 flex items-center justify-center shadow-xs">
+              <FileText className="w-8 h-8" />
             </div>
             <div>
               <div className="flex items-center justify-center gap-2">

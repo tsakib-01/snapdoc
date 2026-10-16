@@ -1,19 +1,63 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Loader2, Minimize2, AlertCircle, FileText, CheckCircle2, Sliders, Download, RotateCcw, ShieldCheck } from 'lucide-react';
+import { Loader2, Minimize2, AlertCircle, FileText, CheckCircle2, Sliders, Download, RotateCcw, ShieldCheck, Sparkles, Zap, Flame } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { compressPdf } from '@/lib/browser-converters/pdf-compress';
 
+type CompressionLevel = 'extreme' | 'recommended' | 'low';
+
+interface LevelOption {
+  id: CompressionLevel;
+  title: string;
+  badge: string;
+  badgeClass: string;
+  description: string;
+  quality: 'low' | 'medium' | 'high';
+  icon: React.ReactNode;
+}
+
+const LEVELS: LevelOption[] = [
+  {
+    id: 'extreme',
+    title: 'Extreme Compression',
+    badge: 'Max Reduction',
+    badgeClass: 'badge-error text-white font-bold',
+    description: 'Maximum file size reduction with lower image resolution. Perfect for documents with strict upload limits.',
+    quality: 'low',
+    icon: <Flame className="w-4 h-4 text-error" />,
+  },
+  {
+    id: 'recommended',
+    title: 'Recommended',
+    badge: 'Best Balance',
+    badgeClass: 'badge-primary text-white font-bold',
+    description: 'Great quality with high compression. The optimal sweet spot for email attachments and everyday sharing.',
+    quality: 'medium',
+    icon: <Sparkles className="w-4 h-4 text-primary" />,
+  },
+  {
+    id: 'low',
+    title: 'Low Compression',
+    badge: 'High Quality',
+    badgeClass: 'badge-neutral font-bold',
+    description: 'Mild compression preserving original image clarity and maximum sharpness for printing and archiving.',
+    quality: 'high',
+    icon: <Zap className="w-4 h-4 text-amber-500" />,
+  },
+];
+
 export default function CompressPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
-  const [compressionLevel, setCompressionLevel] = useState<'25' | '50' | '75'>('50');
+  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('recommended');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progressText, setProgressText] = useState<string>('Optimizing PDF Structure...');
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedOption = LEVELS.find((l) => l.id === compressionLevel) || LEVELS[1];
 
   const handleProcess = async () => {
     if (files.length === 0) return;
@@ -24,17 +68,11 @@ export default function CompressPdfTool() {
     const file = files[0];
     const originalSize = file.size;
 
-    const qualityMap: Record<string, 'high' | 'medium' | 'low'> = {
-      '25': 'high',
-      '50': 'medium',
-      '75': 'low',
-    };
-
     try {
       setProgressText('Analyzing PDF structure...');
 
       const data = await compressPdf(file, {
-        quality: qualityMap[compressionLevel] || 'medium',
+        quality: selectedOption.quality,
         onProgress: (pct) => setProgressText(`Optimizing PDF streams & images (${pct}%)...`),
       });
 
@@ -55,6 +93,7 @@ export default function CompressPdfTool() {
         pageCount: data.pageCount || 1,
         dataUrl: data.dataUrl,
         isAlreadyMaxCompressed,
+        levelName: selectedOption.title,
       });
     } catch (err: any) {
       console.error(err);
@@ -78,83 +117,97 @@ export default function CompressPdfTool() {
           files={files}
           onFilesSelected={setFiles}
           title="Drop PDF file to optimize and compress"
-          subtitle="Reduces PDF file size significantly while preserving crisp text readability"
+          subtitle="Reduces PDF file size cleanly while preserving crisp text readability"
         />
       )}
 
       {files.length > 0 && !result && (
         <div className="space-y-6 animate-in fade-in duration-150">
+          {/* File Info Bar */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300">
-            <div>
-              <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs sm:max-w-md">{files[0].name}</p>
-              <p className="text-xs text-base-content/60">Original Size: <strong>{formatBytes(files[0].size)}</strong></p>
+            <div className="flex items-center gap-3 truncate">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="truncate">
+                <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs sm:max-w-md">
+                  {files[0].name}
+                </p>
+                <p className="text-xs text-base-content/60">
+                  Original Size: <strong>{formatBytes(files[0].size)}</strong>
+                </p>
+              </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
+            <button
+              onClick={handleReset}
+              className="btn btn-ghost btn-xs text-base-content/60 hover:text-error shrink-0"
+            >
               Change
             </button>
           </div>
 
-          {/* Compression Level Selector */}
-          <div className="space-y-3 p-5 rounded-2xl bg-base-200/40 border border-base-300">
-            <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
-              <Sliders className="w-3.5 h-3.5 text-primary" />
-              Select Compression Level
-            </span>
+          {/* Compression Level Selector Cards */}
+          <div className="space-y-3.5 p-5 sm:p-6 rounded-3xl bg-base-100 border border-base-300 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-primary" />
+                Select Compression Level
+              </span>
+              <span className="text-[11px] text-base-content/50 hidden sm:inline">
+                Click to switch mode
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setCompressionLevel('25')}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  compressionLevel === '25'
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                    : 'border-base-300 bg-base-100 hover:bg-base-200/60'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">Standard</span>
-                  <span className="badge badge-xs badge-primary">High Quality</span>
-                </div>
-                <p className="text-[11px] text-base-content/60 mt-1">
-                  Mild reduction (~25% smaller). Preserves crisp text and high-resolution images.
-                </p>
-              </button>
+              {LEVELS.map((level) => {
+                const isSelected = compressionLevel === level.id;
+                return (
+                  <div
+                    key={level.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setCompressionLevel(level.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') setCompressionLevel(level.id);
+                    }}
+                    className={`relative flex flex-col justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/25 shadow-md shadow-primary/5'
+                        : 'border-base-300 bg-base-100 hover:border-base-400 hover:bg-base-200/40'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-1.5">
+                          {level.icon}
+                          <span className="font-extrabold text-sm text-base-content">
+                            {level.title}
+                          </span>
+                        </div>
+                        <span className={`badge badge-xs sm:badge-sm text-[10px] uppercase ${level.badgeClass}`}>
+                          {level.badge}
+                        </span>
+                      </div>
+                      <p className="text-xs text-base-content/70 leading-relaxed">
+                        {level.description}
+                      </p>
+                    </div>
 
-              <button
-                type="button"
-                onClick={() => setCompressionLevel('50')}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  compressionLevel === '50'
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                    : 'border-base-300 bg-base-100 hover:bg-base-200/60'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">Compressed</span>
-                  <span className="badge badge-xs badge-secondary">Balanced</span>
-                </div>
-                <p className="text-[11px] text-base-content/60 mt-1">
-                  Balanced reduction (~50% smaller). Ideal for email attachments and sharing.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCompressionLevel('75')}
-                className={`p-3.5 rounded-2xl border text-left transition-all ${
-                  compressionLevel === '75'
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                    : 'border-base-300 bg-base-100 hover:bg-base-200/60'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-base-content">Maximum</span>
-                  <span className="badge badge-xs badge-neutral">Max Reduction</span>
-                </div>
-                <p className="text-[11px] text-base-content/60 mt-1">
-                  Maximum compression (~75% smaller). Best for strict upload & portal limits.
-                </p>
-              </button>
+                    <div className="pt-3 mt-2 border-t border-base-200/60 flex items-center justify-between">
+                      <span className="text-[11px] font-medium text-base-content/50">
+                        {isSelected ? 'Active choice' : 'Click to select'}
+                      </span>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                          isSelected ? 'border-primary bg-primary' : 'border-base-300 bg-transparent'
+                        }`}
+                      >
+                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -186,9 +239,9 @@ export default function CompressPdfTool() {
         </div>
       )}
 
-      {/* Maximum Compression Stage Alert Card */}
+      {/* Already Optimal Alert Card */}
       {result && result.isAlreadyMaxCompressed && (
-        <div className="w-full p-6 sm:p-8 rounded-3xl bg-base-100 border border-primary/30 shadow-xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-full p-6 sm:p-8 rounded-3xl bg-base-100 border border-emerald-500/30 shadow-xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
           <div className="flex items-start sm:items-center gap-4 pb-4 border-b border-base-200">
             <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0 shadow-inner">
               <ShieldCheck className="w-6 h-6" />
@@ -201,17 +254,17 @@ export default function CompressPdfTool() {
                 <span className="text-xs text-base-content/50">100% Quality Preserved</span>
               </div>
               <h3 className="text-lg sm:text-xl font-extrabold text-base-content mt-1">
-                This PDF has reached its maximum compression stage
+                Your PDF is already at its optimal file size
               </h3>
             </div>
           </div>
 
           <div className="p-4 rounded-2xl bg-base-200/50 border border-base-300 space-y-2 text-xs leading-relaxed text-base-content/80">
             <p>
-              Your document <strong>{files[0]?.name || result.filename}</strong> is already completely optimized. It contains no redundant object streams, bloated metadata, or downsample-able layers.
+              Your document <strong>{files[0]?.name || result.filename}</strong> is composed of clean vector text and streams with no bloated images or redundant metadata.
             </p>
             <p className="text-base-content/60">
-              Further compression without discarding text legibility or removing pages is not possible. To preserve complete document fidelity and avoid making the file larger, SnapDoc has kept your file at its optimal size of <strong>{formatBytes(result.originalSize)}</strong>.
+              Further compression without discarding text legibility or removing pages is physically not possible. To preserve complete document fidelity and avoid making the file larger, SnapDoc kept your file at its exact optimal size of <strong>{formatBytes(result.originalSize)}</strong>.
             </p>
           </div>
 
@@ -225,8 +278,8 @@ export default function CompressPdfTool() {
               <span className="text-sm font-bold text-base-content">{result.pageCount} Pages</span>
             </div>
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center col-span-2 sm:col-span-1">
-              <span className="text-[10px] uppercase font-bold text-emerald-700 block">Compression Stage</span>
-              <span className="text-xs font-bold text-emerald-700">Maximum Efficiency</span>
+              <span className="text-[10px] uppercase font-bold text-emerald-700 block">Status</span>
+              <span className="text-xs font-bold text-emerald-700">Fully Optimized</span>
             </div>
           </div>
 
@@ -261,7 +314,7 @@ export default function CompressPdfTool() {
           filename={result.filename}
           dataUrl={result.dataUrl}
           format="PDF"
-          extraInfo={`${result.pageCount} Pages`}
+          extraInfo={`${result.pageCount} Pages • ${result.levelName || 'Compressed'}`}
           onReset={handleReset}
         />
       )}

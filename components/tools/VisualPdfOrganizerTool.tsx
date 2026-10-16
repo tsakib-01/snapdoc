@@ -24,6 +24,7 @@ import {
   Minus,
   GripVertical,
   Check,
+  FileCheck2,
   Eye,
   HardDrive,
   Calendar,
@@ -964,8 +965,8 @@ export default function VisualPdfOrganizerTool({
         <div className="space-y-6 animate-in fade-in duration-200">
           {/* Header Area */}
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
-              <Check className="w-6 h-6 stroke-[3]" />
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+              <FileCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <h3 className="font-extrabold text-xl sm:text-2xl text-base-content leading-tight">

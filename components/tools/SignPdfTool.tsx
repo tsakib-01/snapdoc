@@ -2502,34 +2502,70 @@ export default function SignPdfTool() {
       {file && pages.length > 0 && !resultData && (
         <div className="w-full rounded-2xl sm:rounded-3xl bg-base-100 border border-base-300 shadow-lg flex flex-col h-[700px] sm:h-[760px] lg:h-[820px] max-h-[90vh] relative overflow-hidden">
           {/* Top Signature Toolbar */}
-          <div className="p-2 sm:p-3 border-b border-base-200 bg-base-200/50 flex items-center justify-between gap-1 sm:gap-2 shrink-0 overflow-x-auto no-scrollbar">
-            {/* Left: Reset & File Title */}
-            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-              <button
-                onClick={handleReset}
-                title="Sign another file"
-                className="btn btn-ghost btn-xs sm:btn-sm btn-circle"
-              >
-                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
-              <div className="max-w-[80px] sm:max-w-[140px] md:max-w-[200px] truncate">
-                <span className="font-bold text-xs sm:text-sm text-base-content truncate block">
-                  {file.name}
-                </span>
+          <div className="p-2 sm:p-3 border-b border-base-200 bg-base-200/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5 sm:gap-2 shrink-0">
+            {/* ROW 1 on Mobile / Left Section on Desktop */}
+            <div className="flex items-center justify-between sm:justify-start gap-1 sm:gap-2 shrink-0">
+              {/* Reset & File Title */}
+              <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+                <button
+                  onClick={handleReset}
+                  title="Sign another file"
+                  className="btn btn-ghost btn-xs sm:btn-sm btn-circle shrink-0"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <div className="max-w-[120px] sm:max-w-[140px] md:max-w-[200px] truncate">
+                  <span className="font-bold text-xs sm:text-sm text-base-content truncate block">
+                    {file.name}
+                  </span>
+                </div>
+                {/* Mobile Thumbnail Strip Toggle */}
+                <button
+                  onClick={() => setShowMobileThumbnails(!showMobileThumbnails)}
+                  className={`btn btn-xs btn-circle sm:hidden shrink-0 ${showMobileThumbnails ? 'btn-primary' : 'btn-ghost'}`}
+                  title="Toggle Pages"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Mobile-Only Actions on Row 1: Undo/Redo & Download */}
+              <div className="flex items-center gap-1 sm:hidden shrink-0">
+                <button
+                  onClick={handleUndo}
+                  disabled={undoStack.length === 0}
+                  className="btn btn-xs btn-circle btn-ghost disabled:opacity-25"
+                  title="Undo"
+                >
+                  <Undo className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleRedo}
+                  disabled={redoStack.length === 0}
+                  className="btn btn-xs btn-circle btn-ghost disabled:opacity-25"
+                  title="Redo"
+                >
+                  <Redo className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleFinalizeAndDownload}
+                  disabled={processing}
+                  className="btn btn-xs btn-primary rounded-xl gap-1 px-2.5 font-bold shadow-sm"
+                >
+                  {processing ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <>
+                      <Download className="w-3 h-3" />
+                      <span>Download</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Center Tools */}
-            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-              {/* Mobile Thumbnail Strip Toggle */}
-              <button
-                onClick={() => setShowMobileThumbnails(!showMobileThumbnails)}
-                className={`btn btn-xs sm:btn-sm btn-circle md:hidden ${showMobileThumbnails ? 'btn-primary' : 'btn-ghost'}`}
-                title="Toggle Pages"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-              </button>
-
+            {/* ROW 2 on Mobile (Tools) / Center on Desktop */}
+            <div className="flex items-center justify-between sm:justify-center gap-1 sm:gap-1.5 shrink-0 pt-1 sm:pt-0 border-t border-base-200/50 sm:border-t-0">
               {/* Hand Tool */}
               <button
                 onClick={() => {
@@ -2553,7 +2589,7 @@ export default function SignPdfTool() {
 
               <div className="h-4 w-px bg-base-300 mx-0.5" />
 
-              {/* Direct Sign Button - Opens Signature Modal Instantly */}
+              {/* Direct Sign Button */}
               <button
                 onClick={handleSignButtonClick}
                 className="btn btn-xs sm:btn-sm rounded-xl gap-1 btn-primary text-white font-bold shadow-md shadow-primary/20 px-2.5 sm:px-3"
@@ -2584,7 +2620,7 @@ export default function SignPdfTool() {
               <div className="relative">
                 <button
                   onClick={() => setShowSymbolsDropdown(!showSymbolsDropdown)}
-                  className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-0.5 px-1.5"
+                  className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-0.5 px-1 sm:px-1.5"
                   title="Add Symbols"
                 >
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -2629,7 +2665,7 @@ export default function SignPdfTool() {
               {/* Digital Seal Tool */}
               <button
                 onClick={() => setShowDigitalSealModal(true)}
-                className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-1 text-emerald-700 hover:bg-emerald-500/10 px-1.5 sm:px-2.5"
+                className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-1 text-emerald-700 hover:bg-emerald-500/10 px-1 sm:px-2.5"
                 title="Stamp Official Digital Seal"
               >
                 <Stamp className="w-3.5 h-3.5 text-emerald-600" />
@@ -2639,7 +2675,7 @@ export default function SignPdfTool() {
               {/* Multi-Party Signers Tool */}
               <button
                 onClick={() => setShowMultiSignerModal(true)}
-                className={`btn btn-xs sm:btn-sm rounded-xl gap-1 px-1.5 sm:px-2.5 ${
+                className={`btn btn-xs sm:btn-sm rounded-xl gap-1 px-1 sm:px-2.5 ${
                   isMultiSignerMode
                     ? 'btn-primary btn-outline font-bold text-xs'
                     : 'btn-ghost text-blue-700 hover:bg-blue-500/10'
@@ -2652,7 +2688,7 @@ export default function SignPdfTool() {
                 </span>
               </button>
 
-              {/* Undo / Redo */}
+              {/* Undo / Redo for Desktop */}
               <button
                 onClick={handleUndo}
                 disabled={undoStack.length === 0}
@@ -2671,8 +2707,8 @@ export default function SignPdfTool() {
               </button>
             </div>
 
-            {/* Right: Download */}
-            <div className="flex items-center shrink-0">
+            {/* Desktop Right: Download */}
+            <div className="hidden sm:flex items-center shrink-0">
               <button
                 onClick={handleFinalizeAndDownload}
                 disabled={processing}

@@ -297,15 +297,18 @@ export default function WatermarkPdfTool() {
                     className="w-full h-full object-contain pointer-events-none"
                   />
 
-                  {/* Live Watermark Overlay */}
+                  {/* Live Watermark Overlay matching PDF HelveticaBold */}
                   {watermarkType === 'text' && text && (
                     <div
                       style={{
                         transform: `rotate(${rotation}deg)`,
                         opacity: opacity,
                         color: color,
+                        fontFamily: 'Helvetica, Arial, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontWeight: 700,
+                        letterSpacing: '0px',
                       }}
-                      className="absolute font-black tracking-widest uppercase text-xl sm:text-2xl text-center pointer-events-none select-none drop-shadow-sm max-w-[90%] break-words"
+                      className="absolute font-bold text-xl sm:text-2xl text-center pointer-events-none select-none drop-shadow-xs max-w-[90%] break-words"
                     >
                       {text}
                     </div>

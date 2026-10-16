@@ -226,9 +226,10 @@ export default function PageNumbererTool() {
                         fontSize: `${Math.max(8, fontSize)}px`,
                         color: fontColor,
                         backgroundColor: bgColor === 'transparent' ? 'transparent' : bgColor,
-                        borderColor: bgColor === 'transparent' ? undefined : bgColor,
+                        fontFamily: 'Helvetica, Arial, sans-serif',
+                        fontWeight: 700,
                       }}
-                      className={`absolute px-2 py-0.5 rounded font-mono font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
+                      className={`absolute px-2 py-0.5 rounded font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
                         bgColor === 'transparent'
                           ? 'border border-dashed border-primary/50 bg-primary/5 backdrop-blur-[1px]'
                           : 'shadow-md border'
@@ -262,9 +263,10 @@ export default function PageNumbererTool() {
                         fontSize: `${Math.max(8, fontSize)}px`,
                         color: fontColor,
                         backgroundColor: bgColor === 'transparent' ? 'transparent' : bgColor,
-                        borderColor: bgColor === 'transparent' ? undefined : bgColor,
+                        fontFamily: 'Helvetica, Arial, sans-serif',
+                        fontWeight: 700,
                       }}
-                      className={`absolute px-2 py-0.5 rounded font-mono font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
+                      className={`absolute px-2 py-0.5 rounded font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
                         bgColor === 'transparent'
                           ? 'border border-dashed border-primary/50 bg-primary/5 backdrop-blur-[1px]'
                           : 'shadow-md border'

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { FileCode, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, FileText, Table, Sparkles } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
+import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 
 import { convertDocumentDirect } from '@/lib/conversionEngine';
@@ -222,28 +223,17 @@ export default function DocToPdfTool({
       )}
 
       {resultData && (
-        <div className="py-6 text-center space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-2xl font-extrabold text-base-content">Converted PDF Ready!</h3>
-            <p className="text-xs text-base-content/60">{formatBytes(resultData.size)}</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={resultData.dataUrl}
-              download={resultData.filename}
-              className="btn btn-primary px-8 gap-2 shadow-lg shadow-primary/25"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download PDF</span>
-            </a>
-            <button onClick={handleReset} className="btn btn-ghost text-xs">
-              Convert Another Document
-            </button>
-          </div>
-        </div>
+        <ResultCard
+          newSize={resultData.size}
+          originalSize={file?.size || resultData.size}
+          filename={resultData.filename}
+          dataUrl={resultData.dataUrl}
+          format="PDF"
+          title="Your document has been converted successfully!"
+          subtitle="Your document has been transformed into a clean, high-fidelity PDF. You can now download your file below."
+          resetLabel="Convert Another Document"
+          onReset={handleReset}
+        />
       )}
     </div>
   );

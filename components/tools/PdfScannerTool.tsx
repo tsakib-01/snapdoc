@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
+import ResultCard from '@/components/ui/ResultCard';
 
 export default function PdfScannerTool() {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -356,28 +357,19 @@ export default function PdfScannerTool() {
       )}
 
       {resultData && (
-        <div className="py-6 text-center space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-2xl font-extrabold text-base-content">Scanned PDF Ready!</h3>
-            <p className="text-xs text-base-content/60">{formatBytes(resultData.size)}</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={resultData.dataUrl}
-              download={resultData.filename}
-              className="btn btn-primary px-8 gap-2 shadow-lg shadow-primary/25"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download Scanned PDF</span>
-            </a>
-            <button onClick={handleReset} className="btn btn-ghost text-xs">
-              Scan Another Document
-            </button>
-          </div>
-        </div>
+        <ResultCard
+          newSize={resultData.size}
+          originalSize={resultData.size}
+          filename={resultData.filename}
+          dataUrl={resultData.dataUrl}
+          format="PDF"
+          title="Your scanned PDF is ready!"
+          subtitle="Your camera scans and photos have been compiled into a clean PDF document."
+          resetLabel="Scan Another Document"
+          extraInfo={capturedImages.length > 0 ? `${capturedImages.length} Pages` : undefined}
+          pageCount={capturedImages.length}
+          onReset={handleReset}
+        />
       )}
     </div>
   );

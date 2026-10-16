@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Stamp, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Eye, FileText } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
+import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 
@@ -343,28 +344,19 @@ export default function WatermarkPdfTool() {
       )}
 
       {resultData && (
-        <div className="p-8 rounded-3xl bg-base-100 border border-base-300 shadow-xl text-center space-y-6">
-          <div className="w-16 h-16 mx-auto rounded-3xl bg-success/10 text-success flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-2xl font-extrabold text-base-content">Watermarked PDF Ready!</h3>
-            <p className="text-xs text-base-content/60">{formatBytes(resultData.size)}</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={resultData.dataUrl}
-              download={resultData.filename}
-              className="btn btn-primary px-8 gap-2 shadow-lg shadow-primary/25 font-bold"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download Watermarked PDF</span>
-            </a>
-            <button onClick={handleReset} className="btn btn-ghost text-xs">
-              Watermark Another PDF
-            </button>
-          </div>
-        </div>
+        <ResultCard
+          newSize={resultData.size}
+          originalSize={file?.size || resultData.size}
+          filename={resultData.filename}
+          dataUrl={resultData.dataUrl}
+          format="PDF"
+          title="Your watermark has been applied successfully!"
+          subtitle="Your document has been protected with your watermark. You can now download your file below."
+          resetLabel="Watermark Another PDF"
+          extraInfo={pages.length > 0 ? `${pages.length} Pages` : undefined}
+          pageCount={pages.length}
+          onReset={handleReset}
+        />
       )}
     </div>
   );

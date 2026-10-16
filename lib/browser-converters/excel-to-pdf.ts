@@ -180,6 +180,10 @@ function mix(a: RGB, b: RGB, t: number): RGB {
   return [0, 1, 2].map((i) => Math.round(a[i] * (1 - t) + b[i] * t)) as RGB;
 }
 
+function brightness(r: RGB): number {
+  return 0.299 * r[0] + 0.587 * r[1] + 0.114 * r[2];
+}
+
 function applyTint(rgb: RGB, tint: number): RGB {
   const r = rgb[0] / 255, g = rgb[1] / 255, b = rgb[2] / 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -266,7 +270,7 @@ function mapV(v: unknown): VAlign {
 function styleFromExcelJs(cell: any, theme: string[]): CellStyle {
   const s = emptyStyle();
   try {
-    const f = cell.font;
+    const f = cell.font ?? cell.row?.font;
     if (f) {
       s.bold = !!f.bold;
       s.italic = !!f.italic;
@@ -367,22 +371,54 @@ function ejStyled(cell: any): boolean {
 /* Sheet geometry                                                             */
 /* -------------------------------------------------------------------------- */
 
-function rowHeightPt(ws: any, r: number): number {
+function rowHeightPt(ws: any, ews: any, r: number): number {
   const m = ws['!rows']?.[r];
   if (m?.hpt) return m.hpt;
   if (m?.hpx) return m.hpx * 0.75;
+  if (ews) {
+    try {
+      const er = ews.getRow(r + 1);
+      if (typeof er?.height === 'number' && er.height > 0) return er.height;
+    } catch {}
+  }
   return DEFAULT_ROW_PT;
 }
 
-function colWidthPt(ws: any, c: number): number {
+function colWidthPt(ws: any, ews: any, c: number, rows?: number[], XLSX?: any): number {
+  // 1) SheetJS !cols
   const m = ws['!cols']?.[c];
-  let px = DEFAULT_COL_PX;
   if (m) {
-    if (m.wpx) px = m.wpx;
-    else if (m.wch) px = Math.round(m.wch * 7 + 5);
-    else if (m.width) px = Math.round(m.width * 7 + 5);
+    if (m.wpx) return m.wpx * 0.75;
+    if (m.wch) return Math.round(m.wch * 7.5 + 5) * 0.75;
+    if (m.width) return Math.round(m.width * 7.5 + 5) * 0.75;
   }
-  return Math.max(6, px * 0.75);
+  // 2) ExcelJS column width
+  if (ews) {
+    try {
+      const col = ews.getColumn(c + 1);
+      if (typeof col?.width === 'number' && col.width > 0) {
+        return Math.round(col.width * 7.5 + 5) * 0.75;
+      }
+    } catch {}
+  }
+  // 3) Content-based fallback if neither defines it
+  if (rows && rows.length > 0 && XLSX) {
+    let maxLen = 0;
+    for (const r of rows) {
+      const sj = ws[XLSX.utils.encode_cell({ r, c })];
+      if (sj) {
+        const text = cellText(sj, false);
+        if (text) {
+          const l = text.length;
+          if (l > maxLen) maxLen = l;
+        }
+      }
+    }
+    if (maxLen > 0) {
+      return Math.min(220, Math.max(50, Math.round(maxLen * 6.5 + 16)));
+    }
+  }
+  return DEFAULT_COL_PX * 0.75;
 }
 
 function buildSheetModel(XLSX: any, name: string, ws: any, ews: any | null): SheetModel | null {
@@ -448,7 +484,7 @@ function buildSheetModel(XLSX: any, name: string, ws: any, ews: any | null): She
       if (!rowSet.has(r)) continue;
       if (info.firstRow < 0) info.firstRow = r;
       info.rowCount++;
-      info.height += rowHeightPt(ws, r);
+      info.height += rowHeightPt(ws, ews, r);
     }
     if (info.rowCount === 0) continue;
     merges.push(info);
@@ -617,12 +653,13 @@ export async function convertExcelToPdf(
   for (let s = 0; s < models.length; s++) {
     const m = models[s];
     const widthMap = new Map<number, number>();
-    m.cols.forEach((c) => widthMap.set(c, colWidthPt(m.ws, c)));
+    m.cols.forEach((c) => widthMap.set(c, colWidthPt(m.ws, m.ews, c, m.rows, XLSX)));
     const widthOf = (c: number) => widthMap.get(c) ?? 48;
     const totalW = m.cols.reduce((a, c) => a + widthOf(c), 0);
 
     const orient: 'portrait' | 'landscape' = orientation ?? (totalW <= A4_W - 2 * MARGIN ? 'portrait' : 'landscape');
-    const avail = (orient === 'landscape' ? A4_H : A4_W) - 2 * MARGIN;
+    const pageWidth = orient === 'landscape' ? A4_H : A4_W;
+    const avail = pageWidth - 2 * MARGIN;
     const groups = splitColumns(m.cols, widthOf, avail / MIN_SCALE);
 
     // merge info per column group (first column inside the group + span)
@@ -630,6 +667,8 @@ export async function convertExcelToPdf(
       const cols = groups[g];
       const gw = cols.reduce((a, c) => a + widthOf(c), 0);
       const scale = Math.min(1, (avail - 1) / gw);
+      const actualTableW = gw * scale;
+      const leftMargin = Math.max(MARGIN, (pageWidth - actualTableW) / 2);
 
       const groupInfoCache = new Map<MergeInfo, { firstCol: number; span: number } | null>();
       const groupInfo = (mg: MergeInfo) => {
@@ -669,23 +708,19 @@ export async function convertExcelToPdf(
         else if (sj && (sj.t === 'b' || sj.t === 'e')) align = 'center';
         else align = 'left';
 
-        const fontSize = Math.max(3, (st.fontSize ?? 11) * scale);
+        const fontSize = Math.max(7, Math.round((st.fontSize ?? 10.5) * scale));
         const indentPad = st.indent * 6 * scale;
         const padding = {
-          top: 1.2 * scale,
-          bottom: 1.2 * scale,
-          left: 2 * scale + (align === 'left' ? indentPad : 0),
-          right: 2 * scale + (align === 'right' ? indentPad : 0),
+          top: 3.5 * scale,
+          bottom: 3.5 * scale,
+          left: 5 * scale + (align === 'left' ? indentPad : 0),
+          right: 5 * scale + (align === 'right' ? indentPad : 0),
         };
 
-        let overflow: 'linebreak' | 'visible' | 'hidden' = 'hidden';
-        if (st.wrap) overflow = 'linebreak';
-        else if (align === 'left' && text && !mg) {
-          const next = m.ws[XLSX.utils.encode_cell({ r, c: c + 1 })];
-          if (!next || cellText(next, false) === '') overflow = 'visible'; // Excel lets text spill into empty neighbours
-        }
+        // Always wrap text so long contents are never clipped/cut off
+        const overflow: 'linebreak' | 'visible' | 'hidden' = 'linebreak';
 
-        const minH = (mg ? mg.height : rowHeightPt(m.ws, r)) * scale;
+        const minH = (mg ? mg.height : rowHeightPt(m.ws, m.ews, r)) * scale;
 
         return {
           content: text,
@@ -722,16 +757,16 @@ export async function convertExcelToPdf(
       const title = groups.length > 1 ? `${m.name} (columns part ${g + 1}/${groups.length})` : m.name;
       d.setFontSize(12);
       d.setTextColor(30, 41, 59);
-      d.text(title, MARGIN, MARGIN + 6);
+      d.text(title, leftMargin, MARGIN + 8);
 
       const queue: Array<() => void> = []; // borders / decorations drawn on top once the page is complete
 
       autoTable(d, {
         body,
-        startY: MARGIN + 18,
-        margin: { top: MARGIN, right: MARGIN, bottom: MARGIN + 10, left: MARGIN },
+        startY: MARGIN + 20,
+        margin: { top: MARGIN + 20, right: leftMargin, bottom: MARGIN + 10, left: leftMargin },
         theme: 'plain',
-        tableWidth: 'wrap',
+        tableWidth: actualTableW,
         columnStyles,
         styles: { fontSize: 8, cellPadding: 1, lineWidth: 0 },
         didParseCell: (data: any) => {
@@ -743,7 +778,11 @@ export async function convertExcelToPdf(
           cs.font = pdfFont(st.fontName);
           cs.fontStyle = fontStyleOf(st);
           cs.fontSize = meta.fontSize;
-          cs.textColor = st.fontColor ?? [0, 0, 0];
+          if (st.fill && brightness(st.fill) < 130 && (!st.fontColor || brightness(st.fontColor) < 80)) {
+            cs.textColor = [255, 255, 255];
+          } else {
+            cs.textColor = st.fontColor ?? [0, 0, 0];
+          }
           if (st.fill) cs.fillColor = st.fill;
           cs.halign = meta.align;
           cs.valign = meta.valign;

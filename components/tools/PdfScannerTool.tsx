@@ -279,10 +279,10 @@ export default function PdfScannerTool() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center shadow-xl border border-base-300">
+              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/4] sm:aspect-[4/3] max-h-[60vh] sm:max-h-[500px] flex items-center justify-center shadow-xl border border-base-300">
                 <video
                   ref={videoRef}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   autoPlay
                   playsInline
                   muted

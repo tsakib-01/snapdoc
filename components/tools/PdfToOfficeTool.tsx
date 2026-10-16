@@ -61,9 +61,10 @@ export default function PdfToOfficeTool({
     setError(null);
 
     try {
+      const cleanTxt = extractedText.replace(/\n*---\s*Page Break\s*---\n*/gi, '\n\n').trim();
       if (format === 'excel') {
-        const result = targetFormat === 'ocr' && extractedText
-          ? await convertTextToExcel(extractedText)
+        const result = targetFormat === 'ocr' && cleanTxt
+          ? await convertTextToExcel(cleanTxt)
           : await convertPdfToExcel(file, { ocrFallback: true });
         const a = document.createElement('a');
         a.href = result.dataUrl;
@@ -72,7 +73,6 @@ export default function PdfToOfficeTool({
         setProcessing(false);
         return;
       } else {
-        const cleanTxt = extractedText.replace(/\n\n--- Page Break ---\n\n/g, '\n\n');
         const blob = new Blob([cleanTxt], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');

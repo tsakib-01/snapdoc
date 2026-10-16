@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
+import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument } from 'pdf-lib';
@@ -1008,11 +1009,10 @@ export default function MergePdfTool() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden">
-              <iframe
-                src={result.dataUrl}
-                className="w-full h-full border-none rounded-2xl"
-                title="Merged PDF Preview"
+            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden p-2 flex items-center justify-center">
+              <PdfPreviewModalViewer
+                dataUrl={result.dataUrl}
+                filename="merged.pdf"
               />
             </div>
           </div>

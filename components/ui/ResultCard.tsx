@@ -13,9 +13,10 @@ import {
   ArrowDownRight,
   Eye,
   X,
-  Maximize2
+  Maximize2,
 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
+import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 
 export interface ResultCardProps {
   originalSize?: number;
@@ -309,11 +310,7 @@ export default function ResultCard({
             </div>
             <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden flex items-center justify-center p-2">
               {isPdf ? (
-                <iframe
-                  src={dataUrl}
-                  className="w-full h-full border-none rounded-2xl"
-                  title="PDF Preview"
-                />
+                <PdfPreviewModalViewer dataUrl={dataUrl} filename={filename} />
               ) : (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img

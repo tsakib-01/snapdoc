@@ -239,9 +239,40 @@ export default function PageNumbererTool() {
                   )}
                 </div>
               ) : (
-                <div className="w-full h-64 bg-base-100 rounded-xl border border-dashed border-base-300 flex items-center justify-center text-xs text-base-content/50">
-                  <FileText className="w-8 h-8 opacity-40 mb-2 block" />
-                  PDF Ready
+                <div className="relative w-full max-w-[340px] sm:max-w-[400px] aspect-[1/1.414] bg-white rounded-xl shadow-lg overflow-hidden border border-base-300 select-none my-2 p-6 flex flex-col justify-between">
+                  <div className="space-y-2.5 opacity-20 pointer-events-none">
+                    <div className="h-3.5 bg-base-content/40 rounded w-3/4"></div>
+                    <div className="h-2.5 bg-base-content/30 rounded w-full"></div>
+                    <div className="h-2.5 bg-base-content/30 rounded w-5/6"></div>
+                    <div className="h-2.5 bg-base-content/30 rounded w-4/6"></div>
+                  </div>
+                  <div className="flex flex-col items-center justify-center text-xs text-base-content/40 font-medium my-auto pointer-events-none">
+                    <FileText className="w-6 h-6 mb-1 opacity-50" />
+                    <span>Page {currentPage} Preview</span>
+                  </div>
+                  <div className="space-y-2.5 opacity-20 pointer-events-none">
+                    <div className="h-2.5 bg-base-content/30 rounded w-full"></div>
+                    <div className="h-2.5 bg-base-content/30 rounded w-4/5"></div>
+                  </div>
+
+                  {/* Stamp Badge with Live Font Size, Font Color, and Background Color */}
+                  {getSampleText(currentPage) && (
+                    <div
+                      style={{
+                        fontSize: `${Math.max(8, fontSize)}px`,
+                        color: fontColor,
+                        backgroundColor: bgColor === 'transparent' ? 'transparent' : bgColor,
+                        borderColor: bgColor === 'transparent' ? undefined : bgColor,
+                      }}
+                      className={`absolute px-2 py-0.5 rounded font-mono font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
+                        bgColor === 'transparent'
+                          ? 'border border-dashed border-primary/50 bg-primary/5 backdrop-blur-[1px]'
+                          : 'shadow-md border'
+                      }`}
+                    >
+                      {getSampleText(currentPage)}
+                    </div>
+                  )}
                 </div>
               )}
 

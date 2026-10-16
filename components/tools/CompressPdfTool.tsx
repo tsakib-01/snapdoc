@@ -17,6 +17,10 @@ interface LevelOption {
   description: string;
   quality: 'low' | 'medium' | 'high';
   icon: React.ReactNode;
+  activeBorder: string;
+  activeBg: string;
+  activeRing: string;
+  radioColor: string;
 }
 
 const LEVELS: LevelOption[] = [
@@ -24,28 +28,40 @@ const LEVELS: LevelOption[] = [
     id: 'extreme',
     title: 'Extreme Compression',
     badge: 'Max Reduction',
-    badgeClass: 'badge-error text-white font-bold',
+    badgeClass: 'bg-rose-500 text-white',
     description: 'Maximum file size reduction with lower image resolution. Perfect for documents with strict upload limits.',
     quality: 'low',
-    icon: <Flame className="w-4 h-4 text-error" />,
+    icon: <Flame className="w-4 h-4 text-rose-500 shrink-0" />,
+    activeBorder: 'border-rose-500',
+    activeBg: 'bg-rose-500/10',
+    activeRing: 'ring-2 ring-rose-500/25',
+    radioColor: 'border-rose-500 bg-rose-500',
   },
   {
     id: 'recommended',
     title: 'Recommended',
     badge: 'Best Balance',
-    badgeClass: 'badge-primary text-white font-bold',
+    badgeClass: 'bg-emerald-500 text-white',
     description: 'Great quality with high compression. The optimal sweet spot for email attachments and everyday sharing.',
     quality: 'medium',
-    icon: <Sparkles className="w-4 h-4 text-primary" />,
+    icon: <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />,
+    activeBorder: 'border-emerald-500',
+    activeBg: 'bg-emerald-500/10',
+    activeRing: 'ring-2 ring-emerald-500/25',
+    radioColor: 'border-emerald-500 bg-emerald-500',
   },
   {
     id: 'low',
     title: 'Low Compression',
-    badge: 'High Quality',
-    badgeClass: 'badge-neutral font-bold',
+    badge: 'High Accuracy',
+    badgeClass: 'bg-amber-400 text-amber-950 font-black',
     description: 'Mild compression preserving original image clarity and maximum sharpness for printing and archiving.',
     quality: 'high',
-    icon: <Zap className="w-4 h-4 text-amber-500" />,
+    icon: <Zap className="w-4 h-4 text-amber-500 shrink-0" />,
+    activeBorder: 'border-amber-400',
+    activeBg: 'bg-amber-400/10',
+    activeRing: 'ring-2 ring-amber-400/25',
+    radioColor: 'border-amber-400 bg-amber-400',
   },
 ];
 
@@ -170,21 +186,23 @@ export default function CompressPdfTool() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') setCompressionLevel(level.id);
                     }}
-                    className={`relative flex flex-col justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left ${
+                    className={`relative flex flex-col justify-between p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 text-left ${
                       isSelected
-                        ? 'border-primary bg-primary/5 ring-2 ring-primary/25 shadow-md shadow-primary/5'
+                        ? `${level.activeBorder} ${level.activeBg} ${level.activeRing} shadow-md`
                         : 'border-base-300 bg-base-100 hover:border-base-400 hover:bg-base-200/40'
                     }`}
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
                           {level.icon}
-                          <span className="font-extrabold text-sm text-base-content">
+                          <span className="font-extrabold text-sm sm:text-base text-base-content leading-tight">
                             {level.title}
                           </span>
                         </div>
-                        <span className={`badge badge-xs sm:badge-sm text-[10px] uppercase ${level.badgeClass}`}>
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap shrink-0 shadow-sm ${level.badgeClass}`}
+                        >
                           {level.badge}
                         </span>
                       </div>
@@ -193,13 +211,13 @@ export default function CompressPdfTool() {
                       </p>
                     </div>
 
-                    <div className="pt-3 mt-2 border-t border-base-200/60 flex items-center justify-between">
+                    <div className="pt-3 mt-3 border-t border-base-200/60 flex items-center justify-between">
                       <span className="text-[11px] font-medium text-base-content/50">
                         {isSelected ? 'Active choice' : 'Click to select'}
                       </span>
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                          isSelected ? 'border-primary bg-primary' : 'border-base-300 bg-transparent'
+                          isSelected ? level.radioColor : 'border-base-300 bg-transparent'
                         }`}
                       >
                         {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}

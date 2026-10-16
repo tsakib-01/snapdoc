@@ -5,7 +5,6 @@ import { Loader2, Download, Image as ImageIcon, Archive, Sparkles, AlertCircle }
 import UploadZone from '@/components/ui/UploadZone';
 import JSZip from 'jszip';
 import { formatBytes } from '@/lib/utils/formatters';
-import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 interface ExtractedPage {
   pageNumber: number;
@@ -114,7 +113,6 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showDownloadToast(singleFilename);
   };
 
   const handleDownloadAllZip = async () => {
@@ -140,7 +138,6 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      showDownloadToast(zipFilename);
     } catch (err) {
       console.error('ZIP generation error:', err);
     } finally {

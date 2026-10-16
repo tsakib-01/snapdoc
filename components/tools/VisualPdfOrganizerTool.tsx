@@ -35,7 +35,6 @@ import ResultCard from '@/components/ui/ResultCard';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
-import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 export interface VisualPageItem {
   id: string;
@@ -199,7 +198,6 @@ export default function VisualPdfOrganizerTool({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showDownloadToast(resultData.filename);
   };
 
   // Drag and drop reordering

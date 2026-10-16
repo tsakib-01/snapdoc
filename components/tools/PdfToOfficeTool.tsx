@@ -6,7 +6,6 @@ import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { formatBytes } from '@/lib/utils/formatters';
-import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 interface PdfToOfficeToolProps {
   targetFormat?: 'excel' | 'txt' | 'ocr';
@@ -66,7 +65,6 @@ export default function PdfToOfficeTool({
         a.href = result.url;
         a.download = result.filename;
         a.click();
-        showDownloadToast(result.filename);
         setProcessing(false);
         return;
       } else {
@@ -79,7 +77,6 @@ export default function PdfToOfficeTool({
         a.download = txtFilename;
         a.click();
         URL.revokeObjectURL(url);
-        showDownloadToast(txtFilename);
       }
     } catch (err: any) {
       console.error('Download export error:', err);

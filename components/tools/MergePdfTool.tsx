@@ -33,7 +33,6 @@ import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument } from 'pdf-lib';
-import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 export interface PdfMergeItem {
   id: string;
@@ -189,7 +188,6 @@ export default function MergePdfTool() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showDownloadToast(downloadFilename);
   };
 
   // Drag and drop reordering

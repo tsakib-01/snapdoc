@@ -1,45 +1,223 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Loader2, Layers, MoveUp, MoveDown, X, FileText, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import {
+  Loader2,
+  Layers,
+  ArrowLeft,
+  ArrowRight,
+  MoveUp,
+  MoveDown,
+  X,
+  FileText,
+  Plus,
+  AlertCircle,
+  FilePlus2,
+  ZoomIn,
+  LayoutGrid,
+  List,
+  ArrowUpDown,
+  RotateCcw,
+  Sparkles,
+  CheckCircle2,
+} from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
+import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 
+export interface PdfMergeItem {
+  id: string;
+  file: File;
+  thumbnailUrl: string | null;
+  pageCount: number | null;
+  aspectRatio: number;
+  loading: boolean;
+  error?: string;
+}
+
 export default function MergePdfTool() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [items, setItems] = useState<PdfMergeItem[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [zoomItem, setZoomItem] = useState<PdfMergeItem | null>(null);
+
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const moveFile = (index: number, direction: 'up' | 'down') => {
-    const newFiles = [...files];
+  const addFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to load 1st page preview and page count for a file
+  const loadFileMetadata = async (item: PdfMergeItem) => {
+    try {
+      const { thumbnails, pageCount } = await extractPdfThumbnails(item.file, {
+        maxPages: 1,
+        scale: 0.7,
+      });
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === item.id
+            ? {
+                ...it,
+                thumbnailUrl: thumbnails[0]?.dataUrl || null,
+                pageCount: pageCount,
+                aspectRatio: thumbnails[0]?.aspectRatio || 1 / 1.414,
+                loading: false,
+              }
+            : it
+        )
+      );
+    } catch (err: any) {
+      console.error('Failed to load PDF preview:', err);
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === item.id
+            ? {
+                ...it,
+                loading: false,
+                error: 'Could not load preview',
+              }
+            : it
+        )
+      );
+    }
+  };
+
+  // Initial file selection from main UploadZone
+  const handleInitialFilesSelected = (selectedFiles: File[]) => {
+    if (!selectedFiles || selectedFiles.length === 0) return;
+    setError(null);
+    setResult(null);
+
+    const newItems: PdfMergeItem[] = selectedFiles.map((file, idx) => ({
+      id: `merge-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+      file,
+      thumbnailUrl: null,
+      pageCount: null,
+      aspectRatio: 1 / 1.414,
+      loading: true,
+    }));
+
+    setItems(newItems);
+    newItems.forEach((item) => loadFileMetadata(item));
+  };
+
+  // Adding more files to existing list
+  const handleAddMoreFiles = (addedFiles: FileList | File[] | null) => {
+    if (!addedFiles) return;
+    const filesArray = Array.from(addedFiles).filter(
+      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+    );
+    if (filesArray.length === 0) return;
+
+    setError(null);
+    const newItems: PdfMergeItem[] = filesArray.map((file, idx) => ({
+      id: `merge-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
+      file,
+      thumbnailUrl: null,
+      pageCount: null,
+      aspectRatio: 1 / 1.414,
+      loading: true,
+    }));
+
+    setItems((prev) => [...prev, ...newItems]);
+    newItems.forEach((item) => loadFileMetadata(item));
+
+    if (addFileInputRef.current) {
+      addFileInputRef.current.value = '';
+    }
+  };
+
+  // Reorder items
+  const moveItem = (index: number, direction: 'up' | 'down') => {
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= newFiles.length) return;
+    if (targetIdx < 0 || targetIdx >= items.length) return;
 
-    const temp = newFiles[index];
-    newFiles[index] = newFiles[targetIdx];
-    newFiles[targetIdx] = temp;
-    setFiles(newFiles);
+    const newItems = [...items];
+    const temp = newItems[index];
+    newItems[index] = newItems[targetIdx];
+    newItems[targetIdx] = temp;
+    setItems(newItems);
   };
 
-  const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index));
+  // Reverse list order
+  const handleReverseOrder = () => {
+    setItems((prev) => [...prev].reverse());
   };
 
+  // Remove single item
+  const removeItem = (id: string) => {
+    setItems((prev) => prev.filter((it) => it.id !== id));
+  };
+
+  // Reset entire tool
+  const handleReset = () => {
+    setItems([]);
+    setResult(null);
+    setError(null);
+    setZoomItem(null);
+  };
+
+  // Drag and drop reordering
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const updated = [...items];
+    const [moved] = updated.splice(draggedIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+    setItems(updated);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  // Execute merge
   const handleProcess = async () => {
-    if (files.length < 2) {
+    if (items.length < 2) {
       setError('Please upload at least 2 PDF documents to merge.');
       return;
     }
+
+    const isAnyLoading = items.some((it) => it.loading);
+    if (isAnyLoading) {
+      setError('Please wait for document thumbnails and page counts to finish loading.');
+      return;
+    }
+
     setError(null);
     setIsProcessing(true);
     setResult(null);
 
     try {
       const formData = new FormData();
-      files.forEach((file) => {
-        formData.append('files', file);
+      items.forEach((item) => {
+        formData.append('files', item.file);
       });
 
       const res = await fetch('/api/merge-pdf', {
@@ -60,129 +238,532 @@ export default function MergePdfTool() {
     }
   };
 
-  const handleReset = () => {
-    setFiles([]);
-    setResult(null);
-    setError(null);
-  };
-
-  const totalOriginalSize = files.reduce((acc, f) => acc + f.size, 0);
+  // Calculations
+  const totalOriginalSize = items.reduce((acc, it) => acc + it.file.size, 0);
+  const totalPagesCount = items.reduce((acc, it) => acc + (it.pageCount || 0), 0);
+  const allThumbnailsLoaded = items.every((it) => !it.loading);
 
   return (
     <div className="w-full space-y-6">
-      {files.length === 0 && (
+      {/* Hidden file input for adding more PDFs */}
+      <input
+        ref={addFileInputRef}
+        type="file"
+        accept="application/pdf"
+        multiple
+        className="hidden"
+        onChange={(e) => handleAddMoreFiles(e.target.files)}
+      />
+
+      {/* Initial Upload State */}
+      {items.length === 0 && (
         <UploadZone
           accept="application/pdf"
           multiple={true}
           maxFiles={20}
-          files={files}
-          onFilesSelected={setFiles}
+          files={[]}
+          onFilesSelected={handleInitialFilesSelected}
           title="Drop multiple PDF files to merge"
-          subtitle="Combine 2 to 20 documents into a single PDF"
+          subtitle="Combine 2 to 20 documents into a single PDF with visual previews"
         />
       )}
 
-      {files.length > 0 && !result && (
-        <div className="space-y-6 animate-in fade-in duration-150">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-base-content/70">
-                PDF Documents ({files.length} Selected)
-              </h4>
-              <p className="text-xs text-base-content/50">Drag or use arrows to adjust merge order</p>
+      {/* Active Workspace */}
+      {items.length > 0 && !result && (
+        <div className="w-full space-y-5 animate-in fade-in duration-200">
+          {/* Top Integrated Action Bar (Styled like VisualPdfOrganizerTool) */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+            {/* Left: Tool Title & Summary Badges */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content"
+                title="Start over / Clear all"
+              >
+                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
+
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-sm sm:text-base text-base-content">
+                  Merge PDFs
+                </span>
+                <span className="badge badge-primary font-bold text-xs py-1">
+                  {items.length} {items.length === 1 ? 'Document' : 'Documents'}
+                </span>
+                {allThumbnailsLoaded && totalPagesCount > 0 && (
+                  <span className="badge badge-ghost font-semibold text-xs py-1 text-base-content/70">
+                    {totalPagesCount} Pages total
+                  </span>
+                )}
+              </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
-              Clear All
-            </button>
+
+            {/* Right: Actions (Add PDF, View Modes, Merge CTA) */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => addFileInputRef.current?.click()}
+                className="btn btn-ghost btn-sm rounded-xl font-bold text-xs text-primary gap-1.5 hover:bg-primary/10"
+                title="Add more PDF documents"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Document</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReverseOrder}
+                className="btn btn-ghost btn-sm rounded-xl text-xs text-base-content/70 gap-1"
+                title="Reverse document order"
+                disabled={items.length < 2}
+              >
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Reverse</span>
+              </button>
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-base-100 rounded-xl p-0.5 border border-base-300">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded-lg transition-all ${
+                    viewMode === 'grid'
+                      ? 'bg-primary text-primary-content shadow-xs'
+                      : 'text-base-content/60 hover:text-base-content'
+                  }`}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded-lg transition-all ${
+                    viewMode === 'list'
+                      ? 'bg-primary text-primary-content shadow-xs'
+                      : 'text-base-content/60 hover:text-base-content'
+                  }`}
+                  title="List View"
+                >
+                  <List className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Finish / Merge CTA */}
+              <button
+                type="button"
+                onClick={handleProcess}
+                disabled={isProcessing || items.length < 2 || !allThumbnailsLoaded}
+                className="btn btn-primary btn-sm px-5 font-bold shadow-md shadow-primary/20 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all text-white"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Merging...</span>
+                  </>
+                ) : (
+                  <>
+                    <Layers className="w-4 h-4" />
+                    <span>
+                      Merge {items.length >= 2 ? `${items.length} PDFs` : 'PDFs'}
+                      {allThumbnailsLoaded && totalPagesCount > 0 ? ` (${totalPagesCount} Pages)` : ''}
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* List of PDFs */}
-          <div className="space-y-2 max-h-80 overflow-y-auto p-1">
-            {files.map((file, idx) => (
-              <div
-                key={`${file.name}-${idx}`}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-base-200/50 border border-base-300 shadow-sm"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0">
-                    {idx + 1}
-                  </span>
-                  <div className="overflow-hidden">
-                    <p className="text-xs sm:text-sm font-bold text-base-content truncate">{file.name}</p>
-                    <p className="text-[11px] text-base-content/50">{formatBytes(file.size)}</p>
-                  </div>
+          {/* Condition: Exactly 1 PDF uploaded prompt banner */}
+          {items.length === 1 && (
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <FilePlus2 className="w-5 h-5" />
                 </div>
-
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    disabled={idx === 0}
-                    onClick={() => moveFile(idx, 'up')}
-                    className="btn btn-ghost btn-xs btn-circle text-base-content/60"
-                    title="Move Up"
-                  >
-                    <MoveUp className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={idx === files.length - 1}
-                    onClick={() => moveFile(idx, 'down')}
-                    className="btn btn-ghost btn-xs btn-circle text-base-content/60"
-                    title="Move Down"
-                  >
-                    <MoveDown className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeFile(idx)}
-                    className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error"
-                    title="Remove"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                <div>
+                  <p className="font-bold text-sm">
+                    1 PDF uploaded &mdash; Please upload the next PDF to merge
+                  </p>
+                  <p className="text-xs opacity-80 mt-0.5">
+                    Merging requires at least 2 PDF documents. Upload another PDF below to enable merging.
+                  </p>
                 </div>
               </div>
-            ))}
+              <button
+                type="button"
+                onClick={() => addFileInputRef.current?.click()}
+                className="btn btn-warning btn-sm rounded-xl font-bold gap-1.5 shrink-0 shadow-xs"
+              >
+                <Plus className="w-4 h-4" />
+                Upload Next PDF
+              </button>
+            </div>
+          )}
+
+          {/* Instructions sub-header */}
+          <div className="px-2 flex items-center justify-between text-xs text-base-content/60">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-primary/70 animate-pulse"></span>
+              Drag &amp; drop cards or use arrows to change the merge sequence
+            </span>
+            <span className="text-[11px] text-base-content/50">
+              Total size: {formatBytes(totalOriginalSize)}
+            </span>
           </div>
 
+          {/* Error Banner */}
           {error && (
-            <div className="alert alert-error text-xs rounded-2xl py-3 shadow-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
+            <div className="alert alert-error text-xs rounded-2xl shadow-sm flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={handleProcess}
-            disabled={isProcessing || files.length < 2}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Merging PDF Files...
-              </>
-            ) : (
-              <>
-                <Layers className="w-5 h-5" />
-                Merge {files.length} PDF Documents
-              </>
-            )}
-          </button>
+          {/* GRID VIEW */}
+          {viewMode === 'grid' && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5 py-2">
+              {items.map((item, index) => {
+                const isDragging = draggedIndex === index;
+                const isDragOver = dragOverIndex === index;
+
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`group relative flex flex-col rounded-2xl bg-base-100 border transition-all duration-200 cursor-grab active:cursor-grabbing select-none shadow-sm hover:shadow-md ${
+                      isDragging ? 'opacity-30 scale-95' : ''
+                    } ${
+                      isDragOver
+                        ? 'border-primary ring-2 ring-primary ring-offset-2 scale-[1.02]'
+                        : 'border-base-300 hover:border-primary/50'
+                    }`}
+                  >
+                    {/* Top Item Badge Bar */}
+                    <div className="p-2.5 pb-1.5 flex items-center justify-between gap-1">
+                      <span className="w-6 h-6 rounded-lg bg-primary text-primary-content font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                        #{index + 1}
+                      </span>
+
+                      {/* Page Count Pill */}
+                      {item.loading ? (
+                        <span className="badge badge-ghost badge-sm text-[10px] gap-1 text-base-content/60">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                          Pages...
+                        </span>
+                      ) : item.pageCount !== null ? (
+                        <span className="badge badge-primary/10 text-primary border-primary/20 font-bold text-[11px]">
+                          {item.pageCount} {item.pageCount === 1 ? 'Page' : 'Pages'}
+                        </span>
+                      ) : null}
+
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeItem(item.id);
+                        }}
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error hover:bg-error/10"
+                        title="Remove document"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* 1st Page Thumbnail Container */}
+                    <div className="px-2.5 py-1.5 flex items-center justify-center">
+                      <div className="relative w-full aspect-[1/1.414] bg-base-200/60 rounded-xl overflow-hidden border border-base-200 flex items-center justify-center group/thumb">
+                        {item.loading ? (
+                          <div className="flex flex-col items-center justify-center gap-2 p-3 text-center">
+                            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                            <span className="text-[10px] text-base-content/50 font-medium">
+                              Rendering 1st page...
+                            </span>
+                          </div>
+                        ) : item.thumbnailUrl ? (
+                          <>
+                            <img
+                              src={item.thumbnailUrl}
+                              alt={`Page 1 of ${item.file.name}`}
+                              className="w-full h-full object-contain bg-white shadow-xs"
+                            />
+                            {/* Hover overlay with zoom */}
+                            <div className="absolute inset-0 bg-base-900/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setZoomItem(item);
+                                }}
+                                className="btn btn-circle btn-xs bg-base-100/90 text-base-content hover:bg-base-100 border-none shadow-md"
+                                title="Zoom 1st page preview"
+                              >
+                                <ZoomIn className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1.5 p-3 text-center text-base-content/40">
+                            <FileText className="w-8 h-8" />
+                            <span className="text-[10px]">Preview unavailable</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Document Meta & Reorder Footer */}
+                    <div className="p-2.5 pt-1 flex flex-col gap-1.5">
+                      <div className="overflow-hidden">
+                        <p
+                          className="text-xs font-bold text-base-content truncate"
+                          title={item.file.name}
+                        >
+                          {item.file.name}
+                        </p>
+                        <p className="text-[10px] text-base-content/50 mt-0.5">
+                          {formatBytes(item.file.size)}
+                        </p>
+                      </div>
+
+                      {/* Quick Move Reorder Buttons */}
+                      <div className="flex items-center justify-between pt-1 border-t border-base-200">
+                        <span className="text-[10px] text-base-content/40 font-medium">Order</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            disabled={index === 0}
+                            onClick={() => moveItem(index, 'up')}
+                            className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
+                            title="Move earlier in merge order"
+                          >
+                            <ArrowLeft className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === items.length - 1}
+                            onClick={() => moveItem(index, 'down')}
+                            className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
+                            title="Move later in merge order"
+                          >
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Add Next PDF Card in Grid */}
+              <div
+                onClick={() => addFileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'copy';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleAddMoreFiles(e.dataTransfer.files);
+                }}
+                className={`group min-h-[220px] rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col items-center justify-center p-4 text-center gap-2 select-none ${
+                  items.length === 1
+                    ? 'border-amber-500/60 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500 animate-pulse'
+                    : 'border-base-300 hover:border-primary/60 bg-base-200/30 hover:bg-base-200/60'
+                }`}
+              >
+                <div
+                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-xs ${
+                    items.length === 1
+                      ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                      : 'bg-primary/10 text-primary'
+                  }`}
+                >
+                  <Plus className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="font-bold text-xs sm:text-sm text-base-content">
+                    {items.length === 1 ? 'Add Next PDF' : 'Add Document'}
+                  </p>
+                  <p className="text-[11px] text-base-content/50 mt-0.5">
+                    Click to browse or drop file here
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* LIST VIEW */}
+          {viewMode === 'list' && (
+            <div className="space-y-2.5 py-1">
+              {items.map((item, index) => {
+                const isDragging = draggedIndex === index;
+                const isDragOver = dragOverIndex === index;
+
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`flex items-center justify-between p-3 rounded-2xl bg-base-100 border transition-all cursor-grab active:cursor-grabbing shadow-xs ${
+                      isDragging ? 'opacity-30 scale-95' : ''
+                    } ${
+                      isDragOver
+                        ? 'border-primary ring-2 ring-primary ring-offset-2'
+                        : 'border-base-300 hover:border-primary/40'
+                    }`}
+                  >
+                    {/* Left: Index + 1st Page Thumbnail + Details */}
+                    <div className="flex items-center gap-3.5 overflow-hidden">
+                      <span className="w-7 h-7 rounded-xl bg-primary text-primary-content font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                        #{index + 1}
+                      </span>
+
+                      {/* Compact 1st Page Thumbnail */}
+                      <div
+                        onClick={() => item.thumbnailUrl && setZoomItem(item)}
+                        className="relative w-12 h-16 rounded-lg bg-base-200 overflow-hidden border border-base-200 shrink-0 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+                        title="Click to view 1st page"
+                      >
+                        {item.loading ? (
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        ) : item.thumbnailUrl ? (
+                          <img
+                            src={item.thumbnailUrl}
+                            alt={`Preview ${item.file.name}`}
+                            className="w-full h-full object-contain bg-white"
+                          />
+                        ) : (
+                          <FileText className="w-5 h-5 text-base-content/40" />
+                        )}
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="overflow-hidden">
+                        <p className="text-xs sm:text-sm font-bold text-base-content truncate">
+                          {item.file.name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[11px] text-base-content/50">
+                            {formatBytes(item.file.size)}
+                          </span>
+                          <span className="text-base-content/30 text-xs">•</span>
+                          {item.loading ? (
+                            <span className="text-[11px] text-base-content/50 flex items-center gap-1">
+                              <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                              Loading pages...
+                            </span>
+                          ) : item.pageCount !== null ? (
+                            <span className="badge badge-primary/10 text-primary border-primary/20 font-bold text-[10px]">
+                              {item.pageCount} {item.pageCount === 1 ? 'Page' : 'Pages'}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: Reorder & Remove Controls */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => moveItem(index, 'up')}
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
+                        title="Move Up"
+                      >
+                        <MoveUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === items.length - 1}
+                        onClick={() => moveItem(index, 'down')}
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
+                        title="Move Down"
+                      >
+                        <MoveDown className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error hover:bg-error/10"
+                        title="Remove"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Add Next PDF Row in List */}
+              <div
+                onClick={() => addFileInputRef.current?.click()}
+                className={`p-3 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex items-center justify-center gap-2 text-xs font-semibold ${
+                  items.length === 1
+                    ? 'border-amber-500/60 bg-amber-500/5 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10'
+                    : 'border-base-300 hover:border-primary/50 text-base-content/70 hover:text-primary hover:bg-base-200/50'
+                }`}
+              >
+                <Plus className="w-4 h-4" />
+                <span>
+                  {items.length === 1 ? 'Upload Next PDF Document' : 'Add Another PDF Document'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Primary Merge Button */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleProcess}
+              disabled={isProcessing || items.length < 2 || !allThumbnailsLoaded}
+              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Merging {items.length} PDF Documents...
+                </>
+              ) : (
+                <>
+                  <Layers className="w-5 h-5" />
+                  {items.length < 2
+                    ? 'Please upload at least 2 PDF documents to merge'
+                    : `Merge ${items.length} PDF Documents ${
+                        allThumbnailsLoaded && totalPagesCount > 0 ? `(${totalPagesCount} Pages total)` : ''
+                      }`}
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
+      {/* Result Display */}
       {result && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-200">
           <div className="p-8 rounded-3xl bg-base-200/50 border border-base-300 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shadow-xs">
               <Layers className="w-8 h-8" />
             </div>
             <div>
-              <h4 className="font-bold text-base text-base-content">PDF Documents Merged Successfully</h4>
-              <p className="text-xs text-base-content/60 mt-0.5">
-                Total Pages: {result.pageCount} | Size: {formatBytes(result.fileSize)}
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-success" />
+                <h4 className="font-bold text-lg text-base-content">
+                  PDF Documents Merged Successfully
+                </h4>
+              </div>
+              <p className="text-xs text-base-content/60 mt-1">
+                Merged {items.length} files • {result.pageCount} Pages • {formatBytes(result.fileSize)}
               </p>
             </div>
           </div>
@@ -196,6 +777,47 @@ export default function MergePdfTool() {
             extraInfo={`${result.pageCount} Pages`}
             onReset={handleReset}
           />
+        </div>
+      )}
+
+      {/* 1st Page Zoom Modal */}
+      {zoomItem && zoomItem.thumbnailUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setZoomItem(null)}
+        >
+          <div
+            className="relative bg-base-100 rounded-3xl p-5 max-w-2xl w-full max-h-[90vh] flex flex-col items-center gap-4 shadow-2xl border border-base-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="w-full flex items-center justify-between">
+              <div>
+                <h5 className="font-bold text-sm text-base-content truncate max-w-md">
+                  {zoomItem.file.name}
+                </h5>
+                <p className="text-xs text-base-content/60">
+                  Preview of Page 1 • Total {zoomItem.pageCount || '?'} Pages
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setZoomItem(null)}
+                className="btn btn-ghost btn-sm btn-circle"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Preview Image */}
+            <div className="flex-1 w-full overflow-auto flex items-center justify-center p-2 bg-base-200/50 rounded-2xl">
+              <img
+                src={zoomItem.thumbnailUrl}
+                alt="Page 1 Preview"
+                className="max-h-[68vh] object-contain rounded-lg shadow-lg bg-white"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

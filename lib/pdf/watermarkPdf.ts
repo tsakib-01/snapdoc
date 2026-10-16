@@ -31,6 +31,10 @@ export async function watermarkPdfDocument(
   const pages = pdfDoc.getPages();
   const opacity = options.opacity ?? 0.3;
   const rotation = options.rotation ?? -45;
+  const pdfAngle = -rotation;
+  const rad = (pdfAngle * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
 
   if (options.type === 'image' && options.imageBuffer) {
     const pngBuffer = await sharp(options.imageBuffer).png().toBuffer();
@@ -41,34 +45,52 @@ export async function watermarkPdfDocument(
       const imgWidth = Math.min(width * 0.5, embedImage.width);
       const imgHeight = (imgWidth / embedImage.width) * embedImage.height;
 
+      // Center of image:
+      const cx = imgWidth / 2;
+      const cy = imgHeight / 2;
+      // Rotated offset from image origin to center
+      const dx = cx * cos - cy * sin;
+      const dy = cx * sin + cy * cos;
+
       page.drawImage(embedImage, {
-        x: (width - imgWidth) / 2,
-        y: (height - imgHeight) / 2,
+        x: width / 2 - dx,
+        y: height / 2 - dy,
         width: imgWidth,
         height: imgHeight,
         opacity,
-        rotate: degrees(rotation),
+        rotate: degrees(pdfAngle),
       });
     }
   } else {
     const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const text = options.text || 'CONFIDENTIAL';
-    const fontSize = options.fontSize || 48;
     const colorObj = options.color ? parseHexColor(options.color) : { r: 0.6, g: 0.6, b: 0.6 };
 
     for (const page of pages) {
       const { width, height } = page.getSize();
-      const textWidth = font.widthOfTextAtSize(text, fontSize);
+      let fontSize = options.fontSize || 48;
+      let textWidth = font.widthOfTextAtSize(text, fontSize);
+      const maxAllowedLength = Math.hypot(width, height) * 0.75;
+      if (textWidth > maxAllowedLength) {
+        fontSize = Math.floor(fontSize * (maxAllowedLength / textWidth));
+        textWidth = font.widthOfTextAtSize(text, fontSize);
+      }
       const textHeight = font.heightAtSize(fontSize);
 
+      // Center of the text:
+      const cx = textWidth / 2;
+      const cy = textHeight * 0.35;
+      const dx = cx * cos - cy * sin;
+      const dy = cx * sin + cy * cos;
+
       page.drawText(text, {
-        x: (width - textWidth) / 2,
-        y: (height - textHeight) / 2,
+        x: width / 2 - dx,
+        y: height / 2 - dy,
         size: fontSize,
         font,
         color: rgb(colorObj.r, colorObj.g, colorObj.b),
         opacity,
-        rotate: degrees(rotation),
+        rotate: degrees(pdfAngle),
       });
     }
   }

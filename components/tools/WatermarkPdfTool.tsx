@@ -114,40 +114,67 @@ export default function WatermarkPdfTool() {
         }
 
         if (embedImg) {
+          const pdfAngle = -rot;
+          const rad = (pdfAngle * Math.PI) / 180;
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+
           for (const page of pdfPages) {
             const { width, height } = page.getSize();
             const imgWidth = Math.min(width * 0.5, embedImg.width);
             const imgHeight = (imgWidth / embedImg.width) * embedImg.height;
 
+            // Center of image:
+            const cx = imgWidth / 2;
+            const cy = imgHeight / 2;
+            // Rotated offset from image origin to center
+            const dx = cx * cos - cy * sin;
+            const dy = cx * sin + cy * cos;
+
             page.drawImage(embedImg, {
-              x: (width - imgWidth) / 2,
-              y: (height - imgHeight) / 2,
+              x: width / 2 - dx,
+              y: height / 2 - dy,
               width: imgWidth,
               height: imgHeight,
               opacity: op,
-              rotate: degrees(rot),
+              rotate: degrees(pdfAngle),
             });
           }
         }
       } else {
         const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
         const stampText = text || 'CONFIDENTIAL';
-        const fontSize = 48;
         const colorObj = parseHexColor(color || '#888888');
+        const pdfAngle = -rot;
+        const rad = (pdfAngle * Math.PI) / 180;
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
 
         for (const page of pdfPages) {
           const { width, height } = page.getSize();
-          const textWidth = font.widthOfTextAtSize(stampText, fontSize);
+          let fontSize = 48;
+          let textWidth = font.widthOfTextAtSize(stampText, fontSize);
+          const maxAllowedLength = Math.hypot(width, height) * 0.75;
+          if (textWidth > maxAllowedLength) {
+            fontSize = Math.floor(fontSize * (maxAllowedLength / textWidth));
+            textWidth = font.widthOfTextAtSize(stampText, fontSize);
+          }
           const textHeight = font.heightAtSize(fontSize);
 
+          // Center of the text:
+          const cx = textWidth / 2;
+          const cy = textHeight * 0.35;
+          const dx = cx * cos - cy * sin;
+          const dy = cx * sin + cy * cos;
+
           page.drawText(stampText, {
-            x: (width - textWidth) / 2,
-            y: (height - textHeight) / 2,
+            x: width / 2 - dx,
+            y: height / 2 - dy,
             size: fontSize,
             font,
             color: rgb(colorObj.r, colorObj.g, colorObj.b),
             opacity: op,
-            rotate: degrees(rot),
+            rotate: degrees(pdfAngle),
           });
         }
       }

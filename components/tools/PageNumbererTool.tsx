@@ -226,7 +226,7 @@ export default function PageNumbererTool() {
                         fontSize: `${Math.max(8, fontSize)}px`,
                         color: fontColor,
                         backgroundColor: bgColor === 'transparent' ? 'transparent' : bgColor,
-                        fontFamily: 'Helvetica, Arial, sans-serif',
+                        fontFamily: "'HelveticaBoldWeb', 'Helvetica Neue', Helvetica, Arial, sans-serif",
                         fontWeight: 700,
                       }}
                       className={`absolute px-2 py-0.5 rounded font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${
@@ -263,7 +263,7 @@ export default function PageNumbererTool() {
                         fontSize: `${Math.max(8, fontSize)}px`,
                         color: fontColor,
                         backgroundColor: bgColor === 'transparent' ? 'transparent' : bgColor,
-                        fontFamily: 'Helvetica, Arial, sans-serif',
+                        fontFamily: "'HelveticaBoldWeb', 'Helvetica Neue', Helvetica, Arial, sans-serif",
                         fontWeight: 700,
                       }}
                       className={`absolute px-2 py-0.5 rounded font-bold pointer-events-none transition-all duration-150 ${getPositionClasses()} ${

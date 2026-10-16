@@ -304,7 +304,7 @@ export default function WatermarkPdfTool() {
                         transform: `rotate(${rotation}deg)`,
                         opacity: opacity,
                         color: color,
-                        fontFamily: 'Helvetica, Arial, -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontFamily: "'HelveticaBoldWeb', 'Helvetica Neue', Helvetica, Arial, sans-serif",
                         fontWeight: 700,
                         letterSpacing: '0px',
                       }}

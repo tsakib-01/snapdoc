@@ -85,7 +85,7 @@ export default function FlattenPdfPage() {
     const { PDFDocument } = await import('pdf-lib');
 
     const arrayBuffer = await inputFile.arrayBuffer();
-    const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+    const pdf = await pdfjs.getDocument({ data: new Uint8Array(arrayBuffer.slice(0)) }).promise;
     const numPages = pdf.numPages;
 
     const newDoc = await PDFDocument.create();

@@ -53,9 +53,18 @@ async function loadPdfJs(): Promise<any> {
   return pdfjs;
 }
 
-/** Converts a Uint8Array into a safe, independent ArrayBuffer (no view offset issues) */
+/** Converts a Uint8Array into a safe, independent ArrayBuffer (no view offset issues, crash-proof against detached buffers) */
 function toArrayBuffer(u8: Uint8Array): ArrayBuffer {
-  return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+  try {
+    if (u8.buffer && u8.buffer.byteLength > 0) {
+      return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer;
+    }
+  } catch {
+    // Fallback if buffer is detached
+  }
+  const copy = new Uint8Array(u8.length);
+  copy.set(u8);
+  return copy.buffer as ArrayBuffer;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -117,7 +126,8 @@ async function rasterizeCompress(
       import('pdf-lib'),
     ]);
 
-    const pdf = await pdfjs.getDocument({ data: originalBytes }).promise;
+    // Pass a fresh slice so PDF.js worker doesn't detach originalBytes buffer
+    const pdf = await pdfjs.getDocument({ data: originalBytes.slice() }).promise;
     const numPages = pdf.numPages;
     if (numPages === 0 || numPages !== expectedPages) {
       await pdf.destroy?.();

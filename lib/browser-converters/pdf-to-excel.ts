@@ -482,7 +482,7 @@ export async function convertPdfToExcel(
   const OPS = pdfjs.OPS;
 
   const data = new Uint8Array(await file.arrayBuffer());
-  const pdf = await pdfjs.getDocument({ data }).promise;
+  const pdf = await pdfjs.getDocument({ data: data.slice() }).promise;
   const numPages: number = pdf.numPages;
 
   let ocrWorker: any = null;

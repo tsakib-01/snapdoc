@@ -38,6 +38,10 @@ export default function CompressPdfTool() {
         onProgress: (pct) => setProgressText(`Optimizing PDF streams & images (${pct}%)...`),
       });
 
+      if (!data || !data.size || data.size <= 0) {
+        throw new Error('Unable to compress document. Output file was empty.');
+      }
+
       const isAlreadyMaxCompressed = (data.reductionPercentage ?? 0) <= 0 || data.size >= originalSize;
       const finalSize = isAlreadyMaxCompressed ? originalSize : data.size;
       const reductionPercentage = isAlreadyMaxCompressed ? 0 : (data.reductionPercentage ?? 0);

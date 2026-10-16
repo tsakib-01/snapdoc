@@ -6,6 +6,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { PDFDocument } from 'pdf-lib';
 
 export default function CropPdfTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -77,32 +78,62 @@ export default function CropPdfTool() {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('action', 'crop');
-      formData.append('top', topMargin.toString());
-      formData.append('bottom', bottomMargin.toString());
-      formData.append('left', leftMargin.toString());
-      formData.append('right', rightMargin.toString());
+      // 1. Direct client-side processing using pdf-lib:
+      // Instant, private, eliminates mobile "failed to fetch"
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+      const pdfPages = pdfDoc.getPages();
 
-      const res = await fetch('/api/flatten-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      for (const page of pdfPages) {
+        const { width, height } = page.getSize();
+        const newX = Math.max(0, leftMargin);
+        const newY = Math.max(0, bottomMargin);
+        const newWidth = Math.max(50, width - leftMargin - rightMargin);
+        const newHeight = Math.max(50, height - topMargin - bottomMargin);
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to crop PDF.');
+        page.setCropBox(newX, newY, newWidth, newHeight);
       }
 
+      const croppedBytes = await pdfDoc.save();
+      const blob = new Blob([croppedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const dataUrl = URL.createObjectURL(blob);
+      const baseName = file.name.replace(/\.[^/.]+$/, '');
+
       setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
+        dataUrl,
+        filename: `${baseName}_cropped.pdf`,
+        size: blob.size,
       });
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error cropping PDF.');
+      console.warn('Client crop fallback to API:', err);
+      // Fallback to API if client-side has unexpected issue
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('action', 'crop');
+        formData.append('top', topMargin.toString());
+        formData.append('bottom', bottomMargin.toString());
+        formData.append('left', leftMargin.toString());
+        formData.append('right', rightMargin.toString());
+
+        const res = await fetch('/api/flatten-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to crop PDF.');
+        }
+
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+        });
+      } catch (apiErr: any) {
+        setError(apiErr.message || err.message || 'Error cropping PDF.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -122,7 +153,7 @@ export default function CropPdfTool() {
     <div className="w-full max-w-5xl mx-auto space-y-6">
       {(!file || loadingThumbnails) && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
           title="Upload PDF to Crop & Trim Margins"

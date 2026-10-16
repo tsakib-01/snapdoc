@@ -5,6 +5,7 @@ import { Loader2, FileText, Sparkles, AlertCircle, X, ArrowLeft, ArrowRight, Plu
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { PDFDocument, PageSizes } from 'pdf-lib';
 
 interface ImageToPdfToolProps {
   title?: string;
@@ -85,27 +86,117 @@ export default function ImageToPdfTool({
     setResult(null);
 
     try {
-      const formData = new FormData();
-      items.forEach((item) => {
-        formData.append('files', item.file);
-      });
-      formData.append('pageSize', pageSize);
-      formData.append('orientation', orientation);
-      formData.append('margin', margin);
+      // 1. Direct client-side generation using pdf-lib:
+      // Instant, private, eliminates mobile "failed to fetch"
+      const pdfDoc = await PDFDocument.create();
+      const marginMap = { none: 0, small: 20, large: 40 };
+      const mVal = marginMap[margin] ?? 20;
 
-      const res = await fetch('/api/image-to-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      for (const item of items) {
+        let embedImg;
+        const fileBuffer = await item.file.arrayBuffer();
+        const fType = item.file.type.toLowerCase();
+        const fName = item.file.name.toLowerCase();
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to generate PDF.');
+        if (
+          fType.includes('jpeg') ||
+          fType.includes('jpg') ||
+          fName.endsWith('.jpg') ||
+          fName.endsWith('.jpeg')
+        ) {
+          embedImg = await pdfDoc.embedJpg(fileBuffer);
+        } else if (fType.includes('png') || fName.endsWith('.png')) {
+          embedImg = await pdfDoc.embedPng(fileBuffer);
+        } else {
+          const imgBitmap = await createImageBitmap(item.file);
+          const canvas = document.createElement('canvas');
+          canvas.width = imgBitmap.width;
+          canvas.height = imgBitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(imgBitmap, 0, 0);
+          const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.92));
+          if (blob) {
+            embedImg = await pdfDoc.embedJpg(await blob.arrayBuffer());
+          }
+        }
+
+        if (embedImg) {
+          const imgWidth = embedImg.width;
+          const imgHeight = embedImg.height;
+
+          let pageWidth: number;
+          let pageHeight: number;
+
+          if (pageSize === 'FIT') {
+            pageWidth = imgWidth + mVal * 2;
+            pageHeight = imgHeight + mVal * 2;
+          } else {
+            const standardSize = pageSize === 'LETTER' ? PageSizes.Letter : PageSizes.A4;
+            const isLandscape =
+              orientation === 'landscape' || (orientation === 'auto' && imgWidth > imgHeight);
+            pageWidth = isLandscape ? standardSize[1] : standardSize[0];
+            pageHeight = isLandscape ? standardSize[0] : standardSize[1];
+          }
+
+          const page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+          const availWidth = pageWidth - mVal * 2;
+          const availHeight = pageHeight - mVal * 2;
+          const scale = Math.min(availWidth / imgWidth, availHeight / imgHeight, 1);
+
+          const finalWidth = imgWidth * scale;
+          const finalHeight = imgHeight * scale;
+          const x = (pageWidth - finalWidth) / 2;
+          const y = (pageHeight - finalHeight) / 2;
+
+          page.drawImage(embedImg, {
+            x,
+            y,
+            width: finalWidth,
+            height: finalHeight,
+          });
+        }
       }
 
-      setResult(data);
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const dataUrl = URL.createObjectURL(blob);
+      const totalOrigSize = items.reduce((acc, it) => acc + it.file.size, 0);
+
+      setResult({
+        success: true,
+        filename: `converted_images_${Date.now()}.pdf`,
+        pdfSize: blob.size,
+        originalSize: totalOrigSize,
+        pageCount: items.length,
+        dataUrl,
+      });
     } catch (err: any) {
-      setError(err.message || 'Error occurred while creating PDF.');
+      console.warn('Client image-to-pdf fallback to API:', err);
+      // Fallback to API if client-side has unexpected issue
+      try {
+        const formData = new FormData();
+        items.forEach((item) => {
+          formData.append('files', item.file);
+        });
+        formData.append('pageSize', pageSize);
+        formData.append('orientation', orientation);
+        formData.append('margin', margin);
+
+        const res = await fetch('/api/image-to-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to generate PDF.');
+        }
+
+        setResult(data);
+      } catch (apiErr: any) {
+        setError(apiErr.message || err.message || 'Error occurred while creating PDF.');
+      }
     } finally {
       setIsProcessing(false);
     }

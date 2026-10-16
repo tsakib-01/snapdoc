@@ -6,6 +6,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import ToolLayout from '@/components/ui/ToolLayout';
 import { formatBytes } from '@/lib/utils/formatters';
+import { PDFDocument } from 'pdf-lib';
 
 export default function FlattenPdfPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -53,28 +54,53 @@ export default function FlattenPdfPage() {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('action', 'flatten');
-
-      const res = await fetch('/api/flatten-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to flatten PDF.');
+      // 1. Direct client-side processing using pdf-lib:
+      // Instant, private, eliminates mobile "failed to fetch"
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+      try {
+        const form = pdfDoc.getForm();
+        form.flatten();
+      } catch {
+        // PDF might not have acroforms
       }
 
+      const flattenedBytes = await pdfDoc.save();
+      const blob = new Blob([flattenedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const dataUrl = URL.createObjectURL(blob);
+      const baseName = file.name.replace(/\.[^/.]+$/, '');
+
       setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
+        dataUrl,
+        filename: `${baseName}_flattened.pdf`,
+        size: blob.size,
       });
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error flattening PDF.');
+      console.warn('Client flatten fallback to API:', err);
+      // Fallback to API if client-side has unexpected issue
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('action', 'flatten');
+
+        const res = await fetch('/api/flatten-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to flatten PDF.');
+        }
+
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+        });
+      } catch (apiErr: any) {
+        setError(apiErr.message || err.message || 'Error flattening PDF.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -91,7 +117,7 @@ export default function FlattenPdfPage() {
       <div className="w-full max-w-4xl mx-auto space-y-6">
         {!file && (
           <UploadZone
-            accept="application/pdf"
+            accept=".pdf,application/pdf"
             maxFiles={1}
             maxSizeMb={50}
             title="Upload PDF to Flatten Layers & Forms"

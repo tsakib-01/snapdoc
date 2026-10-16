@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
 import ResultCard from '@/components/ui/ResultCard';
+import { PDFDocument } from 'pdf-lib';
 
 export default function PdfScannerTool() {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -146,33 +147,71 @@ export default function PdfScannerTool() {
     setError(null);
 
     try {
-      const formData = new FormData();
-      for (let i = 0; i < capturedImages.length; i++) {
-        const resBlob = await fetch(capturedImages[i]).then((r) => r.blob());
-        formData.append('files', resBlob, `scan_page_${i + 1}.jpg`);
-      }
-      formData.append('pageSize', 'A4');
-      formData.append('margin', 'small');
+      // 1. Direct client-side generation using pdf-lib:
+      // Instant, private, eliminates mobile "failed to fetch" on camera photos
+      const pdfDoc = await PDFDocument.create();
 
-      const res = await fetch('/api/image-to-pdf', {
-        method: 'POST',
-        body: formData,
-      });
+      for (const imgUrl of capturedImages) {
+        const res = await fetch(imgUrl);
+        const imgBytes = await res.arrayBuffer();
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to generate scanned PDF.');
+        let embedImg;
+        try {
+          embedImg = await pdfDoc.embedJpg(imgBytes);
+        } catch {
+          embedImg = await pdfDoc.embedPng(imgBytes);
+        }
+
+        const page = pdfDoc.addPage([embedImg.width, embedImg.height]);
+        page.drawImage(embedImg, {
+          x: 0,
+          y: 0,
+          width: embedImg.width,
+          height: embedImg.height,
+        });
       }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const dataUrl = URL.createObjectURL(blob);
 
       setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
+        dataUrl,
+        filename: `scanned_doc_${Date.now()}.pdf`,
+        size: blob.size,
       });
       stopCamera();
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error generating PDF from scans.');
+      console.warn('Client scan generation fallback to API:', err);
+      // Fallback to API if client-side has unexpected issue
+      try {
+        const formData = new FormData();
+        for (let i = 0; i < capturedImages.length; i++) {
+          const resBlob = await fetch(capturedImages[i]).then((r) => r.blob());
+          formData.append('files', resBlob, `scan_page_${i + 1}.jpg`);
+        }
+        formData.append('pageSize', 'A4');
+        formData.append('margin', 'small');
+
+        const res = await fetch('/api/image-to-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to generate scanned PDF.');
+        }
+
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+        });
+        stopCamera();
+      } catch (apiErr: any) {
+        setError(apiErr.message || err.message || 'Error generating PDF from scans.');
+      }
     } finally {
       setProcessing(false);
     }

@@ -6,6 +6,19 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
+
+function parseHexColor(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace('#', '');
+  if (clean.length === 6) {
+    return {
+      r: parseInt(clean.substring(0, 2), 16) / 255,
+      g: parseInt(clean.substring(2, 4), 16) / 255,
+      b: parseInt(clean.substring(4, 6), 16) / 255,
+    };
+  }
+  return { r: 0.5, g: 0.5, b: 0.5 };
+}
 
 export default function WatermarkPdfTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -65,36 +78,124 @@ export default function WatermarkPdfTool() {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', watermarkType);
-      formData.append('text', text);
-      formData.append('opacity', opacity.toString());
-      formData.append('rotation', rotation.toString());
-      formData.append('color', color);
+      // 1. Direct client-side processing using pdf-lib:
+      // Instant, private, eliminates mobile "failed to fetch"
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+      const pdfPages = pdfDoc.getPages();
+      const op = opacity ?? 0.3;
+      const rot = rotation ?? -45;
 
       if (watermarkType === 'image' && imageFile) {
-        formData.append('imageFile', imageFile);
+        let embedImg;
+        const imgBuffer = await imageFile.arrayBuffer();
+        if (
+          imageFile.type === 'image/jpeg' ||
+          imageFile.name.toLowerCase().endsWith('.jpg') ||
+          imageFile.name.toLowerCase().endsWith('.jpeg')
+        ) {
+          embedImg = await pdfDoc.embedJpg(imgBuffer);
+        } else if (
+          imageFile.type === 'image/png' ||
+          imageFile.name.toLowerCase().endsWith('.png')
+        ) {
+          embedImg = await pdfDoc.embedPng(imgBuffer);
+        } else {
+          const imgBitmap = await createImageBitmap(imageFile);
+          const canvas = document.createElement('canvas');
+          canvas.width = imgBitmap.width;
+          canvas.height = imgBitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(imgBitmap, 0, 0);
+          const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/png'));
+          if (blob) {
+            embedImg = await pdfDoc.embedPng(await blob.arrayBuffer());
+          }
+        }
+
+        if (embedImg) {
+          for (const page of pdfPages) {
+            const { width, height } = page.getSize();
+            const imgWidth = Math.min(width * 0.5, embedImg.width);
+            const imgHeight = (imgWidth / embedImg.width) * embedImg.height;
+
+            page.drawImage(embedImg, {
+              x: (width - imgWidth) / 2,
+              y: (height - imgHeight) / 2,
+              width: imgWidth,
+              height: imgHeight,
+              opacity: op,
+              rotate: degrees(rot),
+            });
+          }
+        }
+      } else {
+        const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+        const stampText = text || 'CONFIDENTIAL';
+        const fontSize = 48;
+        const colorObj = parseHexColor(color || '#888888');
+
+        for (const page of pdfPages) {
+          const { width, height } = page.getSize();
+          const textWidth = font.widthOfTextAtSize(stampText, fontSize);
+          const textHeight = font.heightAtSize(fontSize);
+
+          page.drawText(stampText, {
+            x: (width - textWidth) / 2,
+            y: (height - textHeight) / 2,
+            size: fontSize,
+            font,
+            color: rgb(colorObj.r, colorObj.g, colorObj.b),
+            opacity: op,
+            rotate: degrees(rot),
+          });
+        }
       }
 
-      const res = await fetch('/api/watermark-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to watermark PDF.');
-      }
+      const watermarkedBytes = await pdfDoc.save();
+      const blob = new Blob([watermarkedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+      const dataUrl = URL.createObjectURL(blob);
+      const baseName = file.name.replace(/\.[^/.]+$/, '');
 
       setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
+        dataUrl,
+        filename: `${baseName}_watermarked.pdf`,
+        size: blob.size,
       });
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Error adding watermark.');
+      console.warn('Client watermark fallback to API:', err);
+      // Fallback to API if client-side has unexpected issue
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', watermarkType);
+        formData.append('text', text);
+        formData.append('opacity', opacity.toString());
+        formData.append('rotation', rotation.toString());
+        formData.append('color', color);
+
+        if (watermarkType === 'image' && imageFile) {
+          formData.append('imageFile', imageFile);
+        }
+
+        const res = await fetch('/api/watermark-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Failed to watermark PDF.');
+        }
+
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+        });
+      } catch (apiErr: any) {
+        setError(apiErr.message || err.message || 'Error adding watermark.');
+      }
     } finally {
       setProcessing(false);
     }
@@ -116,7 +217,7 @@ export default function WatermarkPdfTool() {
     <div className="w-full max-w-5xl mx-auto space-y-6">
       {(!file || loadingThumbnails) && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
           title="Upload PDF to Add Watermark"

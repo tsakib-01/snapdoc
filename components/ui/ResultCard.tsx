@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
+import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 export interface ResultCardProps {
   originalSize?: number;
@@ -93,6 +94,7 @@ export default function ResultCard({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showDownloadToast(filename);
   };
 
   const handleOpenPreview = () => {

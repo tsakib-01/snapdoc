@@ -33,6 +33,7 @@ import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument } from 'pdf-lib';
+import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 export interface PdfMergeItem {
   id: string;
@@ -181,12 +182,14 @@ export default function MergePdfTool() {
   // Download merged file
   const handleDownload = () => {
     if (!result?.dataUrl) return;
+    const downloadFilename = result.filename || 'merged-file.pdf';
     const link = document.createElement('a');
     link.href = result.dataUrl;
-    link.download = result.filename || 'merged-file.pdf';
+    link.download = downloadFilename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showDownloadToast(downloadFilename);
   };
 
   // Drag and drop reordering

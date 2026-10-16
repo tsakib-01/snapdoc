@@ -5,6 +5,7 @@ import { Loader2, Minimize2, AlertCircle, FileText, CheckCircle2, Sliders, Downl
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { showDownloadToast } from '@/lib/utils/downloadToast';
 
 export default function CompressPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
@@ -244,6 +245,7 @@ export default function CompressPdfTool() {
             <a
               href={result.dataUrl}
               download={result.filename}
+              onClick={() => showDownloadToast(result.filename)}
               className="btn btn-primary btn-md rounded-2xl gap-2 font-bold px-8 shadow-lg shadow-primary/20 w-full sm:w-auto text-white"
             >
               <Download className="w-4 h-4" />

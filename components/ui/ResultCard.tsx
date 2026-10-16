@@ -188,7 +188,7 @@ export default function ResultCard({
             <button
               type="button"
               onClick={handleOpenPreview}
-              className="btn btn-outline border-base-300 hover:bg-base-200 btn-md rounded-xl font-semibold gap-2 px-5 text-base-content"
+              className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-5 text-base-content/70 hover:text-base-content hover:bg-base-200"
             >
               <Eye className="w-4 h-4" />
               <span>Preview</span>
@@ -198,7 +198,7 @@ export default function ResultCard({
           <button
             type="button"
             onClick={onReset}
-            className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content"
+            className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200"
           >
             <RotateCcw className="w-4 h-4" />
             <span>{resetLabel || 'Process Another'}</span>

@@ -28,6 +28,7 @@ export default function WatermarkPdfTool() {
 
   const [watermarkType, setWatermarkType] = useState<'text' | 'image'>('text');
   const [text, setText] = useState<string>('CONFIDENTIAL');
+  const [fontSize, setFontSize] = useState<number>(48);
   const [opacity, setOpacity] = useState<number>(0.3);
   const [rotation, setRotation] = useState<number>(-45);
   const [color, setColor] = useState<string>('#666666');
@@ -152,14 +153,14 @@ export default function WatermarkPdfTool() {
 
         for (const page of pdfPages) {
           const { width, height } = page.getSize();
-          let fontSize = 48;
-          let textWidth = font.widthOfTextAtSize(stampText, fontSize);
+          let effectiveFontSize = fontSize || 48;
+          let textWidth = font.widthOfTextAtSize(stampText, effectiveFontSize);
           const maxAllowedLength = Math.hypot(width, height) * 0.75;
           if (textWidth > maxAllowedLength) {
-            fontSize = Math.floor(fontSize * (maxAllowedLength / textWidth));
-            textWidth = font.widthOfTextAtSize(stampText, fontSize);
+            effectiveFontSize = Math.floor(effectiveFontSize * (maxAllowedLength / textWidth));
+            textWidth = font.widthOfTextAtSize(stampText, effectiveFontSize);
           }
-          const textHeight = font.heightAtSize(fontSize);
+          const textHeight = font.heightAtSize(effectiveFontSize);
 
           // Center of the text:
           const cx = textWidth / 2;
@@ -170,7 +171,7 @@ export default function WatermarkPdfTool() {
           page.drawText(stampText, {
             x: width / 2 - dx,
             y: height / 2 - dy,
-            size: fontSize,
+            size: effectiveFontSize,
             font,
             color: rgb(colorObj.r, colorObj.g, colorObj.b),
             opacity: op,
@@ -197,6 +198,7 @@ export default function WatermarkPdfTool() {
         formData.append('file', file);
         formData.append('type', watermarkType);
         formData.append('text', text);
+        formData.append('fontSize', fontSize.toString());
         formData.append('opacity', opacity.toString());
         formData.append('rotation', rotation.toString());
         formData.append('color', color);
@@ -289,7 +291,7 @@ export default function WatermarkPdfTool() {
               {activeThumbnail ? (
                 <div
                   style={{ aspectRatio: `${activeThumbnail.aspectRatio}` }}
-                  className="relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-xl shadow-lg overflow-hidden border border-base-300 select-none my-2 flex items-center justify-center"
+                  className="@container relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-xl shadow-lg overflow-hidden border border-base-300 select-none my-2 flex items-center justify-center"
                 >
                   <img
                     src={activeThumbnail.dataUrl}
@@ -297,18 +299,20 @@ export default function WatermarkPdfTool() {
                     className="w-full h-full object-contain pointer-events-none"
                   />
 
-                  {/* Live Watermark Overlay matching PDF HelveticaBold */}
+                  {/* Live Watermark Overlay matching PDF Arial/Helvetica */}
                   {watermarkType === 'text' && text && (
                     <div
                       style={{
                         transform: `rotate(${rotation}deg)`,
                         opacity: opacity,
                         color: color,
-                        fontFamily: "'HelveticaBoldWeb', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                        fontFamily: 'Arial, Helvetica, sans-serif',
                         fontWeight: 700,
+                        fontSize: `clamp(14px, ${(fontSize / 595) * 100}cqw, 72px)`,
                         letterSpacing: '0px',
+                        lineHeight: 1,
                       }}
-                      className="absolute font-bold text-xl sm:text-2xl text-center pointer-events-none select-none drop-shadow-xs max-w-[90%] break-words"
+                      className="absolute font-bold text-center pointer-events-none select-none whitespace-nowrap"
                     >
                       {text}
                     </div>
@@ -382,6 +386,22 @@ export default function WatermarkPdfTool() {
                         onChange={(e) => setText(e.target.value)}
                         placeholder="e.g. DRAFT, CONFIDENTIAL, SAMPLE"
                         className="input input-bordered input-sm w-full rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-base-content/70">
+                        <span>Font Size</span>
+                        <span className="font-bold text-primary">{fontSize} pt</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="20"
+                        max="80"
+                        step="2"
+                        value={fontSize}
+                        onChange={(e) => setFontSize(parseInt(e.target.value))}
+                        className="range range-xs range-primary"
                       />
                     </div>
 

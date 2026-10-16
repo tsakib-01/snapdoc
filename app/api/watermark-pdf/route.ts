@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null;
     const watermarkType = (formData.get('type') as 'text' | 'image') || 'text';
     const text = (formData.get('text') as string) || 'CONFIDENTIAL';
+    const fontSize = parseFloat(formData.get('fontSize') as string) || 48;
     const opacity = parseFloat(formData.get('opacity') as string) || 0.3;
     const rotation = parseFloat(formData.get('rotation') as string) || -45;
     const color = (formData.get('color') as string) || '#888888';
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
     const watermarkedBytes = await watermarkPdfDocument(inputBuffer, {
       type: watermarkType,
       text,
+      fontSize,
       imageBuffer,
       opacity,
       rotation,

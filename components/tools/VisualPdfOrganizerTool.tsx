@@ -1024,34 +1024,36 @@ export default function VisualPdfOrganizerTool({
             </div>
 
             {/* Action buttons */}
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleDownloadResult}
-                className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-6"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download File</span>
-              </button>
-
-              {!resultData.filename.endsWith('.zip') && (
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() => setShowResultPreviewModal(true)}
-                  className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-5 text-base-content/70 hover:text-base-content hover:bg-base-200"
+                  onClick={handleDownloadResult}
+                  className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-4 sm:px-6 flex-1 sm:flex-none justify-center"
                 >
-                  <Eye className="w-4 h-4" />
-                  <span>Preview</span>
+                  <Download className="w-4 h-4 shrink-0" />
+                  <span className="truncate">Download File</span>
                 </button>
-              )}
+
+                {!resultData.filename.endsWith('.zip') && (
+                  <button
+                    type="button"
+                    onClick={() => setShowResultPreviewModal(true)}
+                    className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-4 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center"
+                  >
+                    <Eye className="w-4 h-4 shrink-0" />
+                    <span className="truncate">Preview</span>
+                  </button>
+                )}
+              </div>
 
               <button
                 type="button"
                 onClick={handleReset}
-                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200"
+                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center"
               >
-                <RotateCcw className="w-4 h-4" />
-                <span>Process Another</span>
+                <RotateCcw className="w-4 h-4 shrink-0" />
+                <span className="truncate">Process Another</span>
               </button>
             </div>
 

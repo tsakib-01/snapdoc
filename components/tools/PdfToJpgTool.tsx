@@ -156,8 +156,8 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
           accept="application/pdf"
           files={files}
           onFilesSelected={setFiles}
-          title="Drop PDF file to extract JPG pages"
-          subtitle="Converts every page to high-definition JPEG images"
+          title={`Drop PDF file to extract ${label} pages`}
+          subtitle={`Converts every page to high-definition ${isPng ? 'PNG' : 'JPEG'} images`}
         />
       )}
 

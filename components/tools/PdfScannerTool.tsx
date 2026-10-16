@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload, Eye, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, Trash2, SwitchCamera, Upload, Eye, X, ChevronLeft, ChevronRight, FlipHorizontal } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
 import ResultCard from '@/components/ui/ResultCard';
 import { PDFDocument } from 'pdf-lib';
@@ -11,6 +11,7 @@ export default function PdfScannerTool() {
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [isMirrored, setIsMirrored] = useState<boolean>(false);
   const [processing, setProcessing] = useState<boolean>(false);
   const [flash, setFlash] = useState<boolean>(false);
   const [resultData, setResultData] = useState<{
@@ -52,6 +53,7 @@ export default function PdfScannerTool() {
       }
 
       let stream: MediaStream;
+      let isDesktopFallback = false;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -63,6 +65,7 @@ export default function PdfScannerTool() {
         });
       } catch (fallbackErr) {
         // Fallback for desktop webcams that don't support facingMode constraints
+        isDesktopFallback = true;
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
@@ -71,6 +74,8 @@ export default function PdfScannerTool() {
 
       streamRef.current = stream;
       setIsCameraActive(true);
+      // Automatically mirror front selfie camera or desktop webcam for natural reflection
+      setIsMirrored(mode === 'user' || isDesktopFallback);
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -88,6 +93,7 @@ export default function PdfScannerTool() {
   const toggleFacingMode = () => {
     const nextMode = facingMode === 'environment' ? 'user' : 'environment';
     setFacingMode(nextMode);
+    setIsMirrored(nextMode === 'user');
     startCamera(nextMode);
   };
 
@@ -116,6 +122,10 @@ export default function PdfScannerTool() {
     const ctx = canvas.getContext('2d');
 
     if (ctx) {
+      if (isMirrored) {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
       setCapturedImages((prev) => [...prev, dataUrl]);
@@ -286,31 +296,44 @@ export default function PdfScannerTool() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[3/4] sm:aspect-[4/3] max-h-[60vh] sm:max-h-[500px] flex items-center justify-center shadow-xl border border-base-300">
+              <div className="relative rounded-2xl overflow-hidden shadow-xl border border-base-300 w-fit mx-auto max-w-full max-h-[70vh] flex items-center justify-center bg-base-300/20">
                 <video
                   ref={videoRef}
-                  className="w-full h-full object-contain"
+                  className={`max-h-[70vh] w-auto max-w-full block rounded-2xl ${isMirrored ? '-scale-x-100' : ''}`}
                   autoPlay
                   playsInline
                   muted
                 />
 
                 {/* Document Alignment Frame */}
-                <div className="absolute inset-4 sm:inset-8 border-2 border-dashed border-white/60 rounded-2xl pointer-events-none flex items-center justify-center">
+                <div className="absolute inset-4 sm:inset-6 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
                   <span className="text-white text-xs font-bold bg-black/60 px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-md">
                     Align document inside frame
                   </span>
                 </div>
 
-                {/* Flip Camera Button */}
-                <button
-                  type="button"
-                  onClick={toggleFacingMode}
-                  title="Switch Front/Back Camera"
-                  className="absolute top-3 right-3 btn btn-circle btn-sm bg-black/60 hover:bg-black/80 text-white border-none backdrop-blur-md"
-                >
-                  <SwitchCamera className="w-4 h-4" />
-                </button>
+                {/* Camera Control Overlays (Top Right) */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                  {/* Mirror Reflection Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsMirrored((prev) => !prev)}
+                    title={isMirrored ? 'Disable Mirror Reflection' : 'Enable Mirror Reflection'}
+                    className={`btn btn-circle btn-sm ${isMirrored ? 'bg-primary text-white shadow-md' : 'bg-black/60 hover:bg-black/80 text-white'} border-none backdrop-blur-md`}
+                  >
+                    <FlipHorizontal className="w-4 h-4" />
+                  </button>
+
+                  {/* Flip Front/Back Camera Button */}
+                  <button
+                    type="button"
+                    onClick={toggleFacingMode}
+                    title="Switch Front/Back Camera"
+                    className="btn btn-circle btn-sm bg-black/60 hover:bg-black/80 text-white border-none backdrop-blur-md"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </button>
+                </div>
 
                 {/* Visual Camera Shutter Flash */}
                 {flash && (

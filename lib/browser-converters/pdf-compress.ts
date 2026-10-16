@@ -178,7 +178,14 @@ async function rasterizeCompress(
         return null;
       }
 
-      const img = await newDoc.embedJpg(dataUrl);
+      const base64Data = dataUrl.split(',')[1] || dataUrl;
+      const binaryString = atob(base64Data);
+      const jpegBytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        jpegBytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const img = await newDoc.embedJpg(jpegBytes);
       const newPage = newDoc.addPage([origVp.width, origVp.height]);
       newPage.drawImage(img, {
         x: 0,

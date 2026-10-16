@@ -115,3 +115,18 @@ body {
   animation: shake-horizontal 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
+/* Ready badge: perfectly blends with background in both light and dark themes */
+.badge.badge-ready,
+[data-theme='light'] .badge.badge-ready {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+[data-theme='dark'] .badge.badge-ready {
+  background-color: rgba(6, 78, 59, 0.45) !important;
+  border-color: rgba(52, 211, 153, 0.3) !important;
+  color: #6ee7b7 !important;
+}
+
+

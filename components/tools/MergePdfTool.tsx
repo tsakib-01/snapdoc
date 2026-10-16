@@ -878,7 +878,7 @@ export default function MergePdfTool() {
                     <h4 className="font-bold text-base sm:text-lg text-base-content truncate">
                       {result.filename || 'merged-file.pdf'}
                     </h4>
-                    <span className="badge badge-sm bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-none font-bold">
+                    <span className="badge badge-sm badge-ready border font-bold">
                       Ready
                     </span>
                   </div>

@@ -1,21 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Loader2,
   AlertCircle,
-  Check,
   Plus,
   X,
   ArrowRight,
-  ArrowRightCircle,
   RotateCcw,
   Download,
   Archive,
-  Layers,
-  ChevronDown,
-  Sparkles,
-  FileImage,
+  Maximize2,
+  Percent,
+  Lock,
+  Unlock,
+  Check,
+  Scaling,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
@@ -40,36 +40,6 @@ const SOCIAL_PRESETS = [
   { name: 'Web Banner 728×90', width: 728, height: 90 },
 ];
 
-function PixelGridResizeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="11" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="7" y="11" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="3" y="15" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="7" y="15" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="11" y="15" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="3" y="19" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="7" y="19" width="3" height="3" fill="currentColor" rx="0.5" />
-      <rect x="11" y="19" width="3" height="3" fill="currentColor" rx="0.5" />
-      <path d="M14 4H20V10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20 4L11 13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function PercentageResizeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="4" width="13" height="17" rx="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="7" cy="14" r="1.2" fill="currentColor" />
-      <path d="M6 18L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="9" cy="17" r="1.2" fill="currentColor" />
-      <path d="M15 3H21V9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21 3L13 11" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function ResizerTool() {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [mode, setMode] = useState<'pixels' | 'percentage'>('pixels');
@@ -77,7 +47,7 @@ export default function ResizerTool() {
   const [height, setHeight] = useState<number | ''>('');
   const [maintainRatio, setMaintainRatio] = useState<boolean>(true);
   const [doNotEnlarge, setDoNotEnlarge] = useState<boolean>(false);
-  const [scalePercent, setScalePercent] = useState<number>(50);
+  const [scalePercent, setScalePercent] = useState<number>(50); // Capped at 100%
 
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processProgress, setProcessProgress] = useState<{ current: number; total: number } | null>(null);
@@ -87,7 +57,7 @@ export default function ResizerTool() {
 
   const hiddenFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Helper to load dimensions for an array of files
+  // Helper to load natural dimensions for uploaded files
   const loadFiles = async (filesToAdd: File[]) => {
     if (!filesToAdd || filesToAdd.length === 0) return;
 
@@ -113,7 +83,6 @@ export default function ResizerTool() {
     setImages((prev) => {
       const updated = [...prev, ...newItems];
       if (prev.length === 0 && updated.length > 0) {
-        // Set initial width/height from the primary image
         setWidth(updated[0].originalWidth);
         setHeight(updated[0].originalHeight);
       }
@@ -163,20 +132,22 @@ export default function ResizerTool() {
   };
 
   const handleReset = () => {
-    // Revoke object URLs to prevent memory leaks
     images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
     setImages([]);
     setResults(null);
     setError(null);
     setWidth('');
     setHeight('');
+    setScalePercent(50);
     setProcessProgress(null);
   };
 
   // Calculate preview target dimensions for a specific image item
   const getTargetDimensions = (item: ImageItem) => {
     if (mode === 'percentage') {
-      const factor = (scalePercent || 50) / 100;
+      // Percentage strictly capped at 100%
+      const safePct = Math.min(100, Math.max(1, scalePercent || 50));
+      const factor = safePct / 100;
       let targetW = Math.max(1, Math.round(item.originalWidth * factor));
       let targetH = Math.max(1, Math.round(item.originalHeight * factor));
       if (doNotEnlarge && (targetW > item.originalWidth || targetH > item.originalHeight)) {
@@ -190,7 +161,6 @@ export default function ResizerTool() {
     const inputH = typeof height === 'number' && height > 0 ? height : item.originalHeight;
 
     if (maintainRatio) {
-      // Scale proportionally based on item's own aspect ratio
       const ratio = item.originalWidth / item.originalHeight;
       let targetW = inputW;
       let targetH = Math.max(1, Math.round(inputW / ratio));
@@ -234,7 +204,8 @@ export default function ResizerTool() {
         formData.append('maintainAspectRatio', maintainRatio ? 'true' : 'false');
         formData.append('withoutEnlargement', doNotEnlarge ? 'true' : 'false');
         if (mode === 'percentage') {
-          formData.append('scalePercent', scalePercent.toString());
+          // Strictly capped at 100%
+          formData.append('scalePercent', Math.min(100, Math.max(1, scalePercent)).toString());
         }
 
         const res = await fetch('/api/resize-image', {
@@ -292,6 +263,8 @@ export default function ResizerTool() {
     }
   };
 
+  const totalOriginalSize = images.reduce((acc, it) => acc + it.file.size, 0);
+
   return (
     <div className="w-full space-y-6">
       {/* Hidden file input for adding more images */}
@@ -314,7 +287,7 @@ export default function ResizerTool() {
         <UploadZone
           accept="image/jpeg,image/jpg,image/png,image/webp"
           multiple={true}
-          maxFiles={20}
+          maxFiles={30}
           onFilesSelected={loadFiles}
           title="Drop images here to resize"
           subtitle="Resize photos by exact pixels or percentage online"
@@ -324,86 +297,92 @@ export default function ResizerTool() {
       {/* Active Workspace when images are loaded */}
       {images.length > 0 && !results && (
         <div className="flex flex-col lg:flex-row items-start gap-6 animate-in fade-in duration-150">
-          {/* LEFT: Image Gallery / Workspace */}
+          {/* LEFT: Image Gallery / Workspace (matches PDF images layout) */}
           <div className="flex-1 w-full min-w-0 space-y-4">
-            {/* Top Workspace Bar */}
-            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
-              <div className="flex items-center gap-2.5">
-                <span className="badge badge-primary font-bold px-3 py-1 text-xs shadow-xs">
-                  {images.length} {images.length === 1 ? 'Image' : 'Images'}
+            {/* Top Bar with Sequence & Clear All (consistent with PDF tools) */}
+            <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-base-200/50 border border-base-300">
+              <div>
+                <span className="text-xs sm:text-sm font-bold text-base-content block">
+                  Resize Images ({images.length} {images.length === 1 ? 'image' : 'images'})
                 </span>
-                <span className="text-xs text-base-content/60 hidden sm:inline">
-                  Ready to resize
+                <span className="text-xs text-base-content/60">
+                  Total size: {formatBytes(totalOriginalSize)}
                 </span>
               </div>
-
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => hiddenFileInputRef.current?.click()}
-                  className="btn btn-sm btn-ghost gap-1.5 text-xs text-primary font-semibold hover:bg-primary/10"
+                  className="btn btn-ghost btn-xs sm:btn-sm text-primary hover:bg-primary/10 gap-1 font-semibold"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   <span>Add More</span>
                 </button>
                 <div className="w-px h-4 bg-base-300"></div>
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="btn btn-sm btn-ghost text-xs text-base-content/60 hover:text-error gap-1.5"
+                  className="btn btn-ghost btn-xs sm:btn-sm text-base-content/60 hover:text-error gap-1"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset</span>
+                  <span>Clear All</span>
                 </button>
               </div>
             </div>
 
-            {/* Gallery Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4.5 relative">
+            {/* Visual Image Thumbnail Preview Grid (matches PDF tools card layout) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 p-1">
               {images.map((item, idx) => {
                 const dims = getTargetDimensions(item);
                 return (
                   <div
                     key={item.id}
-                    className="group relative rounded-2xl border border-base-300 bg-base-100 hover:border-primary/50 hover:shadow-md transition-all p-3.5 flex flex-col justify-between"
+                    className="group relative rounded-2xl bg-base-100 border-2 border-base-300 hover:border-primary/60 shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden"
                   >
-                    {/* Delete button on card */}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(item.id)}
-                      className="absolute top-2.5 right-2.5 btn btn-circle btn-xs btn-ghost text-base-content/50 hover:text-error hover:bg-error/10 z-10 transition-colors"
-                      title="Remove image"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-
-                    {/* Image Thumbnail */}
-                    <div className="w-full aspect-[4/3] bg-base-200/40 rounded-xl overflow-hidden flex items-center justify-center p-2 mb-3">
+                    {/* Image Thumbnail Container */}
+                    <div className="h-32 sm:h-36 w-full bg-base-200/40 p-2 flex items-center justify-center relative overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={item.previewUrl}
                         alt={item.file.name}
-                        className="max-w-full max-h-full object-contain rounded-lg"
+                        className="h-full w-full object-contain drop-shadow-sm rounded-none"
                       />
+
+                      {/* Item Sequence Badge */}
+                      <span className="absolute top-2 left-2 badge badge-sm bg-neutral/80 text-white backdrop-blur-sm font-bold text-[10px] shadow">
+                        #{idx + 1}
+                      </span>
+
+                      {/* Remove Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(item.id)}
+                        className="absolute top-1.5 right-1.5 btn btn-circle btn-xs btn-error text-white opacity-80 hover:opacity-100 shadow transition-opacity"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
 
                     {/* Info & Dimension Badges */}
-                    <div className="space-y-2">
-                      <p
-                        className="text-xs font-bold text-base-content truncate px-0.5"
-                        title={item.file.name}
-                      >
-                        {item.file.name}
-                      </p>
+                    <div className="p-2.5 bg-base-100 border-t border-base-200 flex flex-col items-center justify-between gap-1.5 text-xs">
+                      <div className="w-full text-center px-1">
+                        <p className="font-semibold text-base-content truncate text-[11px]" title={item.file.name}>
+                          {item.file.name}
+                        </p>
+                        <p className="text-[10px] text-base-content/50">
+                          {formatBytes(item.file.size)}
+                        </p>
+                      </div>
 
-                      {/* Dimension Arrow Badge matching reference screenshot */}
-                      <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-base-200/80">
-                        <span className="px-2 py-0.5 rounded-md bg-base-200 text-base-content/70 text-[11px] font-mono font-medium">
-                          {item.originalWidth} × {item.originalHeight}
+                      {/* Dimension Arrow Badge */}
+                      <div className="flex items-center justify-center gap-1.5 pt-1.5 border-t border-base-200/70 w-full flex-wrap">
+                        <span className="px-1.5 py-0.5 rounded bg-base-200 text-base-content/70 text-[10px] font-mono font-medium">
+                          {item.originalWidth}×{item.originalHeight}
                         </span>
-                        <ArrowRight className="w-3.5 h-3.5 text-base-content/40 shrink-0" />
-                        <span className="px-2 py-0.5 rounded-md bg-primary text-primary-content text-[11px] font-mono font-bold shadow-xs">
-                          {dims.width} × {dims.height}
+                        <ArrowRight className="w-3 h-3 text-base-content/40 shrink-0" />
+                        <span className="px-1.5 py-0.5 rounded bg-primary text-primary-content text-[10px] font-mono font-bold shadow-xs">
+                          {dims.width}×{dims.height}
                         </span>
                       </div>
                     </div>
@@ -412,86 +391,102 @@ export default function ResizerTool() {
               })}
 
               {/* Add More Images Card in Grid */}
-              <button
-                type="button"
+              <div
                 onClick={() => hiddenFileInputRef.current?.click()}
-                className="rounded-2xl border-2 border-dashed border-base-300 hover:border-primary/60 bg-base-200/20 hover:bg-base-200/50 transition-all flex flex-col items-center justify-center p-6 min-h-[200px] gap-2.5 text-base-content/60 hover:text-primary group cursor-pointer"
+                className="rounded-2xl border-2 border-dashed border-base-300 hover:border-primary/60 hover:bg-primary/5 cursor-pointer flex flex-col items-center justify-center p-4 min-h-[160px] text-center transition-all group"
+                title="Add more photos"
               >
-                <div className="w-12 h-12 rounded-2xl bg-base-100 group-hover:bg-primary/10 group-hover:text-primary flex items-center justify-center border border-base-300 transition-colors shadow-xs">
-                  <Plus className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-xl bg-base-200 group-hover:bg-primary/10 text-base-content/60 group-hover:text-primary flex items-center justify-center mb-2 transition-colors">
+                  <Plus className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-bold">Add more images</span>
-              </button>
+                <span className="text-xs font-bold text-base-content/70 group-hover:text-primary">
+                  Add Images
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* RIGHT: Resize Options Sidebar */}
-          <div className="w-full lg:w-80 xl:w-96 rounded-3xl bg-base-100 border border-base-300/80 p-5 sm:p-6 shadow-xl space-y-5 shrink-0 lg:sticky lg:top-20">
-            {/* Sidebar Title */}
-            <h2 className="text-xl sm:text-2xl font-black text-base-content tracking-tight">
-              Resize options
-            </h2>
+          {/* RIGHT: SnapDoc Styled Resize Settings Panel */}
+          <div className="w-full lg:w-80 xl:w-96 rounded-2xl bg-base-100 border border-base-300 p-5 shadow-lg space-y-5 shrink-0 lg:sticky lg:top-20">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-base-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shadow-xs">
+                  <Scaling className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-extrabold text-base-content leading-tight">
+                    Resize Settings
+                  </h2>
+                  <p className="text-[11px] text-base-content/60">
+                    Adjust dimensions or scale
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            {/* Mode Selector Cards (By pixels vs By percentage) */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* By pixels */}
+            {/* Mode Segmented Tab Selector (SnapDoc native style) */}
+            <div className="grid grid-cols-2 p-1 rounded-xl bg-base-200/70 border border-base-300/60 gap-1">
               <button
                 type="button"
                 onClick={() => setMode('pixels')}
-                className={`relative flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   mode === 'pixels'
-                    ? 'border-primary bg-primary/5 text-primary shadow-sm'
-                    : 'border-base-300 bg-base-100 hover:border-base-content/20 text-base-content/70'
+                    ? 'bg-primary text-primary-content shadow-xs'
+                    : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
                 }`}
               >
-                {mode === 'pixels' && (
-                  <div className="absolute top-2.5 left-2.5 w-4 h-4 rounded-full bg-success text-success-content flex items-center justify-center shadow-xs">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </div>
-                )}
-                <PixelGridResizeIcon className="w-8 h-8 mb-2" />
-                <span className="font-extrabold text-xs sm:text-sm">By pixels</span>
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>By Pixels</span>
               </button>
 
-              {/* By percentage */}
               <button
                 type="button"
                 onClick={() => setMode('percentage')}
-                className={`relative flex flex-col items-center justify-center p-3.5 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   mode === 'percentage'
-                    ? 'border-primary bg-primary/5 text-primary shadow-sm'
-                    : 'border-base-300 bg-base-100 hover:border-base-content/20 text-base-content/70'
+                    ? 'bg-primary text-primary-content shadow-xs'
+                    : 'text-base-content/70 hover:text-base-content hover:bg-base-100/50'
                 }`}
               >
-                {mode === 'percentage' && (
-                  <div className="absolute top-2.5 left-2.5 w-4 h-4 rounded-full bg-success text-success-content flex items-center justify-center shadow-xs">
-                    <Check className="w-2.5 h-2.5 stroke-[3]" />
-                  </div>
-                )}
-                <PercentageResizeIcon className="w-8 h-8 mb-2" />
-                <span className="font-extrabold text-xs sm:text-sm">By percentage</span>
+                <Percent className="w-3.5 h-3.5" />
+                <span>By Percentage</span>
               </button>
             </div>
 
-            {/* Context Subtitle */}
-            <p className="text-xs sm:text-sm text-base-content/70">
-              {mode === 'pixels' ? (
-                <>
-                  Resize all images to an <strong className="text-base-content font-bold">exact size</strong> of:
-                </>
-              ) : (
-                <>
-                  Resize all images to a <strong className="text-base-content font-bold">percentage</strong> of original:
-                </>
-              )}
-            </p>
-
             {/* BY PIXELS CONTROLS */}
             {mode === 'pixels' && (
-              <div className="space-y-3.5 pt-1">
-                <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-bold text-base-content">Width (px):</label>
-                  <div className="flex items-center border border-base-300 rounded-xl bg-base-100 overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary shadow-xs">
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-base-content">Target Dimensions</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const nextVal = !maintainRatio;
+                      setMaintainRatio(nextVal);
+                      if (nextVal && width !== '' && primaryImage?.originalWidth) {
+                        const calcH = Math.max(
+                          1,
+                          Math.round((primaryImage.originalHeight / primaryImage.originalWidth) * Number(width))
+                        );
+                        setHeight(calcH);
+                      }
+                    }}
+                    className={`btn btn-xs rounded-lg gap-1 ${
+                      maintainRatio ? 'btn-primary text-primary-content shadow-xs' : 'btn-ghost text-base-content/60'
+                    }`}
+                    title={maintainRatio ? 'Aspect ratio locked' : 'Aspect ratio free'}
+                  >
+                    {maintainRatio ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                    <span>{maintainRatio ? 'Ratio Locked' : 'Ratio Free'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-[11px] font-semibold text-base-content/70 mb-1 block">
+                      Width (px)
+                    </label>
                     <input
                       type="number"
                       min="1"
@@ -501,14 +496,14 @@ export default function ResizerTool() {
                         handleWidthChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))
                       }
                       placeholder="Width"
-                      className="input input-sm border-none focus:outline-hidden font-bold text-center w-28 sm:w-32 text-sm"
+                      className="input input-sm input-bordered w-full rounded-xl font-bold font-mono text-center text-xs"
                     />
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <label className="text-sm font-bold text-base-content">Height (px):</label>
-                  <div className="flex items-center border border-base-300 rounded-xl bg-base-100 overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary shadow-xs">
+                  <div>
+                    <label className="text-[11px] font-semibold text-base-content/70 mb-1 block">
+                      Height (px)
+                    </label>
                     <input
                       type="number"
                       min="1"
@@ -518,26 +513,46 @@ export default function ResizerTool() {
                         handleHeightChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))
                       }
                       placeholder="Height"
-                      className="input input-sm border-none focus:outline-hidden font-bold text-center w-28 sm:w-32 text-sm"
+                      className="input input-sm input-bordered w-full rounded-xl font-bold font-mono text-center text-xs"
                     />
                   </div>
+                </div>
+
+                <div className="pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-base-content/80 select-none">
+                    <input
+                      type="checkbox"
+                      checked={doNotEnlarge}
+                      onChange={(e) => setDoNotEnlarge(e.target.checked)}
+                      className="checkbox checkbox-xs checkbox-primary rounded"
+                    />
+                    <span>Do not enlarge if smaller</span>
+                  </label>
                 </div>
               </div>
             )}
 
-            {/* BY PERCENTAGE CONTROLS */}
+            {/* BY PERCENTAGE CONTROLS (CAPPED STRICTLY AT 100%) */}
             {mode === 'percentage' && (
-              <div className="space-y-3 pt-1">
-                <div className="flex flex-wrap gap-1.5">
-                  {[25, 50, 75, 100, 150, 200].map((pct) => (
+              <div className="space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-base-content">Scale Down (Max 100%)</span>
+                  <span className="badge badge-primary font-bold text-xs px-2 py-0.5 font-mono">
+                    {scalePercent}%
+                  </span>
+                </div>
+
+                {/* Percentage Preset Buttons - Up to 100% only */}
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[25, 50, 75, 100].map((pct) => (
                     <button
                       key={pct}
                       type="button"
                       onClick={() => setScalePercent(pct)}
-                      className={`btn btn-xs rounded-xl flex-1 font-bold ${
+                      className={`btn btn-xs rounded-lg font-bold font-mono ${
                         scalePercent === pct
                           ? 'btn-primary text-primary-content shadow-xs'
-                          : 'btn-ghost bg-base-200/60 border border-base-300'
+                          : 'btn-ghost bg-base-200/70 border border-base-300/60'
                       }`}
                     >
                       {pct}%
@@ -545,71 +560,53 @@ export default function ResizerTool() {
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <label className="text-sm font-bold text-base-content">Scale (%):</label>
-                  <div className="flex items-center border border-base-300 rounded-xl bg-base-100 overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary shadow-xs">
-                    <input
-                      type="number"
-                      min="1"
-                      max="500"
-                      value={scalePercent}
-                      onChange={(e) =>
-                        setScalePercent(Math.max(1, parseInt(e.target.value, 10) || 1))
-                      }
-                      className="input input-sm border-none focus:outline-hidden font-bold text-center w-28 sm:w-32 text-sm"
-                    />
+                {/* Slider (min 1, max 100) */}
+                <div className="space-y-1 pt-1">
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={scalePercent}
+                    onChange={(e) =>
+                      setScalePercent(Math.min(100, Math.max(1, parseInt(e.target.value, 10) || 1)))
+                    }
+                    className="range range-primary range-xs w-full"
+                  />
+                  <div className="flex justify-between text-[10px] text-base-content/50 font-mono px-0.5">
+                    <span>1%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
                   </div>
+                </div>
+
+                <div className="pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-base-content/80 select-none">
+                    <input
+                      type="checkbox"
+                      checked={doNotEnlarge}
+                      onChange={(e) => setDoNotEnlarge(e.target.checked)}
+                      className="checkbox checkbox-xs checkbox-primary rounded"
+                    />
+                    <span>Do not enlarge if smaller</span>
+                  </label>
                 </div>
               </div>
             )}
 
-            {/* CHECKBOXES matching reference screenshot */}
-            <div className="space-y-2.5 pt-2 border-t border-base-200">
-              <label className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-base-content select-none">
-                <input
-                  type="checkbox"
-                  checked={maintainRatio}
-                  onChange={(e) => {
-                    const nextVal = e.target.checked;
-                    setMaintainRatio(nextVal);
-                    if (nextVal && width !== '' && primaryImage?.originalWidth) {
-                      const calcH = Math.max(
-                        1,
-                        Math.round(
-                          (primaryImage.originalHeight / primaryImage.originalWidth) * Number(width)
-                        )
-                      );
-                      setHeight(calcH);
-                    }
-                  }}
-                  className="checkbox checkbox-sm checkbox-primary rounded"
-                />
-                <span>Maintain aspect ratio</span>
-              </label>
-
-              <label className="flex items-center gap-2.5 cursor-pointer text-sm font-medium text-base-content/80 select-none">
-                <input
-                  type="checkbox"
-                  checked={doNotEnlarge}
-                  onChange={(e) => setDoNotEnlarge(e.target.checked)}
-                  className="checkbox checkbox-sm checkbox-primary rounded"
-                />
-                <span>Do not enlarge if smaller</span>
-              </label>
-            </div>
-
             {/* Collapsible Social Presets */}
-            <details className="collapse collapse-arrow bg-base-200/50 rounded-2xl border border-base-300/80">
-              <summary className="collapse-title text-xs font-bold text-base-content/80 py-2.5 min-h-0">
+            <details className="collapse collapse-arrow bg-base-200/40 rounded-xl border border-base-300/70">
+              <summary className="collapse-title text-xs font-bold text-base-content/80 py-2 min-h-0">
                 Popular Social Presets
               </summary>
-              <div className="collapse-content space-y-1.5 pt-1">
+              <div className="collapse-content space-y-1 pt-1">
                 {SOCIAL_PRESETS.map((preset) => (
                   <button
                     key={preset.name}
                     type="button"
                     onClick={() => handlePreset(preset.width, preset.height)}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-base-100 flex items-center justify-between text-base-content/80 hover:text-primary transition-colors"
+                    className="w-full text-left px-2 py-1.5 rounded-lg text-xs hover:bg-base-100 flex items-center justify-between text-base-content/80 hover:text-primary transition-colors cursor-pointer"
                   >
                     <span className="font-medium">{preset.name}</span>
                     <span className="font-mono text-[11px] opacity-60">
@@ -628,16 +625,16 @@ export default function ResizerTool() {
               </div>
             )}
 
-            {/* Big Action CTA Button */}
+            {/* Action CTA Button */}
             <button
               type="button"
               onClick={handleProcess}
               disabled={isProcessing || images.length === 0}
-              className="btn btn-primary btn-lg rounded-2xl w-full font-black text-base shadow-xl shadow-primary/25 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 uppercase tracking-wide cursor-pointer"
+              className="btn btn-primary btn-md sm:btn-lg rounded-xl w-full font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                   <span>
                     Resizing{' '}
                     {processProgress
@@ -647,8 +644,8 @@ export default function ResizerTool() {
                 </>
               ) : (
                 <>
-                  <span>Resize {images.length > 1 ? 'IMAGES' : 'IMAGE'}</span>
-                  <ArrowRightCircle className="w-5 h-5 shrink-0" />
+                  <span>Resize {images.length > 1 ? `${images.length} Images` : 'Image'}</span>
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                 </>
               )}
             </button>
@@ -694,13 +691,13 @@ export default function ResizerTool() {
           {results.length > 1 && (
             <div className="space-y-6">
               {/* Batch Summary Header */}
-              <div className="p-5 sm:p-6 rounded-3xl bg-base-100 border border-base-300 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shadow-xs">
-                    <Check className="w-6 h-6 stroke-[2.5]" />
+              <div className="p-4 sm:p-6 rounded-2xl bg-base-100 border border-base-300 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center shadow-xs">
+                    <Check className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-base-content">
+                    <h3 className="text-base sm:text-lg font-bold text-base-content">
                       {results.length} Images Successfully Resized!
                     </h3>
                     <p className="text-xs text-base-content/60">
@@ -711,12 +708,12 @@ export default function ResizerTool() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={handleDownloadZip}
                     disabled={isZipping}
-                    className="btn btn-primary rounded-xl font-bold gap-2 shadow-lg shadow-primary/20 flex-1 sm:flex-none"
+                    className="btn btn-primary rounded-xl font-bold gap-2 shadow-lg shadow-primary/20 flex-1 sm:flex-none text-xs sm:text-sm"
                   >
                     {isZipping ? (
                       <>
@@ -736,33 +733,33 @@ export default function ResizerTool() {
                     onClick={handleReset}
                     className="btn btn-ghost rounded-xl text-xs gap-1.5"
                   >
-                    <RotateCcw className="w-4 h-4" />
+                    <RotateCcw className="w-3.5 h-3.5" />
                     <span>Resize More</span>
                   </button>
                 </div>
               </div>
 
               {/* Grid of Results */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {results.map((r, idx) => (
                   <div
                     key={idx}
-                    className="rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm flex flex-col justify-between space-y-3"
+                    className="rounded-2xl border border-base-300 bg-base-100 p-3 shadow-sm flex flex-col justify-between space-y-2.5"
                   >
                     <div className="w-full aspect-[4/3] bg-base-200/50 rounded-xl overflow-hidden flex items-center justify-center p-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={r.dataUrl}
                         alt={r.originalName}
-                        className="max-w-full max-h-full object-contain rounded-lg"
+                        className="max-w-full max-h-full object-contain rounded-none"
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <p className="text-xs font-bold text-base-content truncate" title={r.originalName}>
                         {r.originalName}
                       </p>
-                      <div className="flex items-center justify-between text-xs text-base-content/60">
+                      <div className="flex items-center justify-between text-[11px] text-base-content/60">
                         <span>
                           {r.width} × {r.height} px
                         </span>
@@ -773,7 +770,7 @@ export default function ResizerTool() {
                     <a
                       href={r.dataUrl}
                       download={`resized_${r.width}x${r.height}_${r.originalName}`}
-                      className="btn btn-sm btn-outline btn-primary rounded-xl w-full gap-2 font-bold"
+                      className="btn btn-xs sm:btn-sm btn-outline btn-primary rounded-xl w-full gap-1.5 font-bold"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Download</span>

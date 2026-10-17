@@ -48,6 +48,7 @@ export default function ResizerTool() {
   const [maintainRatio, setMaintainRatio] = useState<boolean>(true);
   const [doNotEnlarge, setDoNotEnlarge] = useState<boolean>(false);
   const [scalePercent, setScalePercent] = useState<number>(50); // Capped at 100%
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processProgress, setProcessProgress] = useState<{ current: number; total: number } | null>(null);
@@ -140,6 +141,7 @@ export default function ResizerTool() {
         if (prev.length === 0 && updated.length > 0) {
           setWidth(updated[0].originalWidth);
           setHeight(updated[0].originalHeight);
+          setSelectedPreset(null);
         }
         return updated;
       });
@@ -151,6 +153,7 @@ export default function ResizerTool() {
   const primaryImage = images[0];
 
   const handleWidthChange = (val: number | '') => {
+    setSelectedPreset(null);
     setWidth(val);
     if (maintainRatio && val !== '' && primaryImage?.originalWidth > 0) {
       const calculatedH = Math.max(1, Math.round((primaryImage.originalHeight / primaryImage.originalWidth) * val));
@@ -159,6 +162,7 @@ export default function ResizerTool() {
   };
 
   const handleHeightChange = (val: number | '') => {
+    setSelectedPreset(null);
     setHeight(val);
     if (maintainRatio && val !== '' && primaryImage?.originalHeight > 0) {
       const calculatedW = Math.max(1, Math.round((primaryImage.originalWidth / primaryImage.originalHeight) * val));
@@ -166,7 +170,22 @@ export default function ResizerTool() {
     }
   };
 
-  const handlePreset = (pWidth: number, pHeight: number) => {
+  const handleResetToOriginal = () => {
+    setSelectedPreset(null);
+    setMaintainRatio(true);
+    if (primaryImage) {
+      setWidth(primaryImage.originalWidth);
+      setHeight(primaryImage.originalHeight);
+    }
+  };
+
+  const handlePreset = (presetName: string, pWidth: number, pHeight: number) => {
+    if (selectedPreset === presetName) {
+      // If user clicks the active preset again, revert to original default size
+      handleResetToOriginal();
+      return;
+    }
+    setSelectedPreset(presetName);
     setMode('pixels');
     setMaintainRatio(false);
     setWidth(pWidth);
@@ -201,6 +220,7 @@ export default function ResizerTool() {
     setWidth('');
     setHeight('');
     setScalePercent(50);
+    setSelectedPreset(null);
     setProcessProgress(null);
   };
 
@@ -731,23 +751,57 @@ export default function ResizerTool() {
 
             {/* Collapsible Social Presets */}
             <details className="collapse collapse-arrow bg-base-200/40 rounded-xl border border-base-300/70">
-              <summary className="collapse-title text-xs font-bold text-base-content/80 py-2 min-h-0">
-                Popular Social Presets
+              <summary className="collapse-title text-xs font-bold text-base-content/80 py-2.5 min-h-0 flex items-center justify-between">
+                <span>Popular Social Presets</span>
+                {selectedPreset && (
+                  <span className="badge badge-xs badge-primary font-normal mr-6">
+                    {selectedPreset}
+                  </span>
+                )}
               </summary>
-              <div className="collapse-content space-y-1 pt-1">
-                {SOCIAL_PRESETS.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => handlePreset(preset.width, preset.height)}
-                    className="w-full text-left px-2 py-1.5 rounded-lg text-xs hover:bg-base-100 flex items-center justify-between text-base-content/80 hover:text-primary transition-colors cursor-pointer"
-                  >
-                    <span className="font-medium">{preset.name}</span>
-                    <span className="font-mono text-[11px] opacity-60">
-                      {preset.width}×{preset.height}
-                    </span>
-                  </button>
-                ))}
+              <div className="collapse-content space-y-1.5 pt-1">
+                {/* Default / No Preset Option */}
+                <button
+                  type="button"
+                  onClick={handleResetToOriginal}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                    !selectedPreset
+                      ? 'bg-primary/10 text-primary font-bold border border-primary/20'
+                      : 'hover:bg-base-100 text-base-content/80 hover:text-primary font-medium'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <RotateCcw className="w-3.5 h-3.5 opacity-70" />
+                    Default (Original Size - No Preset)
+                  </span>
+                  <span className="font-mono text-[11px] opacity-70">
+                    {primaryImage ? `${primaryImage.originalWidth}×${primaryImage.originalHeight}` : 'Original'}
+                  </span>
+                </button>
+
+                {SOCIAL_PRESETS.map((preset) => {
+                  const isSelected = selectedPreset === preset.name;
+                  return (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => handlePreset(preset.name, preset.width, preset.height)}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-primary text-primary-content font-bold shadow-xs'
+                          : 'hover:bg-base-100 text-base-content/80 hover:text-primary font-medium'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {isSelected && <Check className="w-3.5 h-3.5" />}
+                        {preset.name}
+                      </span>
+                      <span className={`font-mono text-[11px] ${isSelected ? 'text-primary-content/90' : 'opacity-60'}`}>
+                        {preset.width}×{preset.height}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </details>
 

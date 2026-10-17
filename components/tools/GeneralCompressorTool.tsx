@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, Sliders, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 
+// Optimal high-efficiency compression quality giving maximum file reduction with clear visuals
+const MAX_COMPRESSION_QUALITY = 65;
+
 export default function GeneralCompressorTool() {
   const [files, setFiles] = useState<File[]>([]);
-  const [quality, setQuality] = useState<number>(75);
   const [targetFormat, setTargetFormat] = useState<'original' | 'jpeg' | 'png' | 'webp'>('original');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [result, setResult] = useState<any | null>(null);
@@ -35,7 +37,7 @@ export default function GeneralCompressorTool() {
     try {
       const formData = new FormData();
       formData.append('file', files[0]);
-      formData.append('quality', quality.toString());
+      formData.append('quality', MAX_COMPRESSION_QUALITY.toString());
       formData.append('format', targetFormat);
 
       const res = await fetch('/api/compress-general', {
@@ -92,35 +94,28 @@ export default function GeneralCompressorTool() {
             </button>
           </div>
 
-          {/* Quality Slider Controls */}
+          {/* Maximum Output Compression Mode */}
           <div className="p-5 rounded-2xl bg-base-200/30 border border-base-300 space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-base-content/80 flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-primary" />
-                Compression Quality Level
-              </label>
-              <span className="badge badge-primary font-bold text-sm px-3 py-2">
-                {quality}%
+            <div className="flex items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-base-content">Maximum Compression</h4>
+                  <p className="text-xs text-base-content/60">
+                    Automatically applies the highest possible file size reduction while maintaining clean visual clarity.
+                  </p>
+                </div>
+              </div>
+              <span className="badge badge-success text-success-content font-bold text-xs px-2.5 py-1 shrink-0 gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Auto-Optimized</span>
               </span>
             </div>
 
-            <input
-              type="range"
-              min="10"
-              max="95"
-              value={quality}
-              onChange={(e) => setQuality(parseInt(e.target.value, 10))}
-              className="range range-primary w-full range-sm"
-            />
-
-            <div className="flex justify-between text-[11px] text-base-content/50 font-medium">
-              <span>Max Compression (Smallest file)</span>
-              <span>Balanced (Recommended)</span>
-              <span>High Fidelity</span>
-            </div>
-
             {/* Output Format Picker */}
-            <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-base-200/60">
+            <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-base-200/60">
               <span className="text-xs font-semibold text-base-content/70">
                 Output Format:
               </span>
@@ -131,7 +126,7 @@ export default function GeneralCompressorTool() {
                     type="button"
                     onClick={() => setTargetFormat(fmt)}
                     className={`btn btn-xs join-item uppercase ${
-                      targetFormat === fmt ? 'btn-primary text-white font-bold' : 'btn-ghost'
+                      targetFormat === fmt ? 'btn-primary text-primary-content font-bold' : 'btn-ghost'
                     }`}
                   >
                     {fmt}
@@ -152,17 +147,17 @@ export default function GeneralCompressorTool() {
             type="button"
             onClick={handleProcess}
             disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-primary-content font-bold shadow-xl shadow-primary/20 gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
           >
             {isProcessing ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Optimizing Image...
+                <span>Compressing Image...</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Compress Image ({quality}% Quality)
+                <span>Compress Image</span>
               </>
             )}
           </button>

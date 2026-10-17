@@ -679,9 +679,10 @@ export default function CropPdfTool() {
               )}
 
               {/* Interaction Hint */}
-              <div className="text-[11px] text-base-content/60 text-center flex items-center gap-1.5">
-                <span className="hidden sm:inline">🖱️ Click & drag anywhere to draw a crop box, or drag the edges and center.</span>
-                <span className="sm:hidden">👆 Touch & drag to select or adjust your crop area.</span>
+              <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/70 border border-base-300 text-[11px] font-medium text-base-content/70 shadow-2xs">
+                <Crop className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="hidden sm:inline">Drag on canvas to draw crop area, or resize edges and corners</span>
+                <span className="sm:hidden">Drag on canvas or resize handles to crop</span>
               </div>
 
               {/* Page Navigator & Thumbnails Strip */}

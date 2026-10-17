@@ -9,7 +9,6 @@ import {
   Sliders,
   Image as ImageIcon,
   AlertCircle,
-  Sparkles,
   Minus,
   Plus,
   Maximize2,
@@ -529,10 +528,10 @@ export default function CropperTool() {
 
                   {/* Draw hint overlay when whole image is selected */}
                   {!hasActiveCrop && !isDragging && (
-                    <div className="absolute inset-0 bg-transparent flex items-center justify-center pointer-events-none">
-                      <div className="bg-neutral/80 text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-xs flex items-center gap-1.5 animate-pulse">
-                        <Sparkles className="w-3.5 h-3.5 text-primary" />
-                        <span>Drag to draw a crop box, or choose a preset</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none bg-black/[0.03] p-4 text-center">
+                      <div className="bg-base-100/95 backdrop-blur-sm px-3.5 py-2 rounded-xl shadow-md border border-base-300 flex items-center gap-2 text-xs font-semibold text-base-content/85">
+                        <Crop className="w-4 h-4 text-primary animate-pulse" />
+                        <span>Click & drag to select crop area</span>
                       </div>
                     </div>
                   )}
@@ -682,9 +681,10 @@ export default function CropperTool() {
               )}
 
               {/* Interaction Hint */}
-              <div className="text-[11px] text-base-content/60 text-center flex items-center gap-1.5 mt-3">
-                <span className="hidden sm:inline">🖱️ Click & drag anywhere to draw a crop box, or drag the edges and center.</span>
-                <span className="sm:hidden">👆 Touch & drag to select or adjust your crop area.</span>
+              <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/70 border border-base-300 text-[11px] font-medium text-base-content/70 mt-3 shadow-2xs">
+                <Crop className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="hidden sm:inline">Drag on canvas to draw crop area, or resize edges and corners</span>
+                <span className="sm:hidden">Drag on canvas or resize handles to crop</span>
               </div>
             </div>
 
@@ -695,7 +695,7 @@ export default function CropperTool() {
                 <div className="space-y-2.5 pt-1">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                      <Maximize2 className="w-3.5 h-3.5 text-primary" />
                       Aspect Ratio Presets
                     </label>
                     <span className="text-[11px] font-bold text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-md">
@@ -733,7 +733,8 @@ export default function CropperTool() {
 
                 {/* 2. Quick Margin Presets */}
                 <div className="space-y-2.5 pt-1">
-                  <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 block">
+                  <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 flex items-center gap-1.5">
+                    <Sliders className="w-3.5 h-3.5 text-primary" />
                     Quick Margin Trimming
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">

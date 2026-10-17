@@ -32,6 +32,7 @@ import {
   LayoutGrid,
   Stamp,
   RotateCw,
+  Palette,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
@@ -1250,7 +1251,7 @@ export default function SignPdfTool() {
                             onChange={(e) => setSealColor(e.target.value)}
                             className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
                           />
-                          <span className="text-[10px] font-bold text-base-content/70">🎨</span>
+                          <Palette className="w-3.5 h-3.5 text-base-content/70" />
                         </label>
                       </div>
                     </div>

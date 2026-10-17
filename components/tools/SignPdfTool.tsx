@@ -28,21 +28,10 @@ import {
   Undo,
   Redo,
   ShieldCheck,
-  UserCheck,
-  Users,
   FileSignature,
   LayoutGrid,
-  Link as LinkIcon,
-  Send,
   Stamp,
   RotateCw,
-  ArrowUp,
-  ArrowDown,
-  Mail,
-  FileText,
-  ExternalLink,
-  Share2,
-  Sparkles
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
@@ -50,14 +39,6 @@ import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHe
 import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument, degrees } from 'pdf-lib';
 import { generateOfficialSeal, removeWhiteBackground } from '@/lib/pdf/sealGenerator';
-
-export interface MultiSigner {
-  id: string;
-  name: string;
-  email: string;
-  color: string;
-  role: 'signer' | 'approver' | 'viewer';
-}
 
 export interface PlacedElement {
   id: string;
@@ -72,10 +53,6 @@ export interface PlacedElement {
   color: string;
   opacity: number; // 0.1 to 1.0
   rotation?: number; // degrees (0 - 360)
-  signerId?: string;
-  signerName?: string;
-  signerRole?: string;
-  isSigned?: boolean;
 }
 
 interface SavedSignature {
@@ -187,42 +164,12 @@ export default function SignPdfTool() {
   const [showMobileThumbnails, setShowMobileThumbnails] = useState<boolean>(false);
 
   // Modal Flow States
-  const [showWhoSigningModal, setShowWhoSigningModal] = useState<boolean>(false);
   const [showSealingModal, setShowSealingModal] = useState<boolean>(false);
   const [showSignatureCreator, setShowSignatureCreator] = useState<boolean>(false);
   const [showSignaturesModal, setShowSignaturesModal] = useState<boolean>(false);
-  const [showMultiSignerModal, setShowMultiSignerModal] = useState<boolean>(false);
   const [showDigitalSealModal, setShowDigitalSealModal] = useState<boolean>(false);
   const [creatorMode, setCreatorMode] = useState<'signature' | 'initials'>('signature');
   const [creatorTab, setCreatorTab] = useState<'draw' | 'type' | 'upload'>('draw');
-
-  // Multi-Signer States
-  const [multiSigners, setMultiSigners] = useState<MultiSigner[]>([
-    { id: 'signer_1', name: 'Signer 1', email: 'client@example.com', color: '#2563eb', role: 'signer' },
-    { id: 'signer_2', name: 'Signer 2', email: 'manager@example.com', color: '#10b981', role: 'signer' },
-  ]);
-  const [newSignerName, setNewSignerName] = useState<string>('');
-  const [newSignerEmail, setNewSignerEmail] = useState<string>('');
-  const [newSignerRole, setNewSignerRole] = useState<'signer' | 'approver' | 'viewer'>('signer');
-  const [activeSignerId, setActiveSignerId] = useState<string>('signer_1');
-  const [signingOrder, setSigningOrder] = useState<'parallel' | 'sequential'>('parallel');
-  const [emailSubject, setEmailSubject] = useState<string>('Please review and sign this document');
-  const [emailMessage, setEmailMessage] = useState<string>('Please review and sign this document electronically at your earliest convenience.');
-  const [isMultiSignerMode, setIsMultiSignerMode] = useState<boolean>(false);
-  const [copiedLink, setCopiedLink] = useState<boolean>(false);
-  const [copiedSignerId, setCopiedSignerId] = useState<string | null>(null);
-
-  // Dynamic Signature Selection Target (Allows assigning signature directly to recipient)
-  const [targetSignerForSignature, setTargetSignerForSignature] = useState<MultiSigner | null>(null);
-  const [targetElementIdForSignature, setTargetElementIdForSignature] = useState<string | null>(null);
-
-  // Invitation Sent Confirmation Modal State
-  const [showSendSuccessModal, setShowSendSuccessModal] = useState<boolean>(false);
-  const [sentEnvelopeData, setSentEnvelopeData] = useState<{
-    envelopeId: string;
-    dispatchedAt: string;
-    recipients: MultiSigner[];
-  } | null>(null);
 
   // Digital Seal Studio States
   const [sealStudioTab, setSealStudioTab] = useState<'create' | 'upload'>('create');
@@ -321,7 +268,7 @@ export default function SignPdfTool() {
       }
       setPages(thumbnails);
       setCurrentPage(1);
-      setShowWhoSigningModal(true);
+      setShowSealingModal(true);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to load PDF.');
@@ -457,40 +404,17 @@ export default function SignPdfTool() {
       id: `sig_${Date.now()}`,
       type: creatorMode,
       dataUrl: finalDataUrl,
-      label: targetSignerForSignature
-        ? `${targetSignerForSignature.name} (${creatorMode})`
-        : creatorMode === 'signature'
-        ? typedText || 'Signature'
-        : typedText || 'Initials',
+      label:
+        creatorMode === 'signature'
+          ? typedText || 'Signature'
+          : typedText || 'Initials',
     };
 
     setSavedSignatures((prev) => [...prev, newSig]);
     setShowSignatureCreator(false);
     setShowSignaturesModal(false);
 
-    // If filling a designated element on the canvas
-    if (targetElementIdForSignature) {
-      const updatedElements = placedElements.map((el) =>
-        el.id === targetElementIdForSignature
-          ? {
-              ...el,
-              dataUrl: finalDataUrl,
-              type: creatorMode,
-              isSigned: true,
-              color: creatorColor,
-              opacity: 1.0,
-            }
-          : el
-      );
-      recordState(updatedElements);
-      setSelectedElementId(targetElementIdForSignature);
-      setTargetElementIdForSignature(null);
-      setTargetSignerForSignature(null);
-      return;
-    }
-
     // Place directly onto current page
-    const assignedSigner = targetSignerForSignature;
     placeItemOnPage({
       id: `elem_${Date.now()}`,
       type: creatorMode,
@@ -502,14 +426,7 @@ export default function SignPdfTool() {
       pageIndex: currentPage - 1,
       color: creatorColor,
       opacity: 1.0,
-      signerId: assignedSigner ? assignedSigner.id : undefined,
-      signerName: assignedSigner ? assignedSigner.name : undefined,
-      signerRole: assignedSigner ? assignedSigner.role : undefined,
-      isSigned: !!assignedSigner,
     });
-
-    setTargetElementIdForSignature(null);
-    setTargetSignerForSignature(null);
   };
 
   // Place element onto the PDF page
@@ -623,151 +540,11 @@ export default function SignPdfTool() {
     setShowDigitalSealModal(false);
   };
 
-  // Add Multi-Signer
-  const handleAddSigner = () => {
-    if (!newSignerName.trim()) return;
-    const colors = ['#2563eb', '#10b981', '#7c3aed', '#ea580c', '#0891b2', '#db2777'];
-    const assignedColor = colors[multiSigners.length % colors.length];
-    const newSigner: MultiSigner = {
-      id: `signer_${Date.now()}`,
-      name: newSignerName.trim(),
-      email: newSignerEmail.trim() || `${newSignerName.trim().toLowerCase().replace(/\s+/g, '')}@example.com`,
-      color: assignedColor,
-      role: newSignerRole,
-    };
-    setMultiSigners((prev) => [...prev, newSigner]);
-    setActiveSignerId(newSigner.id);
-    setNewSignerName('');
-    setNewSignerEmail('');
-    setNewSignerRole('signer');
-  };
-
-  // Reorder Signers (for Sequential Workflow)
-  const handleMoveSigner = (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= multiSigners.length) return;
-    const updated = [...multiSigners];
-    const [removed] = updated.splice(index, 1);
-    updated.splice(targetIndex, 0, removed);
-    setMultiSigners(updated);
-  };
-
-  // Remove Signer
-  const handleRemoveSigner = (id: string) => {
-    if (multiSigners.length <= 1) return;
-    const remaining = multiSigners.filter((s) => s.id !== id);
-    setMultiSigners(remaining);
-    if (activeSignerId === id && remaining.length > 0) {
-      setActiveSignerId(remaining[0].id);
-    }
-  };
-
-  // Place a dedicated Signer Field Tag on Current Page
-  const handlePlaceSignerTag = (
-    signer: MultiSigner,
-    fieldType: 'signature' | 'initials' | 'date' = 'signature'
-  ) => {
-    setIsMultiSignerMode(true);
-    setShowMultiSignerModal(false);
-
-    const width = fieldType === 'signature' ? 30 : fieldType === 'initials' ? 18 : 22;
-    const height = fieldType === 'signature' ? 11 : fieldType === 'initials' ? 9 : 7;
-
-    placeItemOnPage({
-      id: `elem_signer_${Date.now()}`,
-      type: fieldType,
-      signerId: signer.id,
-      signerName: signer.name,
-      signerRole: signer.role,
-      isSigned: false,
-      text: fieldType === 'date' ? new Date().toISOString().slice(0, 10) : undefined,
-      x: 35,
-      y: 40,
-      width,
-      height,
-      pageIndex: currentPage - 1,
-      color: signer.color,
-      opacity: 0.95,
-    });
-  };
-
-  // Trigger Direct Signature Selection / Creation for a Specific Signer
-  const handleSignForSigner = (signer: MultiSigner, targetElementId?: string) => {
-    setTargetSignerForSignature(signer);
-    setTargetElementIdForSignature(targetElementId || null);
-    setCreatorColor(signer.color || '#1e293b');
-    setTypedText(signer.name);
-    setShowMultiSignerModal(false);
-
-    if (savedSignatures.length > 0) {
-      setShowSignaturesModal(true);
-    } else {
-      setCreatorMode('signature');
-      setShowSignatureCreator(true);
-    }
-  };
-
-  // Start Multi-Signer Preparation Mode & Place Signer Field Tags for all recipients
-  const handleStartMultiSignerPreparation = () => {
-    setIsMultiSignerMode(true);
-    setShowMultiSignerModal(false);
-    multiSigners.forEach((signer, idx) => {
-      placeItemOnPage({
-        id: `elem_signer_${Date.now()}_${idx}`,
-        type: 'signature',
-        signerId: signer.id,
-        signerName: signer.name,
-        signerRole: signer.role,
-        isSigned: false,
-        x: 20 + (idx % 2) * 42,
-        y: 60 + Math.floor(idx / 2) * 14,
-        width: 32,
-        height: 11,
-        pageIndex: currentPage - 1,
-        color: signer.color,
-        opacity: 0.95,
-      });
-    });
-  };
-
-  // Send Invitations & Open Confirmation Modal with Audit Trail
-  const handleSendInvitations = () => {
-    const envelopeId = `DOC-ENV-${Math.floor(100000 + Math.random() * 900000)}-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`;
-    setSentEnvelopeData({
-      envelopeId,
-      dispatchedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      recipients: [...multiSigners],
-    });
-    setShowMultiSignerModal(false);
-    setShowSendSuccessModal(true);
-  };
-
   // Quick Place Pre-saved Signature or Initials
   const handleSelectSavedSignature = (sig: SavedSignature) => {
     setShowSignaturesModal(false);
 
-    // If populating an existing designated signer placeholder box
-    if (targetElementIdForSignature) {
-      const updatedElements = placedElements.map((el) =>
-        el.id === targetElementIdForSignature
-          ? {
-              ...el,
-              dataUrl: sig.dataUrl,
-              type: sig.type,
-              isSigned: true,
-              opacity: 1.0,
-            }
-          : el
-      );
-      recordState(updatedElements);
-      setSelectedElementId(targetElementIdForSignature);
-      setTargetElementIdForSignature(null);
-      setTargetSignerForSignature(null);
-      return;
-    }
-
     // Place directly onto page
-    const assignedSigner = targetSignerForSignature;
     placeItemOnPage({
       id: `elem_${Date.now()}`,
       type: sig.type,
@@ -777,16 +554,9 @@ export default function SignPdfTool() {
       width: sig.type === 'signature' ? 30 : 16,
       height: sig.type === 'signature' ? 14 : 12,
       pageIndex: currentPage - 1,
-      color: assignedSigner ? assignedSigner.color : '#1e293b',
+      color: '#1e293b',
       opacity: 1.0,
-      signerId: assignedSigner ? assignedSigner.id : undefined,
-      signerName: assignedSigner ? assignedSigner.name : undefined,
-      signerRole: assignedSigner ? assignedSigner.role : undefined,
-      isSigned: !!assignedSigner,
     });
-
-    setTargetElementIdForSignature(null);
-    setTargetSignerForSignature(null);
   };
 
   // Trigger Sign button action
@@ -1051,37 +821,6 @@ export default function SignPdfTool() {
         if (el.dataUrl) {
           const pngImage = await pdfDoc.embedPng(el.dataUrl);
           drawWithRotation(pngImage);
-        } else if (el.signerId && !el.dataUrl) {
-          // Render clean DocuSign-style signer placeholder box on PDF
-          const boxCanvas = document.createElement('canvas');
-          boxCanvas.width = 600;
-          boxCanvas.height = 200;
-          const bCtx = boxCanvas.getContext('2d');
-          if (bCtx) {
-            bCtx.fillStyle = '#f8fafc';
-            bCtx.fillRect(0, 0, 600, 200);
-            bCtx.strokeStyle = el.color;
-            bCtx.lineWidth = 6;
-            bCtx.setLineDash([12, 8]);
-            bCtx.strokeRect(4, 4, 592, 192);
-            bCtx.setLineDash([]);
-            bCtx.fillStyle = el.color;
-            bCtx.fillRect(8, 8, 380, 48);
-            bCtx.fillStyle = '#ffffff';
-            bCtx.font = 'bold 22px sans-serif';
-            bCtx.fillText(`SIGNER: ${(el.signerName || 'RECIPIENT').toUpperCase()}`, 20, 40);
-            bCtx.fillStyle = el.color;
-            bCtx.font = 'bold 36px sans-serif';
-            bCtx.textAlign = 'center';
-            bCtx.fillText(
-              `✍ ${el.type === 'initials' ? 'INITIAL HERE' : el.type === 'date' ? 'DATE HERE' : 'SIGN HERE'}`,
-              300,
-              135
-            );
-            const boxDataUrl = boxCanvas.toDataURL('image/png');
-            const pngImage = await pdfDoc.embedPng(boxDataUrl);
-            drawWithRotation(pngImage);
-          }
         } else if (el.type === 'text' || el.type === 'date') {
           const offCanvas = document.createElement('canvas');
           offCanvas.width = 600;
@@ -1178,81 +917,12 @@ export default function SignPdfTool() {
             maxFiles={1}
             maxSizeMb={50}
             title="Upload PDF to eSign"
-            subtitle="Sign yourself or request signatures. Draw, type, or upload your signature and place it anywhere with drag-and-drop."
+            subtitle="Draw, type, or upload your signature and place it anywhere with drag-and-drop."
             onFilesSelected={handleFilesSelected}
             loading={loadingPdf}
             loadingMessage="Rendering PDF pages & preparing high-resolution eSign studio..."
             files={file ? [file] : []}
           />
-        </div>
-      )}
-
-      {/* 1. Modal: Choose who's signing */}
-      {showWhoSigningModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-base-100 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-base-300 space-y-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl sm:text-2xl font-bold text-base-content">Choose who&apos;s signing</h2>
-              <button
-                onClick={() => setShowWhoSigningModal(false)}
-                className="btn btn-sm btn-circle btn-ghost"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Option 1: Sign Myself */}
-              <div className="rounded-2xl border-2 border-primary/20 hover:border-primary bg-base-200/40 p-5 flex flex-col justify-between items-center text-center space-y-4 hover:shadow-lg transition-all group">
-                <div className="w-full h-32 sm:h-36 bg-base-100 rounded-xl border border-base-300 p-3 flex flex-col items-center justify-center relative overflow-hidden">
-                  <div className="w-24 h-16 border border-dashed border-primary/40 rounded-lg flex items-center justify-center bg-primary/5">
-                    <span className="font-serif italic text-2xl text-primary transform -rotate-6">Signature</span>
-                  </div>
-                </div>
-                <div className="space-y-1 w-full">
-                  <button
-                    onClick={() => {
-                      setShowWhoSigningModal(false);
-                      setShowSealingModal(true);
-                    }}
-                    className="btn btn-primary w-full gap-2 rounded-xl"
-                  >
-                    <UserCheck className="w-4 h-4" />
-                    <span>Sign myself</span>
-                  </button>
-                  <p className="text-xs text-base-content/60 pt-1">Create a signature and sign a document.</p>
-                </div>
-              </div>
-
-              {/* Option 2: Get signatures from others */}
-              <div className="rounded-2xl border-2 border-emerald-500/20 hover:border-emerald-500 bg-emerald-50/10 p-5 flex flex-col justify-between items-center text-center space-y-4 hover:shadow-lg transition-all relative group">
-                <div className="absolute top-3 right-3 badge badge-success badge-sm gap-1 text-[10px] font-bold text-white">
-                  <ShieldCheck className="w-3 h-3" />
-                  Verified signing
-                </div>
-                <div className="w-full h-32 sm:h-36 bg-base-100 rounded-xl border border-base-300 p-3 flex flex-col items-center justify-center relative overflow-hidden">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs">A</div>
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">B</div>
-                  </div>
-                  <span className="text-[11px] text-emerald-600 font-semibold mt-2">Multi-party Signing</span>
-                </div>
-                <div className="space-y-1 w-full">
-                  <button
-                    onClick={() => {
-                      setShowWhoSigningModal(false);
-                      setShowMultiSignerModal(true);
-                    }}
-                    className="btn btn-primary w-full gap-2 rounded-xl"
-                  >
-                    <Users className="w-4 h-4" />
-                    <span>Get signatures from others</span>
-                  </button>
-                  <p className="text-xs text-base-content/60 pt-1">SnapDoc Sign document product</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1317,489 +987,6 @@ export default function SignPdfTool() {
         </div>
       )}
 
-      {/* 2b. Modal: Multi-Party / Third-Party Signer Request */}
-      {showMultiSignerModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-base-100 rounded-3xl max-w-3xl w-full p-5 sm:p-7 shadow-2xl border border-base-300 space-y-5 animate-in fade-in zoom-in duration-200 my-auto max-h-[92vh] flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-base-200 pb-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg sm:text-xl font-bold text-base-content">Get Signatures from Others</h2>
-                    <span className="badge badge-primary badge-sm font-semibold text-[10px]">DocuSign-Style</span>
-                  </div>
-                  <p className="text-xs text-base-content/60">
-                    Assign recipient roles, place interactive signature boxes, or stamp signatures directly for others
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowMultiSignerModal(false)}
-                className="btn btn-sm btn-circle btn-ghost"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="space-y-4 overflow-y-auto flex-1 pr-1">
-              {/* Signing Workflow Settings (Sequential vs Parallel) */}
-              <div className="p-3.5 rounded-2xl bg-base-200/50 border border-base-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-base-content">Signing Workflow Order</p>
-                    <p className="text-[11px] text-base-content/60">
-                      {signingOrder === 'sequential'
-                        ? 'Sequential: Signers must review and sign strictly in numerical order (1 ➔ 2 ➔ 3).'
-                        : 'Parallel: All recipients can review and sign the document simultaneously.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                  <span className={`text-xs font-semibold ${signingOrder === 'parallel' ? 'text-primary font-bold' : 'text-base-content/50'}`}>
-                    Parallel
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={signingOrder === 'sequential'}
-                    onChange={(e) => setSigningOrder(e.target.checked ? 'sequential' : 'parallel')}
-                    className="toggle toggle-sm toggle-primary"
-                  />
-                  <span className={`text-xs font-semibold ${signingOrder === 'sequential' ? 'text-primary font-bold' : 'text-base-content/50'}`}>
-                    Sequential
-                  </span>
-                </div>
-              </div>
-
-              {/* Signers List */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-base-content/70 uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-primary" />
-                    <span>Document Recipients ({multiSigners.length})</span>
-                  </label>
-                  <span className="text-[11px] text-base-content/50">
-                    Click &ldquo;Sign / Place&rdquo; on any signer to pick/stamp their signature
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {multiSigners.map((signer, idx) => (
-                    <div
-                      key={signer.id}
-                      className="p-3 rounded-2xl bg-base-200/40 border border-base-200 hover:border-primary/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3"
-                    >
-                      {/* Left: Reordering & Avatar & Info */}
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        {signingOrder === 'sequential' && (
-                          <div className="flex flex-col gap-0.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => handleMoveSigner(idx, 'up')}
-                              disabled={idx === 0}
-                              className="btn btn-ghost btn-xs btn-square p-0 h-4 min-h-0 disabled:opacity-20"
-                              title="Move Up"
-                            >
-                              <ArrowUp className="w-3 h-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveSigner(idx, 'down')}
-                              disabled={idx === multiSigners.length - 1}
-                              className="btn btn-ghost btn-xs btn-square p-0 h-4 min-h-0 disabled:opacity-20"
-                              title="Move Down"
-                            >
-                              <ArrowDown className="w-3 h-3" />
-                            </button>
-                          </div>
-                        )}
-
-                        <div
-                          className="w-8 h-8 rounded-xl text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-sm"
-                          style={{ backgroundColor: signer.color }}
-                          title={`Color code: ${signer.color}`}
-                        >
-                          {idx + 1}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-1.5 flex-1 min-w-0">
-                          {/* Name Input */}
-                          <div className="sm:col-span-5">
-                            <input
-                              type="text"
-                              value={signer.name}
-                              onChange={(e) => {
-                                const updated = multiSigners.map((s) =>
-                                  s.id === signer.id ? { ...s, name: e.target.value } : s
-                                );
-                                setMultiSigners(updated);
-                              }}
-                              placeholder="Recipient Name"
-                              className="input input-xs sm:input-sm input-bordered rounded-xl w-full text-xs font-semibold"
-                            />
-                          </div>
-
-                          {/* Email Input */}
-                          <div className="sm:col-span-4">
-                            <input
-                              type="email"
-                              value={signer.email}
-                              onChange={(e) => {
-                                const updated = multiSigners.map((s) =>
-                                  s.id === signer.id ? { ...s, email: e.target.value } : s
-                                );
-                                setMultiSigners(updated);
-                              }}
-                              placeholder="Email Address"
-                              className="input input-xs sm:input-sm input-bordered rounded-xl w-full text-xs text-base-content/70"
-                            />
-                          </div>
-
-                          {/* Role Dropdown */}
-                          <div className="sm:col-span-3">
-                            <select
-                              value={signer.role}
-                              onChange={(e) => {
-                                const updated = multiSigners.map((s) =>
-                                  s.id === signer.id ? { ...s, role: e.target.value as any } : s
-                                );
-                                setMultiSigners(updated);
-                              }}
-                              className="select select-xs sm:select-sm select-bordered rounded-xl w-full text-xs capitalize font-medium"
-                            >
-                              <option value="signer">✍ Needs to Sign</option>
-                              <option value="approver">🛡 Approver</option>
-                              <option value="viewer">👁 Viewer (CC)</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Actions for this Recipient */}
-                      <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto border-t md:border-t-0 pt-2 md:pt-0 border-base-200">
-                        {/* Direct Signature & Field Options Dropdown */}
-                        <div className="dropdown dropdown-end">
-                          <label
-                            tabIndex={0}
-                            className="btn btn-xs sm:btn-sm btn-primary rounded-xl gap-1 text-xs font-bold cursor-pointer"
-                          >
-                            <PenTool className="w-3.5 h-3.5" />
-                            <span>Sign / Place ▾</span>
-                          </label>
-                          <ul
-                            tabIndex={0}
-                            className="dropdown-content z-50 menu p-2 shadow-2xl bg-base-100 rounded-2xl w-56 border border-base-300 text-xs space-y-1 mt-1"
-                          >
-                            <li className="menu-title text-[10px] uppercase font-bold text-base-content/60 px-2">
-                              Actions for {signer.name}
-                            </li>
-                            <li>
-                              <button
-                                type="button"
-                                onClick={() => handleSignForSigner(signer)}
-                                className="flex items-center gap-2 py-2 text-primary font-bold hover:bg-primary/10 rounded-xl"
-                              >
-                                <PenTool className="w-3.5 h-3.5" />
-                                <span>Select / Draw Signature</span>
-                              </button>
-                            </li>
-                            <div className="h-px bg-base-200 my-1" />
-                            <li>
-                              <button
-                                type="button"
-                                onClick={() => handlePlaceSignerTag(signer, 'signature')}
-                                className="flex items-center gap-2 py-1.5 hover:bg-base-200 rounded-xl"
-                              >
-                                <FileSignature className="w-3.5 h-3.5" style={{ color: signer.color }} />
-                                <span>Place Signature Box</span>
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                type="button"
-                                onClick={() => handlePlaceSignerTag(signer, 'initials')}
-                                className="flex items-center gap-2 py-1.5 hover:bg-base-200 rounded-xl"
-                              >
-                                <Type className="w-3.5 h-3.5" style={{ color: signer.color }} />
-                                <span>Place Initials Box</span>
-                              </button>
-                            </li>
-                            <li>
-                              <button
-                                type="button"
-                                onClick={() => handlePlaceSignerTag(signer, 'date')}
-                                className="flex items-center gap-2 py-1.5 hover:bg-base-200 rounded-xl"
-                              >
-                                <Calendar className="w-3.5 h-3.5" style={{ color: signer.color }} />
-                                <span>Place Date Box</span>
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
-
-                        {/* Copy Signer Link */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (typeof window !== 'undefined') {
-                              const link = `${window.location.origin}${window.location.pathname}?signer=${signer.id}`;
-                              navigator.clipboard?.writeText(link);
-                              setCopiedSignerId(signer.id);
-                              setTimeout(() => setCopiedSignerId(null), 2500);
-                            }
-                          }}
-                          className="btn btn-xs sm:btn-sm btn-outline rounded-xl gap-1 text-xs"
-                          title="Copy personalized signing link for this recipient"
-                        >
-                          <LinkIcon className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">
-                            {copiedSignerId === signer.id ? 'Copied!' : 'Link'}
-                          </span>
-                        </button>
-
-                        {/* Remove Signer */}
-                        {multiSigners.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSigner(signer.id)}
-                            className="btn btn-ghost btn-xs sm:btn-sm btn-square text-error hover:bg-error/10 rounded-xl"
-                            title="Remove recipient"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Add Another Recipient Form */}
-                <div className="p-3.5 rounded-2xl bg-base-200/30 border border-dashed border-base-300 space-y-2.5">
-                  <p className="text-xs font-bold text-base-content/80 flex items-center gap-1.5">
-                    <Plus className="w-3.5 h-3.5 text-primary" />
-                    <span>Add Another Recipient</span>
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Recipient Full Name"
-                      value={newSignerName}
-                      onChange={(e) => setNewSignerName(e.target.value)}
-                      className="input input-sm input-bordered rounded-xl sm:col-span-4 text-xs"
-                    />
-                    <input
-                      type="email"
-                      placeholder="Email (optional)"
-                      value={newSignerEmail}
-                      onChange={(e) => setNewSignerEmail(e.target.value)}
-                      className="input input-sm input-bordered rounded-xl sm:col-span-4 text-xs"
-                    />
-                    <select
-                      value={newSignerRole}
-                      onChange={(e) => setNewSignerRole(e.target.value as any)}
-                      className="select select-sm select-bordered rounded-xl sm:col-span-2 text-xs"
-                    >
-                      <option value="signer">✍ Signer</option>
-                      <option value="approver">🛡 Approver</option>
-                      <option value="viewer">👁 Viewer</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={handleAddSigner}
-                      disabled={!newSignerName.trim()}
-                      className="btn btn-sm btn-primary rounded-xl sm:col-span-2 text-xs font-bold"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Email Invitation Settings */}
-              <div className="p-3.5 rounded-2xl bg-base-200/40 border border-base-200 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-primary" />
-                  <span className="text-xs font-bold text-base-content">Email & Invitation Message</span>
-                </div>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={emailSubject}
-                    onChange={(e) => setEmailSubject(e.target.value)}
-                    placeholder="Email Subject"
-                    className="input input-sm input-bordered rounded-xl w-full text-xs font-medium"
-                  />
-                  <textarea
-                    rows={2}
-                    value={emailMessage}
-                    onChange={(e) => setEmailMessage(e.target.value)}
-                    placeholder="Custom message to recipients..."
-                    className="textarea textarea-sm textarea-bordered rounded-xl w-full text-xs leading-relaxed resize-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-base-200 shrink-0">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={handleStartMultiSignerPreparation}
-                  className="btn btn-sm btn-outline rounded-xl gap-1.5 text-xs w-full sm:w-auto font-semibold"
-                  title="Place signature placeholder boxes for all recipients automatically"
-                >
-                  <FileSignature className="w-3.5 h-3.5 text-primary" />
-                  <span>Place All Signer Tags</span>
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowMultiSignerModal(false)}
-                  className="btn btn-sm btn-ghost rounded-xl text-xs"
-                >
-                  Close
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMultiSignerMode(true);
-                    setShowMultiSignerModal(false);
-                  }}
-                  className="btn btn-sm btn-outline btn-primary rounded-xl text-xs font-bold"
-                >
-                  Workspace
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSendInvitations}
-                  className="btn btn-sm btn-primary rounded-xl gap-1.5 text-xs font-bold shadow-md shadow-primary/20"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Send Invitations</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2b-2. Modal: Invitations Sent Confirmation with Secure Signing Links */}
-      {showSendSuccessModal && sentEnvelopeData && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in zoom-in duration-200">
-          <div className="bg-base-100 rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-base-300 space-y-5">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-base-200 pb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-success/15 text-success flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-7 h-7" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-base-content">
-                    Signing Requests Dispatched!
-                  </h2>
-                  <p className="text-xs text-base-content/60">
-                    Envelope ID: <span className="font-mono font-bold text-base-content">{sentEnvelopeData.envelopeId}</span>
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowSendSuccessModal(false)}
-                className="btn btn-sm btn-circle btn-ghost"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Summary Details */}
-            <div className="p-3.5 rounded-2xl bg-base-200/50 border border-base-200 space-y-1.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-base-content/60">Document:</span>
-                <span className="font-semibold text-base-content truncate max-w-[240px]">{file?.name || 'Document.pdf'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-base-content/60">Signing Workflow:</span>
-                <span className="badge badge-sm font-semibold capitalize">{signingOrder}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-base-content/60">Dispatched At:</span>
-                <span className="font-semibold text-base-content">{sentEnvelopeData.dispatchedAt}</span>
-              </div>
-            </div>
-
-            {/* Individual Signing Links */}
-            <div className="space-y-2.5">
-              <label className="text-xs font-bold text-base-content/70 uppercase tracking-wider">
-                Individual Recipient Signing Links ({sentEnvelopeData.recipients.length})
-              </label>
-              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                {sentEnvelopeData.recipients.map((signer, idx) => (
-                  <div
-                    key={signer.id}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-base-200/40 border border-base-200"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className="w-7 h-7 rounded-full text-white text-xs font-bold flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: signer.color }}
-                      >
-                        {idx + 1}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm font-bold text-base-content truncate">{signer.name}</p>
-                        <p className="text-[11px] text-base-content/50 truncate">{signer.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="badge badge-xs badge-success text-[10px] font-bold">Ready</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (typeof window !== 'undefined') {
-                            const link = `${window.location.origin}${window.location.pathname}?signer=${signer.id}&env=${sentEnvelopeData.envelopeId}`;
-                            navigator.clipboard?.writeText(link);
-                            setCopiedSignerId(signer.id);
-                            setTimeout(() => setCopiedSignerId(null), 2500);
-                          }
-                        }}
-                        className="btn btn-xs btn-outline rounded-lg gap-1 text-[11px]"
-                      >
-                        <LinkIcon className="w-3 h-3" />
-                        <span>{copiedSignerId === signer.id ? 'Copied!' : 'Copy Link'}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-base-200">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSendSuccessModal(false);
-                  setIsMultiSignerMode(true);
-                }}
-                className="btn btn-sm btn-primary rounded-xl text-xs font-bold px-4"
-              >
-                Continue in Workspace
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 2c. Modal: Create & Stamp Digital Seal */}
       {/* 2c. Modal: Official Seal & Stamp Studio */}
       {showDigitalSealModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
@@ -2226,21 +1413,9 @@ export default function SignPdfTool() {
                   <PenTool className="w-4 h-4 text-primary" />
                   Select Signature or Initials
                 </h2>
-                {targetSignerForSignature && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: targetSignerForSignature.color }} />
-                    <span className="text-xs text-base-content/70">
-                      Selecting for <strong className="text-base-content">{targetSignerForSignature.name}</strong>
-                    </span>
-                  </div>
-                )}
               </div>
               <button
-                onClick={() => {
-                  setShowSignaturesModal(false);
-                  setTargetSignerForSignature(null);
-                  setTargetElementIdForSignature(null);
-                }}
+                onClick={() => setShowSignaturesModal(false)}
                 className="btn btn-sm btn-circle btn-ghost"
               >
                 <X className="w-4 h-4" />
@@ -2299,21 +1474,10 @@ export default function SignPdfTool() {
           <div className="bg-base-100 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-base-300 space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between border-b border-base-200 pb-3">
               <h2 className="text-lg sm:text-xl font-bold text-base-content capitalize flex items-center gap-2">
-                {targetSignerForSignature ? (
-                  <>
-                    <span className="w-3.5 h-3.5 rounded-full inline-block" style={{ backgroundColor: targetSignerForSignature.color }} />
-                    <span>Sign for <span className="text-primary">{targetSignerForSignature.name}</span></span>
-                  </>
-                ) : (
-                  <span>Create {creatorMode}</span>
-                )}
+                <span>Create {creatorMode}</span>
               </h2>
               <button
-                onClick={() => {
-                  setShowSignatureCreator(false);
-                  setTargetSignerForSignature(null);
-                  setTargetElementIdForSignature(null);
-                }}
+                onClick={() => setShowSignatureCreator(false)}
                 className="btn btn-sm btn-circle btn-ghost"
               >
                 <X className="w-4 h-4" />
@@ -2673,22 +1837,6 @@ export default function SignPdfTool() {
                 <span className="text-xs hidden md:inline font-semibold">Seal</span>
               </button>
 
-              {/* Multi-Party Signers Tool */}
-              <button
-                onClick={() => setShowMultiSignerModal(true)}
-                className={`btn btn-xs sm:btn-sm rounded-xl gap-1 px-1 sm:px-2.5 ${
-                  isMultiSignerMode
-                    ? 'btn-primary btn-outline font-bold text-xs'
-                    : 'btn-ghost text-blue-700 hover:bg-blue-500/10'
-                }`}
-                title="Multi-Party Signers"
-              >
-                <Users className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-xs hidden md:inline font-semibold">
-                  {isMultiSignerMode ? `Signers (${multiSigners.length})` : 'Signers'}
-                </span>
-              </button>
-
               {/* Undo / Redo for Desktop */}
               <button
                 onClick={handleUndo}
@@ -2775,102 +1923,6 @@ export default function SignPdfTool() {
 
             {/* Center Canvas Area with Full Touch & Mouse Dragging */}
             <div className="flex-1 h-full flex flex-col min-w-0 overflow-hidden relative bg-base-200/40">
-              {/* Active Signer Workspace Ribbon (DocuSign-Style) */}
-              {isMultiSignerMode && (
-                <div className="bg-base-100/95 backdrop-blur border-b border-base-300 px-3 py-2 flex flex-wrap items-center justify-between gap-2 z-30 shrink-0 shadow-xs">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="badge badge-primary badge-sm font-bold gap-1 text-[10px]">
-                      <Users className="w-3 h-3" />
-                      Signer Mode
-                    </span>
-                    <span className="text-xs font-semibold text-base-content/70 hidden sm:inline">Active Signer:</span>
-                    <select
-                      value={activeSignerId}
-                      onChange={(e) => setActiveSignerId(e.target.value)}
-                      className="select select-xs select-bordered rounded-lg text-xs font-bold"
-                      style={{
-                        color: multiSigners.find((s) => s.id === activeSignerId)?.color || '#2563eb',
-                        borderColor: multiSigners.find((s) => s.id === activeSignerId)?.color || '#2563eb',
-                      }}
-                    >
-                      {multiSigners.map((s, i) => (
-                        <option key={s.id} value={s.id}>
-                          {signingOrder === 'sequential' ? `${i + 1}. ` : ''}{s.name} ({s.role})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Quick Place buttons for the active signer */}
-                  {(() => {
-                    const currentActiveSigner = multiSigners.find((s) => s.id === activeSignerId) || multiSigners[0];
-                    if (!currentActiveSigner) return null;
-                    return (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={() => handlePlaceSignerTag(currentActiveSigner, 'signature')}
-                          className="btn btn-xs rounded-lg gap-1 border border-base-300 hover:border-primary text-[11px]"
-                          title={`Place signature box for ${currentActiveSigner.name}`}
-                        >
-                          <FileSignature className="w-3 h-3" style={{ color: currentActiveSigner.color }} />
-                          <span>+ Signature Box</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handlePlaceSignerTag(currentActiveSigner, 'initials')}
-                          className="btn btn-xs rounded-lg gap-1 border border-base-300 hover:border-primary text-[11px]"
-                          title={`Place initials box for ${currentActiveSigner.name}`}
-                        >
-                          <Type className="w-3 h-3" style={{ color: currentActiveSigner.color }} />
-                          <span>+ Initials</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handlePlaceSignerTag(currentActiveSigner, 'date')}
-                          className="btn btn-xs rounded-lg gap-1 border border-base-300 hover:border-primary text-[11px]"
-                          title={`Place date box for ${currentActiveSigner.name}`}
-                        >
-                          <Calendar className="w-3 h-3" style={{ color: currentActiveSigner.color }} />
-                          <span>+ Date</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleSignForSigner(currentActiveSigner)}
-                          className="btn btn-xs btn-primary rounded-lg gap-1 text-[11px] font-bold shadow-xs"
-                          title={`Select or draw signature now for ${currentActiveSigner.name}`}
-                        >
-                          <PenTool className="w-3 h-3" />
-                          <span>Sign for {currentActiveSigner.name}</span>
-                        </button>
-
-                        <div className="h-4 w-px bg-base-300 mx-1 hidden md:block" />
-
-                        <button
-                          type="button"
-                          onClick={() => setShowMultiSignerModal(true)}
-                          className="btn btn-xs btn-ghost rounded-lg text-[11px] text-base-content/70"
-                        >
-                          Manage
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setIsMultiSignerMode(false)}
-                          className="btn btn-xs btn-ghost btn-circle text-base-content/50"
-                          title="Exit multi-signer workspace"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
               <div
                 className="flex-1 h-full overflow-auto p-1 sm:p-3 md:p-6 flex items-center justify-center relative"
                 onMouseMove={handlePageMouseMove}
@@ -2932,114 +1984,41 @@ export default function SignPdfTool() {
                             : 'hover:border hover:border-dashed hover:border-primary/60 z-20'
                         }`}
                       >
-                        {/* Render Interactive DocuSign-style Signer Field Tag */}
-                        {elem.signerId && !elem.dataUrl ? (
-                          <div
-                            className="w-full h-full flex flex-col justify-between p-1 rounded-lg border-2 border-dashed relative overflow-hidden select-none transition-all group"
-                            style={{
-                              borderColor: elem.color,
-                              backgroundColor: `${elem.color}15`,
-                            }}
-                          >
-                            {/* Header Badge */}
-                            <div className="flex items-center justify-between gap-1 overflow-hidden">
-                              <span
-                                className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded text-white flex items-center gap-1 shadow-xs truncate"
-                                style={{ backgroundColor: elem.color }}
-                              >
-                                <FileSignature className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-                                <span className="truncate">{elem.signerName || 'Signer'}</span>
-                              </span>
-                              <span
-                                className="text-[8px] sm:text-[9px] uppercase font-bold px-1 rounded text-white/90 shrink-0"
-                                style={{ backgroundColor: `${elem.color}90` }}
-                              >
-                                {elem.type === 'initials' ? 'Initials' : elem.type === 'date' ? 'Date' : 'Sign'}
-                              </span>
-                            </div>
-
-                            {/* Center Action: Direct Click to Sign */}
-                            <div className="flex-1 flex flex-col items-center justify-center my-0.5 pointer-events-auto">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const target = multiSigners.find((s) => s.id === elem.signerId) || {
-                                    id: elem.signerId!,
-                                    name: elem.signerName || 'Signer',
-                                    email: '',
-                                    color: elem.color,
-                                    role: 'signer' as const,
-                                  };
-                                  handleSignForSigner(target, elem.id);
-                                }}
-                                className="btn btn-xs rounded-md shadow-xs text-[10px] sm:text-xs font-bold flex items-center gap-1 px-2.5 py-0.5 hover:scale-105 transition-transform"
-                                style={{
-                                  backgroundColor: elem.color,
-                                  color: '#ffffff',
-                                }}
-                                title={`Click to choose or draw signature for ${elem.signerName || 'this recipient'}`}
-                              >
-                                <PenTool className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                                <span>Click to Sign</span>
-                              </button>
-                            </div>
-
-                            {/* Footer hint */}
-                            <div
-                              className="text-[8px] text-center font-semibold truncate opacity-80"
-                              style={{ color: elem.color }}
-                            >
-                              Assigned to {elem.signerName}
-                            </div>
+                        {/* Render Placed Signature/Initials Image */}
+                        {elem.dataUrl && (
+                          <div className="w-full h-full relative group">
+                            <img
+                              src={elem.dataUrl}
+                              alt="Placed signature"
+                              className="w-full h-full object-contain pointer-events-none select-none"
+                              draggable={false}
+                            />
                           </div>
-                        ) : (
-                          <>
-                            {/* Render Placed Signature/Initials Image */}
-                            {elem.dataUrl && (
-                              <div className="w-full h-full relative group">
-                                <img
-                                  src={elem.dataUrl}
-                                  alt="Placed signature"
-                                  className="w-full h-full object-contain pointer-events-none select-none"
-                                  draggable={false}
-                                />
-                                {elem.signerName && (
-                                  <span
-                                    className="absolute -bottom-2.5 right-1 px-1 py-0.5 rounded text-[8px] font-bold text-white shadow-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                                    style={{ backgroundColor: elem.color }}
-                                  >
-                                    ✓ Signed by {elem.signerName}
-                                  </span>
-                                )}
-                              </div>
-                            )}
+                        )}
 
-                            {/* Render Placed Text or Date */}
-                            {(elem.type === 'text' || elem.type === 'date') && (
-                              <input
-                                type="text"
-                                value={elem.text || ''}
-                                onChange={(e) => updateElementProp(elem.id, { text: e.target.value })}
-                                style={{ color: elem.color }}
-                                className="w-full h-full bg-transparent font-bold text-center border-none outline-none text-xs sm:text-sm"
-                              />
-                            )}
+                        {/* Render Placed Text or Date */}
+                        {(elem.type === 'text' || elem.type === 'date') && (
+                          <input
+                            type="text"
+                            value={elem.text || ''}
+                            onChange={(e) => updateElementProp(elem.id, { text: e.target.value })}
+                            style={{ color: elem.color }}
+                            className="w-full h-full bg-transparent font-bold text-center border-none outline-none text-xs sm:text-sm"
+                          />
+                        )}
 
-                            {/* Render Placed Symbols */}
-                            {elem.type === 'check' && (
-                              <Check style={{ color: elem.color }} className="w-full h-full stroke-[3]" />
-                            )}
-                            {elem.type === 'cross' && (
-                              <X style={{ color: elem.color }} className="w-full h-full stroke-[3]" />
-                            )}
-                            {elem.type === 'dot' && (
-                              <Circle style={{ color: elem.color }} className="w-1/2 h-1/2 fill-current" />
-                            )}
-                            {elem.type === 'line' && (
-                              <Minus style={{ color: elem.color }} className="w-full h-full stroke-[4]" />
-                            )}
-                          </>
+                        {/* Render Placed Symbols */}
+                        {elem.type === 'check' && (
+                          <Check style={{ color: elem.color }} className="w-full h-full stroke-[3]" />
+                        )}
+                        {elem.type === 'cross' && (
+                          <X style={{ color: elem.color }} className="w-full h-full stroke-[3]" />
+                        )}
+                        {elem.type === 'dot' && (
+                          <Circle style={{ color: elem.color }} className="w-1/2 h-1/2 fill-current" />
+                        )}
+                        {elem.type === 'line' && (
+                          <Minus style={{ color: elem.color }} className="w-full h-full stroke-[4]" />
                         )}
 
                         {/* Selected Element Floating Toolbar & Handles */}

@@ -930,14 +930,9 @@ export default function SignPdfTool() {
       {showSealingModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-base-100 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-base-300 space-y-6 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between">
+            <div>
               <h2 className="text-xl sm:text-2xl font-bold text-base-content">Choose sealing type</h2>
-              <button
-                onClick={() => setShowSealingModal(false)}
-                className="btn btn-sm btn-circle btn-ghost"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <p className="text-xs text-base-content/60 mt-1">Select how you would like to sign your document to proceed</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

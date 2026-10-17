@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
     const file = formData.get('file') as File | null;
     const targetFormat = (formData.get('targetFormat') as any) || 'png';
     const quality = parseInt(formData.get('quality') as string, 10) || 90;
-    const backgroundColor = (formData.get('backgroundColor') as string) || '#ffffff';
 
     if (!file) {
       return NextResponse.json({ error: 'No image file uploaded.' }, { status: 400 });
@@ -28,7 +27,6 @@ export async function POST(req: NextRequest) {
     const result = await convertImageFormat(inputBuffer, {
       targetFormat,
       quality,
-      backgroundColor,
     });
 
     const mimeType = result.format === 'png' ? 'image/png' : result.format === 'webp' ? 'image/webp' : 'image/jpeg';

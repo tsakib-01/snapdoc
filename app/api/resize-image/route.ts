@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
     const width = parseInt(formData.get('width') as string, 10) || undefined;
     const height = parseInt(formData.get('height') as string, 10) || undefined;
     const maintainAspectRatio = formData.get('maintainAspectRatio') === 'true';
+    const withoutEnlargement = formData.get('withoutEnlargement') === 'true';
     const scalePercent = parseInt(formData.get('scalePercent') as string, 10) || undefined;
     const format = (formData.get('format') as any) || undefined;
     const quality = parseInt(formData.get('quality') as string, 10) || 90;
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
       width,
       height,
       maintainAspectRatio,
+      withoutEnlargement,
       scalePercent,
       format,
       quality,

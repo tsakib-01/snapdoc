@@ -6,6 +6,7 @@ export interface ResizeOptions {
   maintainAspectRatio?: boolean;
   scalePercent?: number;
   fit?: 'inside' | 'cover' | 'fill' | 'contain';
+  withoutEnlargement?: boolean;
   format?: 'jpeg' | 'png' | 'webp';
   quality?: number;
 }
@@ -40,7 +41,7 @@ export async function resizeImage(
     width: targetWidth,
     height: targetHeight,
     fit: options.maintainAspectRatio ? (options.fit || 'inside') : 'fill',
-    withoutEnlargement: false,
+    withoutEnlargement: options.withoutEnlargement ?? false,
     kernel: sharp.kernel.lanczos3,
   });
 

@@ -37,15 +37,118 @@ export default function ConverterTool({
     }
   }, [files]);
 
+  // High quality client-side canvas conversion (instant, bypasses server 413 limits, handles transparency)
+  const convertImageInBrowser = async (
+    file: File,
+    format: 'jpeg' | 'png' | 'webp',
+    qualityVal: number,
+    bgColor: string
+  ): Promise<any> => {
+    let source: ImageBitmap | HTMLImageElement;
+    if (typeof createImageBitmap !== 'undefined') {
+      try {
+        source = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      } catch {
+        source = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = (e) => {
+            URL.revokeObjectURL(url);
+            reject(e);
+          };
+          img.src = url;
+        });
+      }
+    } else {
+      source = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(img);
+        };
+        img.onerror = (e) => {
+          URL.revokeObjectURL(url);
+          reject(e);
+        };
+        img.src = url;
+      });
+    }
+
+    const width = 'naturalWidth' in source ? source.naturalWidth : source.width;
+    const height = 'naturalHeight' in source ? source.naturalHeight : source.height;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) throw new Error('Could not get canvas context');
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // If converting to JPEG, JPEG does not support transparency, so fill background color
+    if (format === 'jpeg') {
+      ctx.fillStyle = bgColor || '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+    }
+
+    ctx.drawImage(source, 0, 0, width, height);
+
+    if ('close' in source && typeof source.close === 'function') {
+      source.close();
+    }
+
+    const mimeType = format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg';
+    const q = Math.min(1, Math.max(0.01, qualityVal / 100));
+    const dataUrl = canvas.toDataURL(mimeType, q);
+
+    const base64Data = dataUrl.split(',')[1] || '';
+    const compressedSize = Math.round((base64Data.length * 3) / 4);
+    const originalSize = file.size;
+    const reductionPercentage =
+      originalSize > 0
+        ? parseFloat((((originalSize - compressedSize) / originalSize) * 100).toFixed(1))
+        : 0;
+
+    return {
+      success: true,
+      originalName: file.name,
+      originalSize,
+      compressedSize,
+      reductionPercentage,
+      width,
+      height,
+      format,
+      mimeType,
+      dataUrl,
+    };
+  };
+
   const handleProcess = async () => {
     if (files.length === 0) return;
     setError(null);
     setIsProcessing(true);
     setResult(null);
 
+    const file = files[0];
     try {
+      // 1. Primary: Direct high-performance client-side conversion (instant, zero network upload, prevents 413)
+      try {
+        const clientResult = await convertImageInBrowser(file, targetFormat, quality, backgroundColor);
+        setResult(clientResult);
+        return;
+      } catch (clientErr) {
+        console.warn('Client-side conversion fallback to server:', clientErr);
+      }
+
+      // 2. Server fallback if client canvas fails
       const formData = new FormData();
-      formData.append('file', files[0]);
+      formData.append('file', file);
       formData.append('targetFormat', targetFormat);
       formData.append('quality', quality.toString());
       formData.append('backgroundColor', backgroundColor);
@@ -55,7 +158,20 @@ export default function ConverterTool({
         body: formData,
       });
 
-      const data = await res.json();
+      if (res.status === 413) {
+        throw new Error('The image file is too large for server processing. Please try a smaller image.');
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      let data: any;
+
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const rawText = await res.text();
+        throw new Error(rawText || `Server error (${res.status})`);
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Conversion failed');
       }

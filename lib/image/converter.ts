@@ -28,11 +28,11 @@ export async function convertImageFormat(
   options: ConvertOptions
 ) {
   const originalSize = inputBuffer.length;
-  const metadata = await sharp(inputBuffer).metadata();
+  const metadata = await sharp(inputBuffer, { failOnError: false }).metadata();
   const originalWidth = metadata.width || 800;
   const originalHeight = metadata.height || 600;
 
-  let pipeline = sharp(inputBuffer);
+  let pipeline = sharp(inputBuffer, { failOnError: false }).rotate();
   const quality = options.quality || 90;
 
   if (options.targetFormat === 'jpeg') {

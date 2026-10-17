@@ -14,6 +14,8 @@ import {
   Maximize2,
   Move,
   Eye,
+  Mouse,
+  Pointer,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
@@ -682,9 +684,14 @@ export default function CropperTool() {
 
               {/* Interaction Hint */}
               <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/70 border border-base-300 text-[11px] font-medium text-base-content/70 mt-3 shadow-2xs">
-                <Crop className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span className="hidden sm:inline">Drag on canvas to draw crop area, or resize edges and corners</span>
-                <span className="sm:hidden">Drag on canvas or resize handles to crop</span>
+                <span className="hidden sm:inline-flex items-center gap-1.5">
+                  <Mouse className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Click & drag anywhere to draw a crop box, or drag edges to adjust.</span>
+                </span>
+                <span className="sm:hidden inline-flex items-center gap-1.5">
+                  <Pointer className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Touch & drag to select or adjust your crop area.</span>
+                </span>
               </div>
             </div>
 

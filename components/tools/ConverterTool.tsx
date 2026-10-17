@@ -95,6 +95,7 @@ export default function ConverterTool({
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
 
+        ctx.imageSmoothingEnabled = false;
         ctx.drawImage(img, 0, 0, w, h);
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
@@ -112,7 +113,8 @@ export default function ConverterTool({
           const r = data[idx];
           const g = data[idx + 1];
           const b = data[idx + 2];
-          return r > 210 && g > 210 && b > 210 && Math.abs(r - g) < 18 && Math.abs(g - b) < 18;
+          const avg = (r + g + b) / 3;
+          return avg > 160 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22;
         };
 
         let borderCheckerCount = 0;
@@ -126,7 +128,7 @@ export default function ConverterTool({
           if (isChecker((y * w + w - 1) * 4)) borderCheckerCount++;
         }
 
-        const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.35;
+        const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.25;
         setDetectedBgType(hasAlpha ? 'transparent' : isFakeCheckerboard ? 'checkerboard' : null);
 
         if (hasAlpha) {
@@ -276,7 +278,8 @@ export default function ConverterTool({
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-      return r > 210 && g > 210 && b > 210 && Math.abs(r - g) < 18 && Math.abs(g - b) < 18;
+      const avg = (r + g + b) / 3;
+      return avg > 160 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22;
     };
 
     let borderCheckerCount = 0;
@@ -290,7 +293,7 @@ export default function ConverterTool({
       if (isChecker((y * width + width - 1) * 4)) borderCheckerCount++;
     }
 
-    const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.35;
+    const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.25;
 
     // Apply real alpha blending
     if (hasAlpha) {

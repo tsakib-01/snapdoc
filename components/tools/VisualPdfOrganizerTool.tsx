@@ -120,7 +120,7 @@ export default function VisualPdfOrganizerTool({
         pageNumber: idx + 1,
         dataUrl: thumb.dataUrl,
         rotation: 0,
-        selected: initialMode === 'delete' ? false : true,
+        selected: (initialMode === 'delete' || initialMode === 'extract') ? false : true,
         aspectRatio: thumb.aspectRatio,
         docName: selectedFile.name,
       }));
@@ -157,7 +157,7 @@ export default function VisualPdfOrganizerTool({
         pageNumber: pages.length + idx + 1,
         dataUrl: thumb.dataUrl,
         rotation: 0,
-        selected: initialMode === 'delete' ? false : true,
+        selected: (initialMode === 'delete' || initialMode === 'extract') ? false : true,
         aspectRatio: thumb.aspectRatio,
         docName: newFile.name,
       }));
@@ -636,8 +636,8 @@ export default function VisualPdfOrganizerTool({
               {/* Finish CTA Button */}
               <button
                 onClick={handleProcess}
-                disabled={processing || pages.length === 0}
-                className="btn btn-primary btn-sm px-6 font-bold shadow-md shadow-primary/20 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all"
+                disabled={processing || pages.length === 0 || (initialMode === 'extract' && selectedCount === 0)}
+                className="btn btn-primary btn-sm px-6 font-bold shadow-md shadow-primary/20 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
               >
                 {processing ? (
                   <>
@@ -649,6 +649,8 @@ export default function VisualPdfOrganizerTool({
                     <span>
                       {toolTab === 'split'
                         ? `Split (${calculatedSplitCount} PDF${calculatedSplitCount > 1 ? 's' : ''})`
+                        : initialMode === 'extract' && selectedCount === 0
+                        ? 'Select Pages to Extract'
                         : `Finish (${selectedCount} Page${selectedCount > 1 ? 's' : ''})`}
                     </span>
                     <ArrowRight className="w-4 h-4" />
@@ -673,7 +675,9 @@ export default function VisualPdfOrganizerTool({
                 <span>Select all</span>
               </label>
               <span className="text-[11px] text-base-content/40 hidden sm:inline">
-                • Drag & drop any page to rearrange order
+                {initialMode === 'extract'
+                  ? '• Click on pages you want to extract'
+                  : '• Drag & drop any page to rearrange order'}
               </span>
             </div>
 

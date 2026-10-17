@@ -399,82 +399,87 @@ export default function MergePdfTool() {
       {items.length > 0 && !result && (
         <div className="w-full space-y-5 animate-in fade-in duration-200">
           {/* Top Integrated Action Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
-            {/* Left: Tool Title & Summary Badges */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content"
-                title="Start over / Clear all"
-              >
-                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+            {/* ROW 1 ON MOBILE / LEFT ON DESKTOP: Tool Title & Summary Badges */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content shrink-0"
+                  title="Start over / Clear all"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-extrabold text-sm sm:text-base text-base-content">
+                <span className="font-extrabold text-xs sm:text-base text-base-content truncate">
                   Merge PDFs
                 </span>
-                <span className="badge badge-primary font-bold text-xs py-1">
-                  {items.length} {items.length === 1 ? 'Document' : 'Documents'}
+              </div>
+
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <span className="badge badge-primary font-bold text-[10px] sm:text-xs py-0.5 sm:py-1">
+                  {items.length} {items.length === 1 ? 'Doc' : 'Docs'}
                 </span>
                 {allThumbnailsLoaded && totalPagesCount > 0 && (
-                  <span className="badge badge-ghost font-semibold text-xs py-1 text-base-content/70">
-                    {totalPagesCount} Pages total
+                  <span className="badge badge-ghost font-semibold text-[10px] sm:text-xs py-0.5 sm:py-1 text-base-content/70 hidden xs:inline-flex">
+                    {totalPagesCount} Pages
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Right: Actions (Add PDF, Reverse, View Modes) */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* ROW 2 ON MOBILE / RIGHT ON DESKTOP: Actions (Add PDF, Reverse, View Modes) */}
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t border-base-300/40 sm:border-t-0">
               <button
                 type="button"
                 onClick={() => addFileInputRef.current?.click()}
-                className="btn btn-ghost btn-sm rounded-xl font-bold text-xs text-primary gap-1.5 hover:bg-primary/10"
+                className="btn btn-ghost btn-xs sm:btn-sm rounded-xl font-bold text-xs text-primary gap-1 sm:gap-1.5 hover:bg-primary/10 px-2 sm:px-3"
                 title="Add more PDF documents"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>Add Document</span>
               </button>
 
-              <button
-                type="button"
-                onClick={handleReverseOrder}
-                className="btn btn-ghost btn-sm rounded-xl text-xs text-base-content/70 gap-1 hover:bg-base-300/50"
-                title="Reverse document order"
-                disabled={items.length < 2}
-              >
-                <ArrowUpDown className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Reverse</span>
-              </button>
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleReverseOrder}
+                  className="btn btn-ghost btn-xs sm:btn-sm rounded-xl text-xs text-base-content/70 gap-1 hover:bg-base-300/50 px-2 sm:px-3"
+                  title="Reverse document order"
+                  disabled={items.length < 2}
+                >
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Reverse</span>
+                </button>
 
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-base-100 rounded-xl p-0.5 border border-base-300">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    viewMode === 'grid'
-                      ? 'bg-primary text-primary-content shadow-xs'
-                      : 'text-base-content/60 hover:text-base-content'
-                  }`}
-                  title="Grid View"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    viewMode === 'list'
-                      ? 'bg-primary text-primary-content shadow-xs'
-                      : 'text-base-content/60 hover:text-base-content'
-                  }`}
-                  title="List View"
-                >
-                  <List className="w-3.5 h-3.5" />
-                </button>
+                {/* View Mode Toggle */}
+                <div className="flex items-center bg-base-100 rounded-xl p-0.5 border border-base-300">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={`p-1 sm:p-1.5 rounded-lg transition-all ${
+                      viewMode === 'grid'
+                        ? 'bg-primary text-primary-content shadow-xs'
+                        : 'text-base-content/60 hover:text-base-content'
+                    }`}
+                    title="Grid View"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className={`p-1 sm:p-1.5 rounded-lg transition-all ${
+                      viewMode === 'list'
+                        ? 'bg-primary text-primary-content shadow-xs'
+                        : 'text-base-content/60 hover:text-base-content'
+                    }`}
+                    title="List View"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

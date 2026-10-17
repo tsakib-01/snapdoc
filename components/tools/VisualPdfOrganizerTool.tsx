@@ -486,69 +486,80 @@ export default function VisualPdfOrganizerTool({
       {/* Seamless, Natural Workspace - No Hardcoded Outer Boxes */}
       {file && !loadingThumbnails && !resultData && (
         <div className="w-full space-y-5">
-          {/* Top Integrated Action Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
-            {/* Left: Reset & Tools */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <button
-                onClick={handleReset}
-                className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content"
-                title="Upload different file"
-              >
-                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
-
-              <span className="font-extrabold text-sm sm:text-lg text-base-content mr-1">
-                {toolTab === 'split' ? 'Split' : 'Extract Pages'}
-              </span>
-
-              {/* Action Pills */}
-              <div className="flex items-center gap-1 bg-base-100 p-0.5 sm:p-1 rounded-xl border border-base-300">
+          {/* Top Integrated Action Bar - Responsive 2-Row Layout on Mobile, Single Row on Desktop */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+            {/* ROW 1 ON MOBILE / LEFT ON DESKTOP: Title, Reset & Edit Tools (Add, Rotate, Delete) */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <button
-                  onClick={() => setToolTab('split')}
-                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    toolTab === 'split'
-                      ? 'bg-primary text-primary-content shadow-xs'
-                      : 'text-base-content/70 hover:text-base-content'
-                  }`}
+                  type="button"
+                  onClick={handleReset}
+                  className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content shrink-0"
+                  title="Upload different file"
                 >
-                  <Scissors className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span>Split</span>
+                  <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
 
-                <button
-                  onClick={() => setToolTab('extract')}
-                  className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
-                    toolTab === 'extract'
-                      ? 'bg-primary text-primary-content shadow-xs'
-                      : 'text-base-content/70 hover:text-base-content'
-                  }`}
-                >
-                  <LayoutGrid className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  <span>Extract</span>
-                </button>
+                <span className="font-extrabold text-xs sm:text-base text-base-content truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">
+                  {title || (toolTab === 'split' ? 'Split' : 'Extract Pages')}
+                </span>
+              </div>
+
+              {/* Action Pills: Add, Rotate Left, Rotate Right, Delete */}
+              <div className="flex items-center gap-0.5 sm:gap-1 bg-base-100 p-0.5 sm:p-1 rounded-xl border border-base-300 shrink-0">
+                {initialMode === 'organize' && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setToolTab('split')}
+                      className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                        toolTab === 'split'
+                          ? 'bg-primary text-primary-content shadow-xs'
+                          : 'text-base-content/70 hover:text-base-content'
+                      }`}
+                    >
+                      <Scissors className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      <span className="hidden sm:inline">Split</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setToolTab('extract')}
+                      className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                        toolTab === 'extract'
+                          ? 'bg-primary text-primary-content shadow-xs'
+                          : 'text-base-content/70 hover:text-base-content'
+                      }`}
+                    >
+                      <LayoutGrid className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      <span className="hidden sm:inline">Extract</span>
+                    </button>
+
+                    <div className="w-px h-3.5 bg-base-300 mx-0.5"></div>
+                  </>
+                )}
 
                 <div className="dropdown dropdown-end">
                   <label
                     tabIndex={0}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-base-content/70 hover:bg-base-200 cursor-pointer"
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-base-content/70 hover:bg-base-200 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-primary" />
-                    <span>Add</span>
-                    <ChevronDown className="w-3 h-3 opacity-60" />
+                    <span className="text-[11px] sm:text-xs">Add</span>
+                    <ChevronDown className="w-3 h-3 opacity-60 hidden sm:inline" />
                   </label>
                   <ul
                     tabIndex={0}
                     className="dropdown-content z-30 menu p-2 shadow-xl bg-base-100 rounded-2xl border border-base-300 w-48 text-xs space-y-1 mt-1"
                   >
                     <li>
-                      <button onClick={() => insertBlankPage(pages.length)}>
+                      <button type="button" onClick={() => insertBlankPage(pages.length)}>
                         <Plus className="w-4 h-4 text-primary" />
                         <span>Insert Blank Page</span>
                       </button>
                     </li>
                     <li>
-                      <button onClick={() => addFileInputRef.current?.click()}>
+                      <button type="button" onClick={() => addFileInputRef.current?.click()}>
                         <FileText className="w-4 h-4 text-success" />
                         <span>Add Document Pages</span>
                       </button>
@@ -556,30 +567,33 @@ export default function VisualPdfOrganizerTool({
                   </ul>
                 </div>
 
-                <div className="w-px h-4 bg-base-300 mx-1"></div>
+                <div className="w-px h-3.5 bg-base-300 mx-0.5 sm:mx-1"></div>
 
                 <button
+                  type="button"
                   onClick={() => rotateSelected(-90)}
                   disabled={selectedCount === 0}
-                  className="p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-40"
+                  className="p-1 sm:p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-30"
                   title="Rotate Left"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => rotateSelected(90)}
                   disabled={selectedCount === 0}
-                  className="p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-40"
+                  className="p-1 sm:p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-30"
                   title="Rotate Right"
                 >
                   <RotateCw className="w-3.5 h-3.5" />
                 </button>
 
                 <button
+                  type="button"
                   onClick={deleteSelected}
                   disabled={selectedCount === 0}
-                  className="p-1.5 rounded-lg text-error hover:bg-error/10 disabled:opacity-40"
+                  className="p-1 sm:p-1.5 rounded-lg text-error hover:bg-error/10 disabled:opacity-30"
                   title="Delete Selected"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -587,61 +601,67 @@ export default function VisualPdfOrganizerTool({
               </div>
             </div>
 
-            {/* Right: Dynamic Split Controls / Separate PDFs & Finish Button */}
-            <div className="flex items-center gap-3">
-              {toolTab === 'split' ? (
-                <div className="flex items-center gap-2 text-xs font-medium text-base-content/80">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
+            {/* ROW 2 ON MOBILE / RIGHT ON DESKTOP: Options (Separate PDFs / Split) & Finish CTA Button */}
+            <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t border-base-300/40 sm:border-t-0">
+              {/* Output Options */}
+              <div className="flex items-center shrink-0">
+                {toolTab === 'split' ? (
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-base-content/80">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={splitAfterEveryEnabled}
+                        onChange={(e) => setSplitAfterEveryEnabled(e.target.checked)}
+                        className="checkbox checkbox-xs checkbox-primary rounded"
+                      />
+                      <span className="text-[11px] sm:text-xs">Every</span>
+                    </label>
+
+                    <div className="flex items-center border border-base-300 rounded-lg bg-base-100 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setSplitEveryN((n) => Math.max(1, n - 1))}
+                        className="px-1.5 py-0.5 sm:px-2 sm:py-1 hover:bg-base-200 text-base-content/70"
+                      >
+                        <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      </button>
+                      <span className="px-2 py-0.5 sm:py-1 font-bold text-xs min-w-[20px] text-center">
+                        {splitEveryN}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSplitEveryN((n) => Math.min(pages.length, n + 1))}
+                        className="px-1.5 py-0.5 sm:px-2 sm:py-1 hover:bg-base-200 text-base-content/70"
+                      >
+                        <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                      </button>
+                    </div>
+
+                    <span className="text-[11px] sm:text-xs">pages</span>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer text-xs font-medium text-base-content/80 select-none">
                     <input
                       type="checkbox"
-                      checked={splitAfterEveryEnabled}
-                      onChange={(e) => setSplitAfterEveryEnabled(e.target.checked)}
-                      className="checkbox checkbox-xs checkbox-primary rounded"
+                      checked={separatePdfs}
+                      onChange={(e) => setSeparatePdfs(e.target.checked)}
+                      className="toggle toggle-xs toggle-primary"
                     />
-                    <span>Split after every</span>
+                    <span className="text-[11px] sm:text-xs">Separate PDFs</span>
                   </label>
-
-                  <div className="flex items-center border border-base-300 rounded-lg bg-base-100 overflow-hidden">
-                    <button
-                      onClick={() => setSplitEveryN((n) => Math.max(1, n - 1))}
-                      className="px-2 py-1 hover:bg-base-200 text-base-content/70"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="px-2.5 py-1 font-bold text-xs min-w-[24px] text-center">
-                      {splitEveryN}
-                    </span>
-                    <button
-                      onClick={() => setSplitEveryN((n) => Math.min(pages.length, n + 1))}
-                      className="px-2 py-1 hover:bg-base-200 text-base-content/70"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </button>
-                  </div>
-
-                  <span>pages</span>
-                </div>
-              ) : (
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-base-content/80">
-                  <input
-                    type="checkbox"
-                    checked={separatePdfs}
-                    onChange={(e) => setSeparatePdfs(e.target.checked)}
-                    className="toggle toggle-xs toggle-primary"
-                  />
-                  <span>Separate PDFs</span>
-                </label>
-              )}
+                )}
+              </div>
 
               {/* Finish CTA Button */}
               <button
+                type="button"
                 onClick={handleProcess}
                 disabled={processing || pages.length === 0 || (initialMode === 'extract' && selectedCount === 0)}
-                className="btn btn-primary btn-sm px-6 font-bold shadow-md shadow-primary/20 rounded-xl gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                className="btn btn-primary btn-sm px-3.5 sm:px-6 font-bold shadow-md shadow-primary/20 rounded-xl gap-1.5 sm:gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 text-xs sm:text-sm shrink-0"
               >
                 {processing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                     <span>Processing...</span>
                   </>
                 ) : (
@@ -651,9 +671,11 @@ export default function VisualPdfOrganizerTool({
                         ? `Split (${calculatedSplitCount} PDF${calculatedSplitCount > 1 ? 's' : ''})`
                         : initialMode === 'extract' && selectedCount === 0
                         ? 'Select Pages to Extract'
+                        : initialMode === 'delete'
+                        ? `Delete (${selectedCount} Page${selectedCount > 1 ? 's' : ''})`
                         : `Finish (${selectedCount} Page${selectedCount > 1 ? 's' : ''})`}
                     </span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </>
                 )}
               </button>

@@ -576,15 +576,11 @@ export default function ConverterTool({
                   <div className="pt-2 border-t border-base-200 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-base-content/70">Live Background Preview:</span>
-                      {detectedBgType === 'checkerboard' ? (
-                        <span className="badge badge-xs bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold gap-1">
-                          ✨ Fake Checkerboard Detected & Replaced
-                        </span>
-                      ) : detectedBgType === 'transparent' ? (
+                      {detectedBgType === 'transparent' && (
                         <span className="badge badge-xs bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 font-bold gap-1">
                           ✓ Transparent Background Filled
                         </span>
-                      ) : null}
+                      )}
                     </div>
                     <div className="w-full max-h-[220px] p-2 flex items-center justify-center rounded-xl border border-base-300 bg-base-200/40 shadow-inner">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -487,10 +487,10 @@ export default function VisualPdfOrganizerTool({
       {file && !loadingThumbnails && !resultData && (
         <div className="w-full space-y-5">
           {/* Top Integrated Action Bar - Responsive 2-Row Layout on Mobile, Single Row on Desktop */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-4 p-2.5 sm:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 lg:gap-4 p-2.5 sm:p-3 lg:p-4 rounded-2xl bg-base-200/60 backdrop-blur-md border border-base-300/80 shadow-xs sm:flex-wrap lg:flex-nowrap">
             {/* ROW 1 ON MOBILE / LEFT ON DESKTOP: Title, Reset & Edit Tools (Add, Rotate, Delete) */}
             <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full sm:w-auto">
-              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink sm:shrink-0">
                 <button
                   type="button"
                   onClick={handleReset}
@@ -500,7 +500,7 @@ export default function VisualPdfOrganizerTool({
                   <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
 
-                <span className="font-extrabold text-xs sm:text-base text-base-content truncate max-w-[120px] xs:max-w-[150px] sm:max-w-none">
+                <span className="font-extrabold text-xs sm:text-sm lg:text-base text-base-content truncate max-w-[120px] xs:max-w-[150px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-none">
                   {title || (toolTab === 'split' ? 'Split' : 'Extract Pages')}
                 </span>
               </div>
@@ -512,7 +512,7 @@ export default function VisualPdfOrganizerTool({
                     <button
                       type="button"
                       onClick={() => setToolTab('split')}
-                      className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      className={`flex items-center gap-1 px-2 sm:px-2.5 lg:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                         toolTab === 'split'
                           ? 'bg-primary text-primary-content shadow-xs'
                           : 'text-base-content/70 hover:text-base-content'
@@ -525,7 +525,7 @@ export default function VisualPdfOrganizerTool({
                     <button
                       type="button"
                       onClick={() => setToolTab('extract')}
-                      className={`flex items-center gap-1 px-2 sm:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      className={`flex items-center gap-1 px-2 sm:px-2.5 lg:px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                         toolTab === 'extract'
                           ? 'bg-primary text-primary-content shadow-xs'
                           : 'text-base-content/70 hover:text-base-content'
@@ -602,11 +602,11 @@ export default function VisualPdfOrganizerTool({
             </div>
 
             {/* ROW 2 ON MOBILE / RIGHT ON DESKTOP: Options (Separate PDFs / Split) & Finish CTA Button */}
-            <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t border-base-300/40 sm:border-t-0">
+            <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-2.5 lg:gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t border-base-300/40 sm:border-t-0 shrink-0">
               {/* Output Options */}
               <div className="flex items-center shrink-0">
                 {toolTab === 'split' ? (
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-base-content/80">
+                  <div className="flex items-center gap-1 sm:gap-1.5 text-xs font-medium text-base-content/80 shrink-0">
                     <label className="flex items-center gap-1 cursor-pointer">
                       <input
                         type="checkbox"
@@ -657,7 +657,7 @@ export default function VisualPdfOrganizerTool({
                 type="button"
                 onClick={handleProcess}
                 disabled={processing || pages.length === 0 || (initialMode === 'extract' && selectedCount === 0)}
-                className="btn btn-primary btn-sm px-3.5 sm:px-6 font-bold shadow-md shadow-primary/20 rounded-xl gap-1.5 sm:gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 text-xs sm:text-sm shrink-0"
+                className="btn btn-primary btn-sm px-3.5 sm:px-4 lg:px-5 font-bold shadow-md shadow-primary/20 rounded-xl gap-1.5 sm:gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 text-xs sm:text-sm shrink-0"
               >
                 {processing ? (
                   <>

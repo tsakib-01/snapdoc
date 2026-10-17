@@ -6,6 +6,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 interface TargetCompressorToolProps {
   defaultTargetKb?: number;
@@ -47,6 +48,9 @@ export default function TargetCompressorTool({
 
   const handleProcess = async () => {
     if (files.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResult(null);
@@ -80,6 +84,7 @@ export default function TargetCompressorTool({
     setFiles([]);
     setResult(null);
     setError(null);
+    scrollToTool();
   };
 
   return (

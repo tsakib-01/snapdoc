@@ -5,6 +5,7 @@ import { Loader2, Download, Image as ImageIcon, Archive, Sparkles, AlertCircle }
 import UploadZone from '@/components/ui/UploadZone';
 import JSZip from 'jszip';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 interface ExtractedPage {
   pageNumber: number;
@@ -97,6 +98,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
       }
 
       setPages(renderedPages);
+      scrollToTool({ force: true });
     } catch (err: any) {
       console.error('PDF to Image conversion error:', err);
       setError('Failed to extract pages from PDF. Please make sure the PDF is valid and not password-protected.');
@@ -149,6 +151,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
     setFiles([]);
     setPages([]);
     setError(null);
+    scrollToTool();
   };
 
   return (

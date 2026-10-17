@@ -8,6 +8,7 @@ import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { convertPdfToExcel } from '@/lib/browser-converters/pdf-to-excel';
 import { convertTextToExcel } from '@/lib/browser-converters/text-to-excel';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 interface PdfToOfficeToolProps {
   targetFormat?: 'excel' | 'txt' | 'ocr';
@@ -45,6 +46,7 @@ export default function PdfToOfficeTool({
       } else {
         setExtractedText(combined);
       }
+      scrollToTool();
     } catch (err: any) {
       console.error(err);
       setError('Could not extract text from PDF. Ensure the file is not encrypted.');
@@ -101,6 +103,7 @@ export default function PdfToOfficeTool({
     setPages([]);
     setExtractedText('');
     setError(null);
+    scrollToTool();
   };
 
   return (

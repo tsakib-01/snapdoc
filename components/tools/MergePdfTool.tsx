@@ -32,6 +32,7 @@ import ResultCard from '@/components/ui/ResultCard';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument } from 'pdf-lib';
 
 export interface PdfMergeItem {
@@ -176,6 +177,7 @@ export default function MergePdfTool() {
     setZoomItem(null);
     setShowResultPreviewModal(false);
     setCreatedTimestamp('');
+    scrollToTool();
   };
 
   // Download merged file
@@ -240,6 +242,9 @@ export default function MergePdfTool() {
     }
 
     setError(null);
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setIsProcessing(true);
     setResult(null);
 

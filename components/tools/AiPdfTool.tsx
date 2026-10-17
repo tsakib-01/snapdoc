@@ -94,12 +94,14 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
   const [expandedSources, setExpandedSources] = useState<Set<number>>(new Set());
   const [modelNote, setModelNote] = useState('');
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const conversationHistory = useRef<{ role: string; text: string }[]>([]);
 
-  // ── Auto-scroll chat ────────────────────────────────────────────────────────
+  // ── Auto-scroll chat internally without moving the browser window ───────────
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   // ── AI model progress forwarding ────────────────────────────────────────────
@@ -486,7 +488,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
           {activeTab === 'chat' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               {/* Messages */}
-              <div className="h-96 overflow-y-auto p-4 rounded-2xl bg-base-200/50 border border-base-300 space-y-3 scroll-smooth">
+              <div ref={chatContainerRef} className="h-96 overflow-y-auto p-4 rounded-2xl bg-base-200/50 border border-base-300 space-y-3 scroll-smooth">
                 {messages.map((m, i) => (
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className="max-w-[88%] space-y-1.5">
@@ -539,7 +541,6 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
                     </div>
                   </div>
                 )}
-                <div ref={chatEndRef} />
               </div>
 
               {/* Suggestion pills */}

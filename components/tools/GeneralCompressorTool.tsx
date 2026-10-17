@@ -6,6 +6,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 // Optimal high-efficiency compression quality giving maximum file reduction with clear visuals
 const MAX_COMPRESSION_QUALITY = 65;
@@ -30,6 +31,9 @@ export default function GeneralCompressorTool() {
 
   const handleProcess = async () => {
     if (files.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResult(null);
@@ -62,6 +66,7 @@ export default function GeneralCompressorTool() {
     setFiles([]);
     setResult(null);
     setError(null);
+    scrollToTool();
   };
 
   return (

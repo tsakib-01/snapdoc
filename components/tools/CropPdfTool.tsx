@@ -24,6 +24,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument } from 'pdf-lib';
 
 type DragHandle =
@@ -321,6 +322,9 @@ export default function CropPdfTool() {
   // ---------------------------------------------------------------------------
   const handleProcess = async () => {
     if (!file) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
 
     setProcessing(true);
     setError(null);
@@ -426,6 +430,7 @@ export default function CropPdfTool() {
     setLeftMargin(0);
     setRightMargin(0);
     setActivePreset('none');
+    scrollToTool();
   };
 
   const activeThumbnail = pages[currentPage - 1];

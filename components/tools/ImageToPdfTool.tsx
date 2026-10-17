@@ -5,6 +5,7 @@ import { Loader2, FileText, Sparkles, AlertCircle, X, ArrowLeft, ArrowRight, Plu
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument, PageSizes } from 'pdf-lib';
 
 interface ImageToPdfToolProps {
@@ -81,6 +82,9 @@ export default function ImageToPdfTool({
 
   const handleProcess = async () => {
     if (items.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResult(null);
@@ -208,6 +212,7 @@ export default function ImageToPdfTool({
     setItems([]);
     setResult(null);
     setError(null);
+    scrollToTool();
   };
 
   const totalOriginalSize = items.reduce((acc, it) => acc + it.file.size, 0);

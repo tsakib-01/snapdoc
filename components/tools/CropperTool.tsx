@@ -5,6 +5,7 @@ import { Loader2, Crop, CheckCircle2, RotateCcw, Sliders, Image as ImageIcon, Al
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 export default function CropperTool() {
   const [files, setFiles] = useState<File[]>([]);
@@ -114,6 +115,9 @@ export default function CropperTool() {
 
   const handleProcess = async () => {
     if (files.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResult(null);
@@ -190,6 +194,7 @@ export default function CropperTool() {
     setFiles([]);
     setResult(null);
     setError(null);
+    scrollToTool();
   };
 
   return (

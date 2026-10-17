@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { UploadCloud, FileImage, FileText, FileSpreadsheet, AlertCircle, X, CheckCircle2, Loader2 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 function getFileStyle(filename: string = '', mimeType: string = '') {
   const lowerName = filename.toLowerCase();
@@ -159,6 +160,9 @@ export default function UploadZone({
     setTimeout(() => {
       setLoadingProgress(100);
       setTimeout(() => {
+        if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
         if (multiple) {
           const combined = [...files, ...newFiles].slice(0, maxFiles);
           onFilesSelected(combined);
@@ -166,6 +170,7 @@ export default function UploadZone({
           onFilesSelected(newFiles.slice(0, 1));
         }
         setInternalLoading(false);
+        scrollToTool();
       }, 150);
     }, isLarge ? 550 : 320);
   };

@@ -5,6 +5,7 @@ import { Loader2, Minimize2, AlertCircle, FileText, CheckCircle2, Sliders, Downl
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { compressPdf } from '@/lib/browser-converters/pdf-compress';
 
 type CompressionLevel = 'extreme' | 'recommended' | 'low';
@@ -77,6 +78,9 @@ export default function CompressPdfTool() {
 
   const handleProcess = async () => {
     if (files.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResult(null);
@@ -123,6 +127,7 @@ export default function CompressPdfTool() {
     setFiles([]);
     setResult(null);
     setError(null);
+    scrollToTool();
   };
 
   return (

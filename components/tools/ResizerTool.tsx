@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Loader2,
   AlertCircle,
@@ -21,6 +21,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import JSZip from 'jszip';
 
 export interface ImageItem {
@@ -55,6 +56,12 @@ export default function ResizerTool() {
   const [results, setResults] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (results && results.length > 0) {
+      scrollToTool({ force: true });
+    }
+  }, [results]);
 
   const hiddenFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -222,6 +229,7 @@ export default function ResizerTool() {
     setScalePercent(50);
     setSelectedPreset(null);
     setProcessProgress(null);
+    scrollToTool();
   };
 
   // Calculate preview target dimensions for a specific image item
@@ -331,6 +339,9 @@ export default function ResizerTool() {
 
   const handleProcess = async () => {
     if (images.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResults(null);

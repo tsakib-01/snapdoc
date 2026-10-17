@@ -22,6 +22,7 @@ import {
 import UploadZone from '@/components/ui/UploadZone';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { processPdfOcr, PdfOcrResult } from '@/lib/browser-converters/pdf-ocr';
 
 const LANGUAGES = [
@@ -70,6 +71,7 @@ export default function PdfOcrTool() {
       setResult(ocrResult);
       setEditedText(ocrResult.fullText);
       setSelectedPageIndex(0);
+      scrollToTool({ force: true });
     } catch (err: any) {
       console.error('OCR Processing error:', err);
       setError(err?.message || 'Optical Character Recognition failed. Ensure the document is readable.');
@@ -104,6 +106,7 @@ export default function PdfOcrTool() {
     setResult(null);
     setError(null);
     setEditedText('');
+    scrollToTool();
   };
 
   return (

@@ -6,6 +6,7 @@ import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 interface ConverterToolProps {
   sourceFormat?: 'jpg' | 'png' | 'webp' | 'any';
@@ -138,6 +139,9 @@ export default function ConverterTool({
 
   const handleProcess = async () => {
     if (files.length === 0) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setError(null);
     setIsProcessing(true);
     setResult(null);
@@ -194,6 +198,7 @@ export default function ConverterTool({
     setFiles([]);
     setResult(null);
     setError(null);
+    scrollToTool();
   };
 
   const acceptTypes =

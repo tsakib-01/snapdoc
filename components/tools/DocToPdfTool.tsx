@@ -5,6 +5,7 @@ import { FileCode, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, FileT
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { convertExcelToPdf } from '@/lib/browser-converters/excel-to-pdf';
@@ -35,6 +36,9 @@ export default function DocToPdfTool({
 
   const handleProcess = async () => {
     if (!file && !textContent.trim()) return;
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
 
     setProcessing(true);
     setError(null);
@@ -113,6 +117,7 @@ export default function DocToPdfTool({
     setTextContent('');
     setResultData(null);
     setError(null);
+    scrollToTool();
   };
 
   return (

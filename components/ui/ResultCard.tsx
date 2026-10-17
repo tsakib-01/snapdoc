@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Download,
   RotateCcw,
@@ -16,6 +16,7 @@ import {
   Maximize2,
 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 
 export interface ResultCardProps {
@@ -52,6 +53,10 @@ export default function ResultCard({
   onPreview,
 }: ResultCardProps) {
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    scrollToTool({ force: true });
+  }, []);
 
   const effectiveOriginalSize = originalSize !== undefined ? originalSize : newSize;
   const calculatedReduction =
@@ -200,7 +205,10 @@ export default function ResultCard({
 
           <button
             type="button"
-            onClick={onReset}
+            onClick={() => {
+              scrollToTool();
+              onReset();
+            }}
             className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap"
           >
             <RotateCcw className="w-4 h-4 shrink-0" />

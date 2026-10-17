@@ -1,14 +1,25 @@
 /**
- * Universal, bulletproof helper to safely extract an orientation-corrected preview
+ * Universal, ultra-fast and resilient helper to safely extract an orientation-corrected preview
  * and natural dimensions for any image (camera photos, iPhone HEIC, WhatsApp, JFIF, etc.)
+ *
+ * Guarantees:
+ * 1. NEVER hangs (hard timeouts on all async decoders).
+ * 2. Instant fallback to native blob URL (0ms) so UI never gets stuck in a loading state.
+ * 3. Handles mobile camera capture photos and high-megapixel images without OOM.
  */
 export async function getSafeImagePreview(
   file: File
 ): Promise<{ previewUrl: string; width: number; height: number }> {
-  if (!file || file.size === 0) {
-    throw new Error(
-      `"${file?.name || 'File'}" has 0 bytes. If you took this directly with your camera, please wait a moment or choose it from your photo library.`
-    );
+  if (!file) {
+    throw new Error('No file provided');
+  }
+
+  // Instant baseline blob URL available immediately in 0ms
+  let baselineBlobUrl = '';
+  try {
+    baselineBlobUrl = URL.createObjectURL(file);
+  } catch {
+    baselineBlobUrl = '';
   }
 
   const fileName = (file.name || '').toLowerCase();
@@ -23,156 +34,143 @@ export async function getSafeImagePreview(
     fileType.includes('heif') ||
     fileType.includes('tiff');
 
-  // If format is HEIC or TIFF (unsupported by standard browser <img> on Windows/Android), use server Sharp pipeline directly
+  // If format is HEIC or TIFF, try server Sharp pipeline first with a 3s timeout
   if (isHeicOrTiff) {
     try {
-      const serverResult = await fetchServerPreview(file);
+      const serverResult = await Promise.race([
+        fetchServerPreview(file),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+      ]);
       if (serverResult && serverResult.previewUrl) return serverResult;
     } catch (err) {
-      console.warn('Server HEIC/TIFF preview failed, trying client decoders:', err);
+      console.warn('Server HEIC/TIFF preview failed:', err);
+    }
+
+    if (baselineBlobUrl) {
+      return {
+        previewUrl: baselineBlobUrl,
+        width: 1920,
+        height: 1080,
+      };
     }
   }
 
-  // 1. Try client-side createImageBitmap (instant, auto-rotates camera photos from EXIF)
-  if (typeof window !== 'undefined' && typeof createImageBitmap !== 'undefined' && !isHeicOrTiff) {
+  // 1. Try createImageBitmap with a 1000ms timeout (auto-rotates camera photos from EXIF)
+  if (typeof window !== 'undefined' && typeof createImageBitmap !== 'undefined') {
     try {
-      let bitmap: ImageBitmap;
-      try {
-        bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-      } catch {
-        bitmap = await createImageBitmap(file);
-      }
-
-      const origW = bitmap.width;
-      const origH = bitmap.height;
-
-      if (origW > 0 && origH > 0) {
-        // Constrain preview canvas dimensions to max 1600px for speed and memory efficiency
-        const maxDim = 1600;
-        let targetW = origW;
-        let targetH = origH;
-        if (targetW > maxDim || targetH > maxDim) {
-          if (targetW > targetH) {
-            targetH = Math.round((targetH / targetW) * maxDim);
-            targetW = maxDim;
-          } else {
-            targetW = Math.round((targetW / targetH) * maxDim);
-            targetH = maxDim;
-          }
+      const bitmapPromise = (async () => {
+        let bitmap: ImageBitmap;
+        try {
+          bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        } catch {
+          bitmap = await createImageBitmap(file);
         }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = targetW;
-        canvas.height = targetH;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(bitmap, 0, 0, targetW, targetH);
-          bitmap.close();
+        const origW = bitmap.width;
+        const origH = bitmap.height;
 
-          const isPng = fileType.includes('png') || fileName.endsWith('.png');
-          const mime = isPng ? 'image/png' : 'image/jpeg';
-          const dataUrl = canvas.toDataURL(mime, 0.90);
+        if (origW > 0 && origH > 0) {
+          const maxDim = 1200; // 1200px is super fast and lightweight for mobile preview
+          let targetW = origW;
+          let targetH = origH;
+          if (targetW > maxDim || targetH > maxDim) {
+            if (targetW > targetH) {
+              targetH = Math.round((targetH / targetW) * maxDim);
+              targetW = maxDim;
+            } else {
+              targetW = Math.round((targetW / targetH) * maxDim);
+              targetH = maxDim;
+            }
+          }
 
-          if (dataUrl && dataUrl.length > 100) {
-            return {
-              previewUrl: dataUrl,
-              width: origW,
-              height: origH,
-            };
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'medium';
+            ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+            bitmap.close();
+
+            const isPng = fileType.includes('png') || fileName.endsWith('.png');
+            const mime = isPng ? 'image/png' : 'image/jpeg';
+            const dataUrl = canvas.toDataURL(mime, 0.85);
+
+            if (dataUrl && dataUrl.length > 200 && !dataUrl.startsWith('data:,')) {
+              return {
+                previewUrl: dataUrl,
+                width: origW,
+                height: origH,
+              };
+            }
+          } else {
+            bitmap.close();
           }
         } else {
           bitmap.close();
         }
-      } else {
-        bitmap.close();
-      }
+        return null;
+      })();
+
+      const result = await Promise.race([
+        bitmapPromise,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000)),
+      ]);
+
+      if (result) return result;
     } catch {
-      // Fall through to next method
+      // Fall through to Image() probe
     }
   }
 
-  // 2. Try Image() decoding with objectUrl (zero heap memory duplication compared to FileReader)
-  if (typeof window !== 'undefined' && typeof URL !== 'undefined' && !isHeicOrTiff) {
-    let objectUrl: string | null = null;
+  // 2. Try Image() decoding with a strict 1000ms timeout
+  if (baselineBlobUrl) {
     try {
-      objectUrl = URL.createObjectURL(file);
-      const img = new Image();
-      img.src = objectUrl;
-
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Browser failed to decode image'));
-        if (typeof img.decode === 'function') {
-          img.decode().then(resolve).catch(() => {
-            // decode rejected, wait for onload/onerror
-          });
-        }
-      });
-
-      const w = img.naturalWidth;
-      const h = img.naturalHeight;
-
-      if (w > 0 && h > 0) {
-        const maxDim = 1600;
-        let targetW = w;
-        let targetH = h;
-        if (targetW > maxDim || targetH > maxDim) {
-          if (targetW > targetH) {
-            targetH = Math.round((targetH / targetW) * maxDim);
-            targetW = maxDim;
-          } else {
-            targetW = Math.round((targetW / targetH) * maxDim);
-            targetH = maxDim;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = targetW;
-        canvas.height = targetH;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0, targetW, targetH);
-          const isPng = fileType.includes('png') || fileName.endsWith('.png');
-          const dataUrl = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.90);
-          URL.revokeObjectURL(objectUrl);
-
-          return {
-            previewUrl: dataUrl,
+      const imgResult = await new Promise<{ previewUrl: string; width: number; height: number } | null>((resolve) => {
+        const timer = setTimeout(() => resolve(null), 1000);
+        const img = new Image();
+        img.onload = () => {
+          clearTimeout(timer);
+          const w = img.naturalWidth || 800;
+          const h = img.naturalHeight || 600;
+          resolve({
+            previewUrl: baselineBlobUrl,
             width: w,
             height: h,
-          };
-        }
-      }
-      URL.revokeObjectURL(objectUrl);
+          });
+        };
+        img.onerror = () => {
+          clearTimeout(timer);
+          resolve(null);
+        };
+        // MUST set img.src AFTER attaching onload & onerror
+        img.src = baselineBlobUrl;
+      });
+
+      if (imgResult) return imgResult;
     } catch {
-      if (objectUrl) {
-        try {
-          URL.revokeObjectURL(objectUrl);
-        } catch {}
-      }
-      // Fall through to server fallback
+      // Fall through
     }
   }
 
-  // 3. Fallback to server Sharp pipeline (handles HEIC, camera RAW, high-megapixel, EXIF rotation)
+  // 3. Fallback to server Sharp pipeline with 2500ms timeout
   try {
-    const serverResult = await fetchServerPreview(file);
+    const serverResult = await Promise.race([
+      fetchServerPreview(file),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+    ]);
     if (serverResult && serverResult.previewUrl) return serverResult;
   } catch (err) {
     console.warn('Server fallback preview failed:', err);
   }
 
-  // 4. Ultimate fallback: URL.createObjectURL
-  if (typeof window !== 'undefined' && typeof URL !== 'undefined') {
-    const blobUrl = URL.createObjectURL(file);
+  // 4. Guaranteed fallback
+  if (baselineBlobUrl) {
     return {
-      previewUrl: blobUrl,
-      width: 800,
-      height: 600,
+      previewUrl: baselineBlobUrl,
+      width: 1200,
+      height: 900,
     };
   }
 
@@ -182,22 +180,32 @@ export async function getSafeImagePreview(
 async function fetchServerPreview(
   file: File
 ): Promise<{ previewUrl: string; width: number; height: number } | null> {
-  const formData = new FormData();
-  formData.append('file', file);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-  const res = await fetch('/api/image-preview', {
-    method: 'POST',
-    body: formData,
-  });
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
 
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (data.success && data.previewUrl) {
-    return {
-      previewUrl: data.previewUrl,
-      width: data.width || 800,
-      height: data.height || 600,
-    };
+    const res = await fetch('/api/image-preview', {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.success && data.previewUrl) {
+      return {
+        previewUrl: data.previewUrl,
+        width: data.width || 800,
+        height: data.height || 600,
+      };
+    }
+    return null;
+  } catch {
+    clearTimeout(timeoutId);
+    return null;
   }
-  return null;
 }

@@ -3,6 +3,9 @@ const nextConfig = {
   transpilePackages: ['lucide-react'],
   experimental: {
     serverComponentsExternalPackages: ['sharp', 'pdf-lib'],
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
   },
   eslint: {
     ignoreDuringBuilds: true,

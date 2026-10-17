@@ -89,6 +89,15 @@ export default function CropperTool() {
       setRightMargin(0);
       setActivePreset('none');
 
+      // 1. Immediately provide instant baseline preview so thumbnail and crop view appear in 0ms!
+      let instantUrl = '';
+      try {
+        instantUrl = URL.createObjectURL(files[0]);
+        setOriginalPreviewUrl(instantUrl);
+      } catch {}
+
+      setIsPreviewLoading(true);
+
       getSafeImagePreview(files[0])
         .then((preview) => {
           if (!isCancelled) {
@@ -100,17 +109,16 @@ export default function CropperTool() {
         .catch((err) => {
           if (!isCancelled) {
             console.error('Cropper preview error:', err);
-            try {
-              const fallbackUrl = URL.createObjectURL(files[0]);
-              setOriginalPreviewUrl(fallbackUrl);
+            if (instantUrl) {
+              setOriginalPreviewUrl(instantUrl);
               const img = new Image();
               img.onload = () => {
                 if (!isCancelled) {
                   setOrigDimensions({ width: img.naturalWidth || 800, height: img.naturalHeight || 600 });
                 }
               };
-              img.src = fallbackUrl;
-            } catch {}
+              img.src = instantUrl;
+            }
             setIsPreviewLoading(false);
           }
         });
@@ -470,7 +478,16 @@ export default function CropperTool() {
               <div className="w-12 h-12 rounded-2xl bg-base-200 border border-base-300 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
                 {originalPreviewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={originalPreviewUrl} alt="Thumb" className="w-full h-full object-cover" />
+                  <img
+                    src={originalPreviewUrl}
+                    alt="Thumb"
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      try {
+                        setOriginalPreviewUrl(URL.createObjectURL(files[0]));
+                      } catch {}
+                    }}
+                  />
                 ) : (
                   <ImageIcon className="w-5 h-5 text-base-content/40" />
                 )}
@@ -526,6 +543,11 @@ export default function CropperTool() {
                     alt="Original Crop Source"
                     className="max-h-[440px] w-auto max-w-full object-contain block pointer-events-none select-none"
                     draggable={false}
+                    onError={() => {
+                      try {
+                        setOriginalPreviewUrl(URL.createObjectURL(files[0]));
+                      } catch {}
+                    }}
                   />
 
                   {/* Draw hint overlay when whole image is selected */}

@@ -74,7 +74,20 @@ export default function ResizerTool() {
     try {
       const newItems: ImageItem[] = await Promise.all(
         filesToAdd.map(async (file) => {
-          const { previewUrl, width: w, height: h } = await getSafeImagePreview(file);
+          let previewUrl = '';
+          let w = 800;
+          let h = 600;
+          try {
+            previewUrl = URL.createObjectURL(file);
+          } catch {}
+          try {
+            const preview = await getSafeImagePreview(file);
+            previewUrl = preview.previewUrl || previewUrl;
+            w = preview.width || w;
+            h = preview.height || h;
+          } catch {
+            // keep fallback
+          }
           return {
             id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
             file,

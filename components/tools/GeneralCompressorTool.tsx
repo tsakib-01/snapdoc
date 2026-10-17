@@ -26,7 +26,15 @@ export default function GeneralCompressorTool() {
     let isCancelled = false;
 
     if (files.length > 0) {
+      // 1. Immediately provide instant baseline preview so thumbnail and preview appear in 0ms!
+      let instantUrl = '';
+      try {
+        instantUrl = URL.createObjectURL(files[0]);
+        setOriginalPreviewUrl(instantUrl);
+      } catch {}
+
       setIsPreviewLoading(true);
+
       getSafeImagePreview(files[0])
         .then((preview) => {
           if (!isCancelled) {
@@ -38,10 +46,16 @@ export default function GeneralCompressorTool() {
         .catch((err) => {
           if (!isCancelled) {
             console.error('Preview error:', err);
-            try {
-              const fallbackUrl = URL.createObjectURL(files[0]);
-              setOriginalPreviewUrl(fallbackUrl);
-            } catch {}
+            if (instantUrl) {
+              setOriginalPreviewUrl(instantUrl);
+              const img = new Image();
+              img.onload = () => {
+                if (!isCancelled && img.naturalWidth) {
+                  setOrigDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+                }
+              };
+              img.src = instantUrl;
+            }
             setIsPreviewLoading(false);
           }
         });
@@ -119,6 +133,11 @@ export default function GeneralCompressorTool() {
                     src={originalPreviewUrl}
                     alt="Original thumb"
                     className="w-full h-full object-cover"
+                    onError={() => {
+                      try {
+                        setOriginalPreviewUrl(URL.createObjectURL(files[0]));
+                      } catch {}
+                    }}
                   />
                 ) : isPreviewLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -146,7 +165,7 @@ export default function GeneralCompressorTool() {
           </div>
 
           {/* Visual Image Preview Card */}
-          {originalPreviewUrl && (
+          {originalPreviewUrl ? (
             <div className="rounded-2xl border border-base-300 bg-base-100 p-3 sm:p-5 shadow-xs flex flex-col items-center justify-center space-y-3">
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
@@ -166,10 +185,20 @@ export default function GeneralCompressorTool() {
                   src={originalPreviewUrl}
                   alt={files[0].name}
                   className="max-h-[300px] sm:max-h-[360px] w-auto max-w-full object-contain rounded-lg shadow-sm"
+                  onError={() => {
+                    try {
+                      setOriginalPreviewUrl(URL.createObjectURL(files[0]));
+                    } catch {}
+                  }}
                 />
               </div>
             </div>
-          )}
+          ) : isPreviewLoading ? (
+            <div className="rounded-2xl border border-base-300 bg-base-100 p-8 flex flex-col items-center justify-center gap-2 text-xs text-base-content/60">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span>Preparing uploaded image preview...</span>
+            </div>
+          ) : null}
 
           {/* Maximum Output Compression Mode */}
           <div className="p-5 rounded-2xl bg-base-200/30 border border-base-300 space-y-4">

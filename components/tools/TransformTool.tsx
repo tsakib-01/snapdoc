@@ -28,7 +28,15 @@ export default function TransformTool({ mode }: TransformToolProps) {
     let isCancelled = false;
 
     if (files.length > 0) {
+      // 1. Immediately provide instant baseline preview so thumbnail and preview appear in 0ms!
+      let instantUrl = '';
+      try {
+        instantUrl = URL.createObjectURL(files[0]);
+        setOriginalPreviewUrl(instantUrl);
+      } catch {}
+
       setIsPreviewLoading(true);
+
       getSafeImagePreview(files[0])
         .then((preview) => {
           if (!isCancelled) {
@@ -40,10 +48,16 @@ export default function TransformTool({ mode }: TransformToolProps) {
         .catch((err) => {
           if (!isCancelled) {
             console.error('Transform preview error:', err);
-            try {
-              const fallbackUrl = URL.createObjectURL(files[0]);
-              setOriginalPreviewUrl(fallbackUrl);
-            } catch {}
+            if (instantUrl) {
+              setOriginalPreviewUrl(instantUrl);
+              const img = new Image();
+              img.onload = () => {
+                if (!isCancelled && img.naturalWidth) {
+                  setOrigDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+                }
+              };
+              img.src = instantUrl;
+            }
             setIsPreviewLoading(false);
           }
         });
@@ -122,6 +136,11 @@ export default function TransformTool({ mode }: TransformToolProps) {
                     src={originalPreviewUrl}
                     alt="Original thumb"
                     className="w-full h-full object-cover"
+                    onError={() => {
+                      try {
+                        setOriginalPreviewUrl(URL.createObjectURL(files[0]));
+                      } catch {}
+                    }}
                   />
                 ) : isPreviewLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -231,6 +250,11 @@ export default function TransformTool({ mode }: TransformToolProps) {
                 className="max-h-[320px] object-contain transition-transform duration-300 rounded-lg shadow-md"
                 style={{
                   transform: `rotate(${rotateAngle}deg) scaleX(${flipH ? -1 : 1}) scaleY(${flipV ? -1 : 1})`,
+                }}
+                onError={() => {
+                  try {
+                    setOriginalPreviewUrl(URL.createObjectURL(files[0]));
+                  } catch {}
                 }}
               />
             </div>

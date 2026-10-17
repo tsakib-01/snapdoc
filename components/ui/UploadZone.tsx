@@ -106,7 +106,7 @@ export default function UploadZone({
     setIsDragging(false);
   };
 
-  const processFiles = (selectedFiles: FileList | null) => {
+  const processFiles = async (selectedFiles: FileList | null) => {
     setErrorMessage(null);
     if (!selectedFiles || selectedFiles.length === 0) return;
 
@@ -114,7 +114,12 @@ export default function UploadZone({
     const isPdfOnly = accept.includes('pdf');
 
     for (let i = 0; i < selectedFiles.length; i++) {
-      const f = selectedFiles[i];
+      let f = selectedFiles[i];
+
+      // Handle mobile camera captures: if file initially reports 0 bytes while mobile camera OS buffer flushes, retry after 250ms
+      if (f.size === 0) {
+        await new Promise((r) => setTimeout(r, 250));
+      }
 
       // Validate non-empty file
       if (f.size === 0) {
@@ -156,16 +161,14 @@ export default function UploadZone({
     if (newFiles.length === 0) return;
 
     const firstFile = newFiles[0];
-    const isLarge = firstFile && firstFile.size > 1.5 * 1024 * 1024; // > 1.5MB
 
     setInternalLoading(true);
     setLoadingFileName(firstFile?.name || 'File');
     setLoadingFileSize(firstFile?.size || 0);
     setLoadingFileType(firstFile?.type || '');
-    setLoadingProgress(25);
+    setLoadingProgress(40);
 
-    setTimeout(() => setLoadingProgress(60), 120);
-    setTimeout(() => setLoadingProgress(90), 280);
+    setTimeout(() => setLoadingProgress(80), 80);
     setTimeout(() => {
       setLoadingProgress(100);
       setTimeout(() => {
@@ -180,8 +183,8 @@ export default function UploadZone({
         }
         setInternalLoading(false);
         scrollToTool();
-      }, 150);
-    }, isLarge ? 550 : 320);
+      }, 80);
+    }, 160);
   };
 
   const handleDrop = (e: React.DragEvent) => {

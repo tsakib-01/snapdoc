@@ -39,11 +39,15 @@ export default function ImageToPdfTool({
   const addMoreInputRef = useRef<HTMLInputElement>(null);
 
   const handleFilesSelected = async (newFiles: File[]) => {
-    const initialItems: ImageItem[] = newFiles.map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 7)}`,
-      file,
-      previewUrl: '',
-    }));
+    const initialItems: ImageItem[] = newFiles.map((file) => {
+      let previewUrl = '';
+      try { previewUrl = URL.createObjectURL(file); } catch {}
+      return {
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 7)}`,
+        file,
+        previewUrl,
+      };
+    });
     setItems(initialItems);
 
     const resolved = await Promise.all(
@@ -52,11 +56,7 @@ export default function ImageToPdfTool({
           const preview = await getSafeImagePreview(file);
           return { ...initialItems[idx], previewUrl: preview.previewUrl };
         } catch {
-          try {
-            return { ...initialItems[idx], previewUrl: URL.createObjectURL(file) };
-          } catch {
-            return initialItems[idx];
-          }
+          return initialItems[idx];
         }
       })
     );
@@ -64,11 +64,15 @@ export default function ImageToPdfTool({
   };
 
   const handleAddMoreFiles = async (additionalFiles: File[]) => {
-    const startItems: ImageItem[] = additionalFiles.map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 7)}`,
-      file,
-      previewUrl: '',
-    }));
+    const startItems: ImageItem[] = additionalFiles.map((file) => {
+      let previewUrl = '';
+      try { previewUrl = URL.createObjectURL(file); } catch {}
+      return {
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 7)}`,
+        file,
+        previewUrl,
+      };
+    });
     setItems((prev) => [...prev, ...startItems].slice(0, 50));
 
     const resolved = await Promise.all(

@@ -116,8 +116,9 @@ export default function ConverterTool({
           const r = data[idx];
           const g = data[idx + 1];
           const b = data[idx + 2];
-          const avg = (r + g + b) / 3;
-          return avg > 160 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22;
+          const isWhiteTile = r >= 246 && g >= 246 && b >= 246;
+          const isGrayTile = r >= 220 && r <= 242 && Math.abs(r - g) <= 9 && Math.abs(g - b) <= 9;
+          return isWhiteTile || isGrayTile;
         };
 
         let borderCheckerCount = 0;
@@ -131,7 +132,7 @@ export default function ConverterTool({
           if (isChecker((y * w + w - 1) * 4)) borderCheckerCount++;
         }
 
-        const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.25;
+        const isFakeCheckerboard = !hasAlpha && borderCheckerCount / borderSamples > 0.35;
         setDetectedBgType(hasAlpha ? 'transparent' : isFakeCheckerboard ? 'checkerboard' : null);
 
         if (hasAlpha) {
@@ -276,13 +277,14 @@ export default function ConverterTool({
       }
     }
 
-    // 2. Check for checkerboard pattern from borders
+    // 2. Check for checkerboard pattern from borders (only for images without genuine alpha)
     const isChecker = (idx: number) => {
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-      const avg = (r + g + b) / 3;
-      return avg > 160 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22;
+      const isWhiteTile = r >= 246 && g >= 246 && b >= 246;
+      const isGrayTile = r >= 220 && r <= 242 && Math.abs(r - g) <= 9 && Math.abs(g - b) <= 9;
+      return isWhiteTile || isGrayTile;
     };
 
     let borderCheckerCount = 0;
@@ -296,7 +298,7 @@ export default function ConverterTool({
       if (isChecker((y * width + width - 1) * 4)) borderCheckerCount++;
     }
 
-    const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.25;
+    const isFakeCheckerboard = !hasAlpha && borderCheckerCount / borderSamples > 0.35;
 
     // Only apply background color replacement when converting to JPEG (since JPEG cannot store alpha transparency)
     if (format === 'jpeg') {

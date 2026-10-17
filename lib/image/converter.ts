@@ -34,8 +34,9 @@ function replaceBorderCheckerboard(
     const r = rawBuffer[idx];
     const g = rawBuffer[idx + 1];
     const b = rawBuffer[idx + 2];
-    const avg = (r + g + b) / 3;
-    return avg > 160 && Math.abs(r - g) < 22 && Math.abs(g - b) < 22;
+    const isWhiteTile = r >= 246 && g >= 246 && b >= 246;
+    const isGrayTile = r >= 220 && r <= 242 && Math.abs(r - g) <= 9 && Math.abs(g - b) <= 9;
+    return isWhiteTile || isGrayTile;
   };
 
   const visited = new Uint8Array(width * height);

@@ -232,12 +232,12 @@ export default function ConverterTool({
 
   const acceptTypes =
     sourceFormat === 'jpg'
-      ? 'image/jpeg,image/jpg,.jpg,.jpeg,.jfif,.pjpeg'
+      ? 'image/jpeg,image/jpg,image/*,.jpg,.jpeg,.jfif,.pjpeg'
       : sourceFormat === 'png'
-      ? 'image/png,.png'
+      ? 'image/png,image/*,.png'
       : sourceFormat === 'webp'
-      ? 'image/webp,.webp'
-      : 'image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
+      ? 'image/webp,image/*,.webp'
+      : 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
 
   return (
     <div className="w-full space-y-6">

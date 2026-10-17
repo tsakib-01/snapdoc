@@ -134,7 +134,7 @@ export default function CompressPdfTool() {
     <div className="w-full space-y-6">
       {files.length === 0 && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           files={files}
           onFilesSelected={setFiles}
           title="Drop PDF file to optimize and compress"

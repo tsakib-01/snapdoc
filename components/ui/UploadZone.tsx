@@ -116,6 +116,12 @@ export default function UploadZone({
     for (let i = 0; i < selectedFiles.length; i++) {
       const f = selectedFiles[i];
 
+      // Validate non-empty file
+      if (f.size === 0) {
+        setErrorMessage(`"${f.name || 'Photo'}" has 0 bytes. If taking a photo with your camera, please wait a moment or choose it from your photo library.`);
+        return;
+      }
+
       // Validate type
       if (isPdfOnly) {
         if (!f.type.includes('pdf') && !f.name.toLowerCase().endsWith('.pdf')) {
@@ -125,7 +131,10 @@ export default function UploadZone({
       } else if (accept.includes('image')) {
         const isImg =
           f.type.startsWith('image/') ||
-          /\.(jpe?g|jfif|pjpeg|pjp|png|webp|avif|bmp|tiff?|gif|heic|heif)$/i.test(f.name);
+          !f.type ||
+          f.type === 'application/octet-stream' ||
+          /\.(jpe?g|jfif|pjpeg|pjp|png|webp|avif|bmp|tiff?|gif|heic|heif|dng|raw)$/i.test(f.name) ||
+          !f.name.includes('.'); // Camera captures without file extensions
         if (!isImg) {
           setErrorMessage(`"${f.name}" is not a supported image format. Please upload JPG, PNG, or WebP.`);
           return;

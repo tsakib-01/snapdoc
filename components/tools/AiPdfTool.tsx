@@ -304,7 +304,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
       {/* Upload / Loading state */}
       {(!file || isProcessing || progress.phase === 'error') && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
           title="Upload PDF for AI Assistant & Summarizer"

@@ -158,7 +158,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
     <div className="w-full space-y-6">
       {files.length === 0 && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           files={files}
           onFilesSelected={setFiles}
           title={`Drop PDF file to extract ${label} pages`}

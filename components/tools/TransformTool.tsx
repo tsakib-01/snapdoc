@@ -103,11 +103,11 @@ export default function TransformTool({ mode }: TransformToolProps) {
     <div className="w-full space-y-6">
       {files.length === 0 && (
         <UploadZone
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
           title={`Upload image to ${mode === 'rotate' ? 'rotate' : 'flip'}`}
-          subtitle="Supports JPG, PNG, and WebP"
+          subtitle="Supports JPG, PNG, WebP, and camera formats"
         />
       )}
 

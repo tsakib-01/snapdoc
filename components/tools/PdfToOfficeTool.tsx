@@ -110,7 +110,7 @@ export default function PdfToOfficeTool({
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {!file && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
           title={title}

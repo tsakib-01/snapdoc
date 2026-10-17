@@ -7,7 +7,7 @@ export async function getSafeImagePreview(
 ): Promise<{ previewUrl: string; width: number; height: number }> {
   if (!file || file.size === 0) {
     throw new Error(
-      `"${file?.name || 'File'}" has 0 bytes. If you dragged this from WhatsApp or another web app, please save the file to your computer first, then upload it.`
+      `"${file?.name || 'File'}" has 0 bytes. If you took this directly with your camera, please wait a moment or choose it from your photo library.`
     );
   }
 
@@ -23,99 +23,150 @@ export async function getSafeImagePreview(
     fileType.includes('heif') ||
     fileType.includes('tiff');
 
-  // If format is HEIC or TIFF (unsupported by browser <img> on Windows), use server Sharp pipeline directly
+  // If format is HEIC or TIFF (unsupported by standard browser <img> on Windows/Android), use server Sharp pipeline directly
   if (isHeicOrTiff) {
     try {
       const serverResult = await fetchServerPreview(file);
-      if (serverResult) return serverResult;
+      if (serverResult && serverResult.previewUrl) return serverResult;
     } catch (err) {
-      console.warn('Server HEIC/TIFF preview failed:', err);
+      console.warn('Server HEIC/TIFF preview failed, trying client decoders:', err);
     }
   }
 
   // 1. Try client-side createImageBitmap (instant, auto-rotates camera photos from EXIF)
   if (typeof window !== 'undefined' && typeof createImageBitmap !== 'undefined' && !isHeicOrTiff) {
     try {
-      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      } catch {
+        bitmap = await createImageBitmap(file);
+      }
+
       const origW = bitmap.width;
       const origH = bitmap.height;
 
-      // Constrain preview canvas dimensions to max 1200px for speed and memory efficiency
-      const maxDim = 1200;
-      let targetW = origW;
-      let targetH = origH;
-      if (targetW > maxDim || targetH > maxDim) {
-        if (targetW > targetH) {
-          targetH = Math.round((targetH / targetW) * maxDim);
-          targetW = maxDim;
-        } else {
-          targetW = Math.round((targetW / targetH) * maxDim);
-          targetH = maxDim;
+      if (origW > 0 && origH > 0) {
+        // Constrain preview canvas dimensions to max 1600px for speed and memory efficiency
+        const maxDim = 1600;
+        let targetW = origW;
+        let targetH = origH;
+        if (targetW > maxDim || targetH > maxDim) {
+          if (targetW > targetH) {
+            targetH = Math.round((targetH / targetW) * maxDim);
+            targetW = maxDim;
+          } else {
+            targetW = Math.round((targetW / targetH) * maxDim);
+            targetH = maxDim;
+          }
         }
-      }
 
-      const canvas = document.createElement('canvas');
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+          bitmap.close();
+
+          const isPng = fileType.includes('png') || fileName.endsWith('.png');
+          const mime = isPng ? 'image/png' : 'image/jpeg';
+          const dataUrl = canvas.toDataURL(mime, 0.90);
+
+          if (dataUrl && dataUrl.length > 100) {
+            return {
+              previewUrl: dataUrl,
+              width: origW,
+              height: origH,
+            };
+          }
+        } else {
+          bitmap.close();
+        }
+      } else {
         bitmap.close();
-
-        const isPng = fileType.includes('png') || fileName.endsWith('.png');
-        const mime = isPng ? 'image/png' : 'image/jpeg';
-        const dataUrl = canvas.toDataURL(mime, 0.88);
-
-        return {
-          previewUrl: dataUrl,
-          width: origW,
-          height: origH,
-        };
       }
-      bitmap.close();
     } catch {
       // Fall through to next method
     }
   }
 
-  // 2. Try FileReader readAsDataURL
-  if (typeof window !== 'undefined' && typeof FileReader !== 'undefined' && !isHeicOrTiff) {
+  // 2. Try Image() decoding with objectUrl (zero heap memory duplication compared to FileReader)
+  if (typeof window !== 'undefined' && typeof URL !== 'undefined' && !isHeicOrTiff) {
+    let objectUrl: string | null = null;
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target?.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+      objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.src = objectUrl;
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Browser failed to decode image'));
+        if (typeof img.decode === 'function') {
+          img.decode().then(resolve).catch(() => {
+            // decode rejected, wait for onload/onerror
+          });
+        }
       });
 
-      const dims = await new Promise<{ width: number; height: number }>((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve({ width: img.naturalWidth || 800, height: img.naturalHeight || 600 });
-        img.onerror = () => resolve({ width: 800, height: 600 });
-        img.src = dataUrl;
-      });
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
 
-      return {
-        previewUrl: dataUrl,
-        width: dims.width,
-        height: dims.height,
-      };
+      if (w > 0 && h > 0) {
+        const maxDim = 1600;
+        let targetW = w;
+        let targetH = h;
+        if (targetW > maxDim || targetH > maxDim) {
+          if (targetW > targetH) {
+            targetH = Math.round((targetH / targetW) * maxDim);
+            targetW = maxDim;
+          } else {
+            targetW = Math.round((targetW / targetH) * maxDim);
+            targetH = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+          const isPng = fileType.includes('png') || fileName.endsWith('.png');
+          const dataUrl = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.90);
+          URL.revokeObjectURL(objectUrl);
+
+          return {
+            previewUrl: dataUrl,
+            width: w,
+            height: h,
+          };
+        }
+      }
+      URL.revokeObjectURL(objectUrl);
     } catch {
+      if (objectUrl) {
+        try {
+          URL.revokeObjectURL(objectUrl);
+        } catch {}
+      }
       // Fall through to server fallback
     }
   }
 
-  // 3. Fallback to server sharp pipeline
+  // 3. Fallback to server Sharp pipeline (handles HEIC, camera RAW, high-megapixel, EXIF rotation)
   try {
     const serverResult = await fetchServerPreview(file);
-    if (serverResult) return serverResult;
+    if (serverResult && serverResult.previewUrl) return serverResult;
   } catch (err) {
     console.warn('Server fallback preview failed:', err);
   }
 
-  // 4. Ultimate fallback: URL.createObjectURL (without instant revocation)
+  // 4. Ultimate fallback: URL.createObjectURL
   if (typeof window !== 'undefined' && typeof URL !== 'undefined') {
     const blobUrl = URL.createObjectURL(file);
     return {

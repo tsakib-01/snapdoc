@@ -13,14 +13,18 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const image = sharp(buffer);
-    const metadata = await image.metadata();
+    const rawImage = sharp(buffer, { failOnError: false });
+    const metadata = await rawImage.metadata();
 
-    // Auto-orient according to EXIF and downscale to max 1200px for instant thumbnail/preview
-    const previewBuffer = await image
+    const isRotated90 = metadata.orientation && [5, 6, 7, 8].includes(metadata.orientation);
+    const naturalWidth = isRotated90 ? (metadata.height || 800) : (metadata.width || 800);
+    const naturalHeight = isRotated90 ? (metadata.width || 600) : (metadata.height || 600);
+
+    // Auto-orient according to EXIF and downscale to max 1600px for instant thumbnail/preview
+    const previewBuffer = await rawImage
       .rotate()
-      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 82 })
+      .resize(1600, 1600, { fit: 'inside', withoutEnlargement: true })
+      .jpeg({ quality: 85 })
       .toBuffer();
 
     const dataUrl = `data:image/jpeg;base64,${previewBuffer.toString('base64')}`;
@@ -28,8 +32,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       previewUrl: dataUrl,
-      width: metadata.width || 800,
-      height: metadata.height || 600,
+      width: naturalWidth,
+      height: naturalHeight,
       format: metadata.format || 'jpeg',
     });
   } catch (err: any) {

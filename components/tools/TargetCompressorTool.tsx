@@ -119,11 +119,11 @@ export default function TargetCompressorTool({
       {/* 1. Upload state */}
       {files.length === 0 && (
         <UploadZone
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
           title="Drop your image to compress"
-          subtitle="Supports JPG, PNG, and WebP (Up to 50MB)"
+          subtitle="Supports JPG, PNG, WebP, and camera formats (Up to 50MB)"
         />
       )}
 

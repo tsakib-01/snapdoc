@@ -26,7 +26,7 @@ interface ImageItem {
 export default function ImageToPdfTool({
   title = 'Drop one or multiple images to convert to PDF',
   subtitle = 'Supports JPG, PNG, and WebP (Up to 30 images)',
-  accept = 'image/jpeg,image/jpg,image/png,image/webp',
+  accept = 'image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif',
   fileTypeLabel = 'Image',
 }: ImageToPdfToolProps = {}) {
   const [items, setItems] = useState<ImageItem[]>([]);

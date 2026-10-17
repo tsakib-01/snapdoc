@@ -381,7 +381,7 @@ export default function MergePdfTool() {
       <input
         ref={addFileInputRef}
         type="file"
-        accept="application/pdf"
+        accept=".pdf,application/pdf"
         multiple
         className="hidden"
         onChange={(e) => handleAddMoreFiles(e.target.files)}
@@ -390,7 +390,7 @@ export default function MergePdfTool() {
       {/* Initial Upload State */}
       {items.length === 0 && (
         <UploadZone
-          accept="application/pdf"
+          accept=".pdf,application/pdf"
           multiple={true}
           maxFiles={20}
           files={[]}

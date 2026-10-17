@@ -453,7 +453,7 @@ export default function VisualPdfOrganizerTool({
       {!file && (
         <div className="max-w-2xl mx-auto">
           <UploadZone
-            accept="application/pdf"
+            accept=".pdf,application/pdf"
             maxFiles={1}
             maxSizeMb={50}
             title={title}
@@ -977,7 +977,7 @@ export default function VisualPdfOrganizerTool({
       <input
         ref={addFileInputRef}
         type="file"
-        accept="application/pdf"
+        accept=".pdf,application/pdf"
         className="hidden"
         onChange={(e) => {
           if (e.target.files && e.target.files[0]) {

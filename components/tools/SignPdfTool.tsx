@@ -914,7 +914,7 @@ export default function SignPdfTool() {
       {(!file || loadingPdf) && (
         <div className="max-w-4xl mx-auto space-y-6">
           <UploadZone
-            accept="application/pdf"
+            accept=".pdf,application/pdf"
             maxFiles={1}
             maxSizeMb={50}
             title="Upload PDF to eSign"

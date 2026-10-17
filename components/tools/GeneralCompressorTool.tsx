@@ -100,11 +100,11 @@ export default function GeneralCompressorTool() {
     <div className="w-full space-y-6">
       {files.length === 0 && (
         <UploadZone
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
           title="Drop image to optimize"
-          subtitle="Supports JPG, PNG, and WebP formats"
+          subtitle="Supports JPG, PNG, WebP, and camera formats"
         />
       )}
 

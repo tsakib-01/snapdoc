@@ -490,7 +490,7 @@ export default function PageNumbererTool() {
                   type="button"
                   onClick={handleProcess}
                   disabled={processing}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold"
+                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold h-auto min-h-[3rem] py-2.5 px-3 text-center leading-snug flex items-center justify-center"
                 >
                   {processing ? (
                     <>

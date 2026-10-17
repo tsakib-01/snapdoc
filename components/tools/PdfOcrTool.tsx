@@ -239,10 +239,10 @@ export default function PdfOcrTool() {
               <button
                 type="button"
                 onClick={handleRunOcr}
-                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
               >
-                <ScanText className="w-5 h-5" />
-                Start OCR & Extract Text
+                <ScanText className="w-5 h-5 shrink-0" />
+                <span>Start OCR & Extract Text</span>
               </button>
             )}
           </div>
@@ -293,38 +293,38 @@ export default function PdfOcrTool() {
               <a
                 href={result.searchablePdfUrl}
                 download={result.filename}
-                className="btn btn-primary btn-md rounded-2xl gap-2 font-bold px-6 shadow-lg shadow-primary/20 w-full sm:flex-1 text-white"
+                className="btn btn-primary btn-md rounded-2xl gap-2 font-bold px-6 shadow-lg shadow-primary/20 w-full sm:flex-1 text-white h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center"
               >
-                <FileSearch className="w-4 h-4" />
+                <FileSearch className="w-4 h-4 shrink-0" />
                 <span>Download Searchable PDF</span>
               </a>
 
               <button
                 type="button"
                 onClick={() => setShowPreviewModal(true)}
-                className="btn btn-ghost border border-base-300 btn-md rounded-2xl gap-2 font-bold px-5 text-base-content hover:bg-base-200 w-full sm:w-auto"
+                className="btn btn-ghost border border-base-300 btn-md rounded-2xl gap-2 font-bold px-5 text-base-content hover:bg-base-200 w-full sm:w-auto h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center"
               >
-                <Eye className="w-4 h-4" />
+                <Eye className="w-4 h-4 shrink-0" />
                 <span>Preview</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleDownloadTxt}
-                className="btn btn-outline btn-md rounded-2xl gap-2 font-bold px-5 w-full sm:w-auto"
+                className="btn btn-outline btn-md rounded-2xl gap-2 font-bold px-5 w-full sm:w-auto h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-4 h-4 shrink-0" />
                 <span>Download .TXT</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleCopyText}
-                className={`btn btn-md rounded-2xl gap-2 font-bold px-5 w-full sm:w-auto transition-all ${
+                className={`btn btn-md rounded-2xl gap-2 font-bold px-5 w-full sm:w-auto h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center transition-all ${
                   copied ? 'btn-success text-white' : 'btn-ghost border border-base-300'
                 }`}
               >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copied ? <Check className="w-4 h-4 shrink-0" /> : <Copy className="w-4 h-4 shrink-0" />}
                 <span>{copied ? 'Copied!' : 'Copy Text'}</span>
               </button>
             </div>

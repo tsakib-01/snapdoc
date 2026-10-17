@@ -159,63 +159,63 @@ export default function TransformTool({ mode }: TransformToolProps) {
             </span>
 
             {mode === 'rotate' ? (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setRotateAngle(90)}
-                  className={`btn btn-md rounded-2xl gap-2 ${
+                  className={`btn btn-md h-auto min-h-[3rem] py-2 px-2 text-xs sm:text-sm rounded-2xl gap-1.5 flex items-center justify-center text-center leading-snug ${
                     rotateAngle === 90 ? 'btn-primary text-white' : 'btn-ghost bg-base-100 border border-base-300'
                   }`}
                 >
-                  <RotateCw className="w-4 h-4" />
-                  90° Right
+                  <RotateCw className="w-4 h-4 shrink-0" />
+                  <span>90° Right</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setRotateAngle(270)}
-                  className={`btn btn-md rounded-2xl gap-2 ${
+                  className={`btn btn-md h-auto min-h-[3rem] py-2 px-2 text-xs sm:text-sm rounded-2xl gap-1.5 flex items-center justify-center text-center leading-snug ${
                     rotateAngle === 270 ? 'btn-primary text-white' : 'btn-ghost bg-base-100 border border-base-300'
                   }`}
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  90° Left
+                  <RotateCcw className="w-4 h-4 shrink-0" />
+                  <span>90° Left</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setRotateAngle(180)}
-                  className={`btn btn-md rounded-2xl gap-2 ${
+                  className={`btn btn-md h-auto min-h-[3rem] py-2 px-2 text-xs sm:text-sm rounded-2xl gap-1.5 flex items-center justify-center text-center leading-snug ${
                     rotateAngle === 180 ? 'btn-primary text-white' : 'btn-ghost bg-base-100 border border-base-300'
                   }`}
                 >
-                  <RotateCw className="w-4 h-4" />
-                  180° Upside Down
+                  <RotateCw className="w-4 h-4 shrink-0" />
+                  <span>180° Flip</span>
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setFlipH(!flipH);
                   }}
-                  className={`btn btn-md rounded-2xl gap-2 ${
+                  className={`btn btn-md h-auto min-h-[3rem] py-2 px-2.5 text-xs sm:text-sm rounded-2xl gap-1.5 flex items-center justify-center text-center leading-snug ${
                     flipH ? 'btn-primary text-white' : 'btn-ghost bg-base-100 border border-base-300'
                   }`}
                 >
-                  <FlipHorizontal className="w-4 h-4" />
-                  Flip Horizontal (Mirror) {flipH ? '✓' : ''}
+                  <FlipHorizontal className="w-4 h-4 shrink-0" />
+                  <span>Flip Horizontal {flipH ? '✓' : ''}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setFlipV(!flipV);
                   }}
-                  className={`btn btn-md rounded-2xl gap-2 ${
+                  className={`btn btn-md h-auto min-h-[3rem] py-2 px-2.5 text-xs sm:text-sm rounded-2xl gap-1.5 flex items-center justify-center text-center leading-snug ${
                     flipV ? 'btn-primary text-white' : 'btn-ghost bg-base-100 border border-base-300'
                   }`}
                 >
-                  <FlipVertical className="w-4 h-4" />
-                  Flip Vertical (Upside Down) {flipV ? '✓' : ''}
+                  <FlipVertical className="w-4 h-4 shrink-0" />
+                  <span>Flip Vertical {flipV ? '✓' : ''}</span>
                 </button>
               </div>
             )}
@@ -252,7 +252,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
             type="button"
             onClick={handleProcess}
             disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
           >
             {isProcessing ? (
               <>

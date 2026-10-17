@@ -579,7 +579,7 @@ export default function ResizerTool() {
                         setHeight(calcH);
                       }
                     }}
-                    className={`btn btn-xs rounded-lg gap-1 ${
+                    className={`btn btn-xs h-auto min-h-[1.75rem] py-1 px-2 rounded-lg gap-1 leading-none ${
                       maintainRatio ? 'btn-primary text-primary-content shadow-xs' : 'btn-ghost text-base-content/60'
                     }`}
                     title={maintainRatio ? 'Aspect ratio locked' : 'Aspect ratio free'}
@@ -771,7 +771,7 @@ export default function ResizerTool() {
               type="button"
               onClick={handleProcess}
               disabled={isProcessing || images.length === 0}
-              className="btn btn-primary btn-md sm:btn-lg rounded-xl w-full font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="btn btn-primary btn-md sm:btn-lg rounded-xl w-full font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer h-auto min-h-[3rem] py-3 px-3 text-center leading-snug"
             >
               {isProcessing ? (
                 <>

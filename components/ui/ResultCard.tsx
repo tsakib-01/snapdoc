@@ -188,7 +188,7 @@ export default function ResultCard({
             <button
               type="button"
               onClick={handleDownload}
-              className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-3 sm:px-6 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
+              className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-3 sm:px-6 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap h-auto min-h-[2.75rem] py-2 leading-snug"
             >
               <Download className="w-4 h-4 shrink-0" />
               <span className="inline sm:hidden">Download</span>
@@ -199,7 +199,7 @@ export default function ResultCard({
               <button
                 type="button"
                 onClick={handleOpenPreview}
-                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-3 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
+                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-3 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap h-auto min-h-[2.75rem] py-2 leading-snug"
               >
                 <Eye className="w-4 h-4 shrink-0" />
                 <span>Preview</span>
@@ -213,7 +213,7 @@ export default function ResultCard({
               scrollToTool();
               onReset();
             }}
-            className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap"
+            className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap h-auto min-h-[2.75rem] py-2 leading-snug"
           >
             <RotateCcw className="w-4 h-4 shrink-0" />
             <span className="truncate">{resetLabel || 'Process Another'}</span>

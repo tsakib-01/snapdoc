@@ -363,14 +363,14 @@ export default function WatermarkPdfTool() {
                   <button
                     type="button"
                     onClick={() => setWatermarkType('text')}
-                    className={`btn btn-xs rounded-xl ${watermarkType === 'text' ? 'btn-primary' : 'btn-ghost'}`}
+                    className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${watermarkType === 'text' ? 'btn-primary' : 'btn-ghost'}`}
                   >
                     Text Watermark
                   </button>
                   <button
                     type="button"
                     onClick={() => setWatermarkType('image')}
-                    className={`btn btn-xs rounded-xl ${watermarkType === 'image' ? 'btn-primary' : 'btn-ghost'}`}
+                    className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${watermarkType === 'image' ? 'btn-primary' : 'btn-ghost'}`}
                   >
                     Image Logo
                   </button>
@@ -473,7 +473,7 @@ export default function WatermarkPdfTool() {
                   type="button"
                   onClick={handleProcess}
                   disabled={processing}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold"
+                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold h-auto min-h-[3rem] py-2.5 px-3 text-center leading-snug flex items-center justify-center"
                 >
                   {processing ? (
                     <>

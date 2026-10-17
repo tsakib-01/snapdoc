@@ -768,25 +768,25 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => setCropScope('all')}
-                      className={`btn btn-sm rounded-xl text-xs font-bold gap-1.5 transition-all ${
+                      className={`btn btn-sm h-auto min-h-[2.25rem] py-1.5 px-2 rounded-xl text-xs font-bold gap-1.5 transition-all flex items-center justify-center leading-tight ${
                         cropScope === 'all'
                           ? 'btn-primary shadow-sm'
                           : 'btn-ghost text-base-content/70 hover:text-base-content'
                       }`}
                     >
-                      <Files className="w-4 h-4" />
+                      <Files className="w-4 h-4 shrink-0" />
                       <span>All Pages</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setCropScope('current')}
-                      className={`btn btn-sm rounded-xl text-xs font-bold gap-1.5 transition-all ${
+                      className={`btn btn-sm h-auto min-h-[2.25rem] py-1.5 px-2 rounded-xl text-xs font-bold gap-1.5 transition-all flex items-center justify-center leading-tight ${
                         cropScope === 'current'
                           ? 'btn-primary shadow-sm'
                           : 'btn-ghost text-base-content/70 hover:text-base-content'
                       }`}
                     >
-                      <File className="w-4 h-4" />
+                      <File className="w-4 h-4 shrink-0" />
                       <span>Current Page</span>
                     </button>
                   </div>
@@ -807,8 +807,8 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => handleApplyPreset('light')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'light' ? 'btn-primary' : 'btn-outline'
+                      className={`h-auto min-h-[38px] py-1.5 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                        activePreset === 'light' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
                       Light (4%)
@@ -816,8 +816,8 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => handleApplyPreset('standard')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'standard' ? 'btn-primary' : 'btn-outline'
+                      className={`h-auto min-h-[38px] py-1.5 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                        activePreset === 'standard' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
                       Standard (8%)
@@ -825,8 +825,8 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => handleApplyPreset('heavy')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'heavy' ? 'btn-primary' : 'btn-outline'
+                      className={`h-auto min-h-[38px] py-1.5 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                        activePreset === 'heavy' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
                       Deep (15%)
@@ -834,8 +834,8 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => handleApplyPreset('header-footer')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'header-footer' ? 'btn-primary' : 'btn-outline'
+                      className={`h-auto min-h-[38px] py-1.5 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                        activePreset === 'header-footer' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
                       Header/Footer
@@ -843,8 +843,8 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => handleApplyPreset('sides')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'sides' ? 'btn-primary' : 'btn-outline'
+                      className={`h-auto min-h-[38px] py-1.5 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                        activePreset === 'sides' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
                       Side Margins
@@ -852,8 +852,8 @@ export default function CropPdfTool() {
                     <button
                       type="button"
                       onClick={() => handleApplyPreset('none')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'none' ? 'btn-primary' : 'btn-outline'
+                      className={`h-auto min-h-[38px] py-1.5 px-1.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                        activePreset === 'none' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
                       Whole Page
@@ -1024,7 +1024,7 @@ export default function CropPdfTool() {
                   type="button"
                   onClick={handleProcess}
                   disabled={processing || !hasActiveCrop}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold text-sm disabled:opacity-50"
+                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold text-sm disabled:opacity-50 h-auto min-h-[3rem] py-2.5 px-3 text-center leading-snug flex items-center justify-center"
                 >
                   {processing ? (
                     <>

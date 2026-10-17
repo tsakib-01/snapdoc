@@ -991,7 +991,7 @@ export default function CropperTool() {
                 type="button"
                 onClick={handleProcess}
                 disabled={isProcessing || !hasActiveCrop}
-                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 disabled:opacity-50"
+                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 disabled:opacity-50 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
               >
                 {isProcessing ? (
                   <>

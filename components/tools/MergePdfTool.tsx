@@ -840,7 +840,7 @@ export default function MergePdfTool() {
               type="button"
               onClick={handleProcess}
               disabled={isProcessing || items.length < 2 || !allThumbnailsLoaded}
-              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-3 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50"
+              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-3 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
             >
               {isProcessing ? (
                 <>

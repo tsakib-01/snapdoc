@@ -657,7 +657,7 @@ export default function VisualPdfOrganizerTool({
                 type="button"
                 onClick={handleProcess}
                 disabled={processing || pages.length === 0 || (initialMode === 'extract' && selectedCount === 0)}
-                className="btn btn-primary btn-sm px-3.5 sm:px-4 lg:px-5 font-bold shadow-md shadow-primary/20 rounded-xl gap-1.5 sm:gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 text-xs sm:text-sm shrink-0"
+                className="btn btn-primary btn-sm px-3.5 sm:px-4 lg:px-5 font-bold shadow-md shadow-primary/20 rounded-xl gap-1.5 sm:gap-2 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 text-xs sm:text-sm shrink-0 h-auto min-h-[2rem] sm:min-h-[2.25rem] py-1.5 leading-snug flex items-center justify-center"
               >
                 {processing ? (
                   <>

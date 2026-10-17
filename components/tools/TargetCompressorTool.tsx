@@ -290,7 +290,7 @@ export default function TargetCompressorTool({
               type="button"
               onClick={handleProcess}
               disabled={isProcessing}
-              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/25 gap-2 hover:scale-[1.01] transition-transform"
+              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/25 gap-2 hover:scale-[1.01] transition-transform h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
             >
               {isProcessing ? (
                 <>

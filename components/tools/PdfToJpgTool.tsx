@@ -193,7 +193,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
             type="button"
             onClick={handleConvert}
             disabled={isRendering}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
           >
             {isRendering ? (
               <>

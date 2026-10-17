@@ -332,7 +332,7 @@ export default function ConverterTool({
                       key={fmt}
                       type="button"
                       onClick={() => setTargetFormat(fmt)}
-                      className={`btn btn-sm uppercase rounded-xl ${
+                      className={`btn btn-sm uppercase rounded-xl h-auto min-h-[2.5rem] py-1.5 px-2 text-xs font-semibold leading-tight text-center flex items-center justify-center ${
                         targetFormat === fmt ? 'btn-primary text-white font-bold' : 'btn-ghost bg-base-100 border border-base-300'
                       }`}
                     >
@@ -355,7 +355,7 @@ export default function ConverterTool({
             type="button"
             onClick={handleProcess}
             disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
           >
             {isProcessing ? (
               <>

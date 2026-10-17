@@ -177,13 +177,13 @@ export default function PdfToOfficeTool({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFormat('excel')}
-                className={`btn btn-xs rounded-xl ${format === 'excel' ? 'btn-primary' : 'btn-ghost'}`}
+                className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${format === 'excel' ? 'btn-primary' : 'btn-ghost'}`}
               >
                 Excel (.xlsx)
               </button>
               <button
                 onClick={() => setFormat('txt')}
-                className={`btn btn-xs rounded-xl ${format === 'txt' || format === 'ocr' ? 'btn-primary' : 'btn-ghost'}`}
+                className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${format === 'txt' || format === 'ocr' ? 'btn-primary' : 'btn-ghost'}`}
               >
                 Text (.txt)
               </button>
@@ -191,7 +191,7 @@ export default function PdfToOfficeTool({
 
             <button
               onClick={handleDownload}
-              className="btn btn-primary px-8 gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto font-bold"
+              className="btn btn-primary px-6 sm:px-8 gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto font-bold h-auto min-h-[2.75rem] py-2.5 leading-snug flex items-center justify-center text-center text-xs sm:text-sm"
             >
               <Download className="w-4 h-4" />
               <span>

@@ -224,7 +224,7 @@ export default function GeneralCompressorTool() {
             type="button"
             onClick={handleProcess}
             disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-primary-content font-bold shadow-xl shadow-primary/20 gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
+            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-primary-content font-bold shadow-xl shadow-primary/20 gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
           >
             {isProcessing ? (
               <>

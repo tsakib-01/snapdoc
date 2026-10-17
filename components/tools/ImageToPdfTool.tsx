@@ -464,18 +464,6 @@ export default function ImageToPdfTool({
       {/* Result */}
       {result && (
         <div className="space-y-6">
-          <div className="p-8 rounded-3xl bg-base-200/50 border border-base-300 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-16 h-16 rounded-2xl bg-red-500/15 text-red-500 flex items-center justify-center">
-              <FileText className="w-8 h-8" />
-            </div>
-            <div>
-              <h4 className="font-bold text-base text-base-content">PDF Document Created Successfully</h4>
-              <p className="text-xs text-base-content/60 mt-0.5">
-                Contains {result.pageCount} pages ({formatBytes(result.fileSize ?? result.pdfSize ?? 0)})
-              </p>
-            </div>
-          </div>
-
           <ResultCard
             originalSize={totalOriginalSize}
             newSize={result.fileSize ?? result.pdfSize ?? 0}
@@ -483,6 +471,7 @@ export default function ImageToPdfTool({
             dataUrl={result.dataUrl}
             format="PDF"
             extraInfo={`${result.pageCount} Pages`}
+            pageCount={result.pageCount}
             onReset={handleReset}
           />
         </div>

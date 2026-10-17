@@ -329,6 +329,7 @@ export default function TargetCompressorTool({
             format="JPG"
             dimensions={{ width: result.width, height: result.height }}
             onReset={handleReset}
+            hideHeader={true}
           />
         </div>
       )}

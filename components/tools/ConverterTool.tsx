@@ -392,6 +392,7 @@ export default function ConverterTool({
             format={result.format.toUpperCase()}
             dimensions={{ width: result.width, height: result.height }}
             onReset={handleReset}
+            hideHeader={true}
           />
         </div>
       )}

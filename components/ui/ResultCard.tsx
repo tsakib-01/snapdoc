@@ -34,6 +34,7 @@ export interface ResultCardProps {
   resetLabel?: string;
   pageCount?: number;
   onPreview?: () => void;
+  hideHeader?: boolean;
 }
 
 export default function ResultCard({
@@ -51,6 +52,7 @@ export default function ResultCard({
   resetLabel,
   pageCount,
   onPreview,
+  hideHeader = false,
 }: ResultCardProps) {
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
@@ -111,19 +113,21 @@ export default function ResultCard({
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header Area: Centered on mobile, left-aligned on desktop */}
-      <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-3 sm:gap-3.5">
-        <div className="w-11 h-11 sm:w-11 sm:h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs sm:mt-0.5">
-          <FileCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
+      {!hideHeader && (
+        <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-3 sm:gap-3.5">
+          <div className="w-11 h-11 sm:w-11 sm:h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs sm:mt-0.5">
+            <FileCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-extrabold text-lg sm:text-2xl text-base-content leading-snug sm:leading-tight">
+              {title || (isPdf ? 'Your PDF is ready for download!' : 'Your file is ready for download!')}
+            </h3>
+            <p className="text-xs sm:text-sm text-base-content/60 leading-relaxed max-w-sm sm:max-w-none">
+              {subtitle || 'Your file has been processed successfully. You can now download it or perform other actions below.'}
+            </p>
+          </div>
         </div>
-        <div className="space-y-1">
-          <h3 className="font-extrabold text-lg sm:text-2xl text-base-content leading-snug sm:leading-tight">
-            {title || (isPdf ? 'Your PDF is ready for download!' : 'Your file is ready for download!')}
-          </h3>
-          <p className="text-xs sm:text-sm text-base-content/60 leading-relaxed max-w-sm sm:max-w-none">
-            {subtitle || 'Your file has been processed successfully. You can now download it or perform other actions below.'}
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Main Card Container */}
       <div className="w-full rounded-3xl bg-base-100 border border-base-300 p-5 sm:p-7 space-y-6 shadow-sm">

@@ -261,6 +261,7 @@ export default function GeneralCompressorTool() {
             format={result.format}
             dimensions={{ width: result.width, height: result.height }}
             onReset={handleReset}
+            hideHeader={true}
           />
         </div>
       )}

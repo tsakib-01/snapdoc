@@ -245,23 +245,6 @@ export default function PdfScannerTool() {
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {!resultData && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-base-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <Camera className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-base-content">Camera Document Scanner</h3>
-                <p className="text-xs text-base-content/60">Capture receipts, book pages, or contracts straight to PDF</p>
-              </div>
-            </div>
-            {capturedImages.length > 0 && (
-              <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle">
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
           {/* Camera Viewfinder & Upload Options */}
           {!isCameraActive ? (
             <div className="text-center py-10 px-4 space-y-5 rounded-2xl border-2 border-dashed border-base-300 bg-base-200/40">
@@ -375,9 +358,20 @@ export default function PdfScannerTool() {
           {/* Scanned Pages Gallery */}
           {capturedImages.length > 0 && (
             <div className="space-y-3 pt-4 border-t border-base-200">
-              <h4 className="font-bold text-xs uppercase tracking-wider text-base-content/70">
-                Scanned Pages ({capturedImages.length})
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-base-content/70">
+                  Scanned Pages ({capturedImages.length})
+                </h4>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="btn btn-ghost btn-xs text-base-content/60 hover:text-error gap-1"
+                  title="Clear all pages"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Clear All</span>
+                </button>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {capturedImages.map((img, idx) => (
                   <div

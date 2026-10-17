@@ -274,44 +274,47 @@ export default function ResultCard({
       {/* Built-in Preview Modal */}
       {showPreviewModal && dataUrl && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4"
           onClick={() => setShowPreviewModal(false)}
         >
           <div
-            className="relative bg-base-100 rounded-3xl p-4 sm:p-5 max-w-4xl w-full h-[85vh] flex flex-col gap-3 shadow-2xl border border-base-300"
+            className="relative bg-base-100 rounded-2xl sm:rounded-3xl p-2.5 sm:p-5 max-w-4xl w-full h-[92dvh] sm:h-[85vh] flex flex-col gap-2 sm:gap-3 shadow-2xl border border-base-300 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-base-200">
-              <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center justify-between pb-2 border-b border-base-200 shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 mr-2">
                 {isPdf ? (
-                  <FileText className="w-5 h-5 text-red-500 shrink-0" />
+                  <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 shrink-0" />
                 ) : (
-                  <ImageIcon className="w-5 h-5 text-primary shrink-0" />
+                  <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
                 )}
-                <h5 className="font-bold text-sm sm:text-base text-base-content truncate">
+                <h5 className="font-bold text-xs sm:text-base text-base-content truncate">
                   {filename}
                 </h5>
-                <span className="badge badge-sm font-semibold">{formatBytes(newSize)}</span>
+                <span className="badge badge-xs sm:badge-sm font-semibold shrink-0 hidden sm:inline-flex">
+                  {formatBytes(newSize)}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="btn btn-xs btn-primary font-bold gap-1 rounded-lg"
+                  className="btn btn-xs btn-primary font-bold gap-1 rounded-lg px-2 sm:px-3"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download</span>
+                  <span className="hidden sm:inline">Download</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowPreviewModal(false)}
                   className="btn btn-ghost btn-xs btn-circle"
+                  aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-2xl overflow-hidden flex flex-col p-2">
+            <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-xl sm:rounded-2xl overflow-hidden flex flex-col p-1.5 sm:p-2">
               {isPdf ? (
                 <PdfPreviewModalViewer dataUrl={dataUrl} filename={filename} />
               ) : (

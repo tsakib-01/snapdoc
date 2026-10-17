@@ -85,8 +85,6 @@ export default function Footer() {
           <div className="space-y-3">
             <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Convert & Office</h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/excel-to-pdf" className="hover:text-primary transition-colors">Excel to PDF</Link></li>
-              <li><Link href="/pdf-to-excel" className="hover:text-primary transition-colors">PDF to Excel</Link></li>
               <li><Link href="/pdf-to-jpg" className="hover:text-primary transition-colors">PDF to JPG</Link></li>
               <li><Link href="/pdf-to-png" className="hover:text-primary transition-colors">PDF to PNG</Link></li>
               <li><Link href="/html-to-pdf" className="hover:text-primary transition-colors">HTML to PDF</Link></li>
@@ -95,12 +93,10 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* AI & Image Tools */}
+          {/* More Tools & Links */}
           <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">AI & Compress</h5>
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Tools & Resources</h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/ai-pdf" className="hover:text-primary transition-colors text-violet-600 font-medium">AI PDF Assistant</Link></li>
-              <li><Link href="/chat-with-pdf" className="hover:text-primary transition-colors">Chat with PDF</Link></li>
               <li><Link href="/pdf-scanner" className="hover:text-primary transition-colors">Camera Scanner</Link></li>
               <li><Link href="/compress-pdf" className="hover:text-primary transition-colors">Compress PDF</Link></li>
               <li><Link href="/compress-jpg-to-10kb" className="hover:text-primary transition-colors">JPG to 10KB</Link></li>

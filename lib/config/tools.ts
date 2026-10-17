@@ -887,35 +887,6 @@ export const TOOLS: ToolMeta[] = [
     ]
   },
   {
-    id: 'pdf-to-excel',
-    name: 'PDF to Excel / CSV',
-    shortName: 'PDF to Excel',
-    slug: 'pdf-to-excel',
-    description: 'Extract tabular data and text from PDF documents into spreadsheet-compatible CSV/Excel files.',
-    longDescription: 'Extract tables, records, and text lines from your PDF documents into structured CSV files that open immediately in Microsoft Excel or Google Sheets.',
-    category: 'convert',
-    icon: 'FileSpreadsheet',
-    acceptedTypes: 'application/pdf',
-    keywords: ['pdf to excel', 'pdf to csv', 'extract table from pdf', 'pdf data extractor'],
-    features: [
-      'Extracts structured rows and columns from PDF',
-      'Download as CSV compatible with Excel and Google Sheets',
-      'Live text preview before downloading',
-      'Zero permanent storage or data tracking'
-    ],
-    howTo: [
-      { step: '1', text: 'Upload your PDF document containing tabular data.' },
-      { step: '2', text: 'Review the extracted data in the preview box.' },
-      { step: '3', text: 'Click "Download Extracted EXCEL" to save your spreadsheet.' }
-    ],
-    faqs: [
-      {
-        q: 'Does it work with Excel and Google Sheets?',
-        a: 'Yes, the exported CSV spreadsheet imports directly into Excel and Sheets.'
-      }
-    ]
-  },
-  {
     id: 'pdf-to-png',
     name: 'PDF to PNG Converter',
     shortName: 'PDF to PNG',
@@ -941,35 +912,6 @@ export const TOOLS: ToolMeta[] = [
       {
         q: 'What is the difference between PDF to JPG and PDF to PNG?',
         a: 'PNG provides lossless compression which keeps text and graphics extremely sharp with zero compression artifacts.'
-      }
-    ]
-  },
-  {
-    id: 'excel-to-pdf',
-    name: 'Excel / CSV to PDF Converter',
-    shortName: 'Excel to PDF',
-    slug: 'excel-to-pdf',
-    description: 'Convert Excel sheets and CSV tabular data into structured, readable PDF tables.',
-    longDescription: 'Turn raw spreadsheet data, receipts, and table reports into clean, multi-page PDF documents with styled headers and organized columns.',
-    category: 'convert',
-    icon: 'FileSpreadsheet',
-    acceptedTypes: '.csv,.xlsx,.xls,.txt',
-    keywords: ['excel to pdf', 'csv to pdf', 'spreadsheet to pdf', 'convert table to pdf'],
-    features: [
-      'Automatic column width and row height calculation',
-      'Highlighted table header row and clean borders',
-      'Supports pasted CSV rows or uploaded files',
-      'Zero storage guarantee with instant download'
-    ],
-    howTo: [
-      { step: '1', text: 'Upload your CSV or Excel file, or paste table data directly.' },
-      { step: '2', text: 'Click "Convert to PDF" to generate the table layout.' },
-      { step: '3', text: 'Download your PDF report.' }
-    ],
-    faqs: [
-      {
-        q: 'Will multi-page tables automatically format properly?',
-        a: 'Yes, long tables are split cleanly across multiple PDF pages with consistent margins.'
       }
     ]
   },
@@ -1028,67 +970,6 @@ export const TOOLS: ToolMeta[] = [
       {
         q: 'Can I convert raw HTML code directly without saving a file first?',
         a: 'Yes! Simply paste your HTML code into the text area and click convert.'
-      }
-    ]
-  },
-  {
-    id: 'ai-pdf',
-    name: 'AI PDF Assistant & Summarizer',
-    shortName: 'AI PDF',
-    slug: 'ai-pdf',
-    description: 'Summarize lengthy documents, extract key insights, and chat with your PDF in real-time.',
-    longDescription: 'Our AI PDF Assistant processes research papers, legal contracts, reports, and textbooks in memory to produce executive summaries, key bullet takeaways, and answer questions directly.',
-    category: 'pdf',
-    badge: 'AI Powered',
-    icon: 'Bot',
-    popular: true,
-    acceptedTypes: 'application/pdf',
-    keywords: ['ai pdf', 'chat with pdf', 'pdf summarizer', 'ask pdf', 'ai document assistant', 'free ai pdf'],
-    features: [
-      'Instant executive summary & key takeaways',
-      'Interactive Q&A chat with document context',
-      'Automatic quiz and comprehension question generation',
-      '100% In-memory processing with no account needed'
-    ],
-    howTo: [
-      { step: '1', text: 'Upload your PDF document.' },
-      { step: '2', text: 'View the instant executive summary and key points.' },
-      { step: '3', text: 'Switch to the "Chat" tab to ask specific questions about the file.' }
-    ],
-    faqs: [
-      {
-        q: 'Do I need to sign up or provide an API key?',
-        a: 'No! The AI PDF Assistant is 100% free and ready to use immediately without any login, account, or API key.'
-      }
-    ]
-  },
-  {
-    id: 'chat-with-pdf',
-    name: 'Chat with PDF',
-    shortName: 'Chat with PDF',
-    slug: 'chat-with-pdf',
-    description: 'Ask questions and get instant answers directly from your PDF document.',
-    longDescription: 'Interact with any PDF document as if speaking with a research assistant. Ask for definitions, specific clauses, numbers, or summary paragraphs directly.',
-    category: 'pdf',
-    badge: 'AI Powered',
-    icon: 'MessageSquare',
-    acceptedTypes: 'application/pdf',
-    keywords: ['chat with pdf', 'ask pdf', 'talk to pdf', 'ai pdf reader'],
-    features: [
-      'Interactive chat interface with document memory',
-      'Instant semantic context lookup',
-      'No account or API subscription needed',
-      'Zero document retention guarantee'
-    ],
-    howTo: [
-      { step: '1', text: 'Upload your PDF document.' },
-      { step: '2', text: 'Type any question in the chat input.' },
-      { step: '3', text: 'Receive instant contextual answers derived from your text.' }
-    ],
-    faqs: [
-      {
-        q: 'Is my chat private?',
-        a: 'Yes, all interactions are processed locally in your session memory with zero database logging.'
       }
     ]
   },

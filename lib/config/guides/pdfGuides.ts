@@ -871,9 +871,9 @@ export const PDF_GUIDES: GuideArticle[] = [
     "primaryToolName": "SnapDoc PDF OCR Extractor",
     "primaryToolCtaText": "Extract Text from PDF Free",
     "relatedToolSlugs": [
-      "pdf-to-excel",
-      "ai-pdf",
-      "chat-with-pdf"
+      "pdf-to-jpg",
+      "pdf-to-png",
+      "organize-pdf"
     ],
     "relatedGuideSlugs": [
       "how-to-compress-a-pdf",

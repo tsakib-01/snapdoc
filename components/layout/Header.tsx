@@ -83,9 +83,7 @@ export default function Header() {
                       Convert PDF
                     </span>
                     <ul className="menu menu-compact p-0 text-xs space-y-0.5">
-                      <li><Link href="/excel-to-pdf" className="py-1.5 font-medium text-primary">Excel to PDF</Link></li>
-                      <li><Link href="/pdf-to-excel" className="py-1.5">PDF to Excel / CSV</Link></li>
-                      <li><Link href="/pdf-to-png" className="py-1.5">PDF to PNG</Link></li>
+                      <li><Link href="/pdf-to-png" className="py-1.5 font-medium text-primary">PDF to PNG</Link></li>
                       <li><Link href="/pdf-to-jpg" className="py-1.5">PDF to JPG</Link></li>
                       <li><Link href="/pdf-ocr" className="py-1.5">OCR Text Extractor</Link></li>
                     </ul>
@@ -93,11 +91,11 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Edit & AI Dropdown */}
+              {/* Edit PDF Dropdown */}
               <div className="dropdown dropdown-hover">
                 <label tabIndex={0} className="btn btn-ghost btn-sm font-medium gap-1 text-base-content/80 hover:text-base-content cursor-pointer">
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Edit & AI</span>
+                  <span>Edit PDF</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </label>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-3 shadow-xl bg-base-100 rounded-2xl w-60 border border-base-300">
@@ -106,8 +104,6 @@ export default function Header() {
                   <li><Link href="/watermark-pdf" className="text-xs font-medium py-1.5">Watermark PDF</Link></li>
                   <li><Link href="/crop-pdf" className="text-xs font-medium py-1.5">Crop PDF</Link></li>
                   <li><Link href="/flatten-pdf" className="text-xs font-medium py-1.5">Flatten PDF</Link></li>
-                  <li><Link href="/ai-pdf" className="text-xs font-semibold py-1.5 text-violet-600">AI PDF Summarizer</Link></li>
-                  <li><Link href="/chat-with-pdf" className="text-xs font-medium py-1.5">Chat with PDF</Link></li>
                   <li><Link href="/pdf-scanner" className="text-xs font-medium py-1.5 text-teal-600">Camera Scanner</Link></li>
                 </ul>
               </div>
@@ -181,7 +177,7 @@ export default function Header() {
                 <Link href="/organize-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Organize PDF</Link>
                 <Link href="/merge-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Merge PDF</Link>
                 <Link href="/split-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Split PDF</Link>
-                <Link href="/excel-to-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Excel to PDF</Link>
+                <Link href="/pdf-ocr" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">PDF OCR</Link>
                 <Link href="/compress-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Compress PDF</Link>
                 <Link href="/sign-pdf" onClick={() => setIsMobileMenuOpen(false)} className="px-2 py-1.5 rounded-lg text-xs font-medium hover:bg-base-200">Sign PDF</Link>
               </div>

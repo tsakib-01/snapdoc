@@ -57,37 +57,95 @@ export default function ResizerTool() {
 
   const hiddenFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Robust helper to safely extract natural dimensions and a reliable preview for any image (including WhatsApp, jfif, etc.)
+  const getSafePreviewAndDimensions = async (
+    file: File
+  ): Promise<{ previewUrl: string; width: number; height: number }> => {
+    if (file.size === 0) {
+      throw new Error(
+        `"${file.name}" has 0 bytes. If you dragged this from WhatsApp Web, please right-click the image in WhatsApp and select "Save image as", then upload the saved file.`
+      );
+    }
+
+    // Try createImageBitmap (modern, respects EXIF orientation automatically)
+    if (typeof createImageBitmap !== 'undefined') {
+      try {
+        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(bitmap, 0, 0);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          const w = bitmap.width;
+          const h = bitmap.height;
+          bitmap.close();
+          return { previewUrl: dataUrl, width: w, height: h };
+        }
+        bitmap.close();
+      } catch {
+        // Fallback to FileReader/Image
+      }
+    }
+
+    // Fallback: FileReader + HTMLImageElement
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        const img = new Image();
+        img.onload = () => {
+          resolve({
+            previewUrl: dataUrl,
+            width: img.naturalWidth || 800,
+            height: img.naturalHeight || 600,
+          });
+        };
+        img.onerror = () => {
+          const objUrl = URL.createObjectURL(file);
+          resolve({ previewUrl: objUrl, width: 800, height: 600 });
+        };
+        img.src = dataUrl;
+      };
+      reader.onerror = () => {
+        const objUrl = URL.createObjectURL(file);
+        resolve({ previewUrl: objUrl, width: 800, height: 600 });
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Helper to load natural dimensions for uploaded files
   const loadFiles = async (filesToAdd: File[]) => {
     if (!filesToAdd || filesToAdd.length === 0) return;
+    setError(null);
 
-    const newItems: ImageItem[] = await Promise.all(
-      filesToAdd.map(async (file) => {
-        const url = URL.createObjectURL(file);
-        const dims = await new Promise<{ width: number; height: number }>((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-          img.onerror = () => resolve({ width: 800, height: 600 });
-          img.src = url;
-        });
-        return {
-          id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
-          file,
-          previewUrl: url,
-          originalWidth: dims.width,
-          originalHeight: dims.height,
-        };
-      })
-    );
+    try {
+      const newItems: ImageItem[] = await Promise.all(
+        filesToAdd.map(async (file) => {
+          const { previewUrl, width: w, height: h } = await getSafePreviewAndDimensions(file);
+          return {
+            id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+            file,
+            previewUrl,
+            originalWidth: w,
+            originalHeight: h,
+          };
+        })
+      );
 
-    setImages((prev) => {
-      const updated = [...prev, ...newItems];
-      if (prev.length === 0 && updated.length > 0) {
-        setWidth(updated[0].originalWidth);
-        setHeight(updated[0].originalHeight);
-      }
-      return updated;
-    });
+      setImages((prev) => {
+        const updated = [...prev, ...newItems];
+        if (prev.length === 0 && updated.length > 0) {
+          setWidth(updated[0].originalWidth);
+          setHeight(updated[0].originalHeight);
+        }
+        return updated;
+      });
+    } catch (err: any) {
+      setError(err.message || 'Error loading one or more images.');
+    }
   };
 
   const primaryImage = images[0];
@@ -132,7 +190,11 @@ export default function ResizerTool() {
   };
 
   const handleReset = () => {
-    images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    images.forEach((img) => {
+      if (img.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+    });
     setImages([]);
     setResults(null);
     setError(null);
@@ -181,6 +243,72 @@ export default function ResizerTool() {
     return { width: targetW, height: targetH };
   };
 
+  // High quality client-side canvas resizing (instant, private, eliminates "failed to fetch")
+  const resizeImageInBrowser = async (
+    item: ImageItem,
+    targetWidth: number,
+    targetHeight: number
+  ): Promise<any> => {
+    let source: ImageBitmap | HTMLImageElement;
+    try {
+      source = await createImageBitmap(item.file, { imageOrientation: 'from-image' });
+    } catch {
+      source = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = item.previewUrl;
+      });
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) throw new Error('Could not get canvas context');
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    const isPng = item.file.type.includes('png') || item.file.name.toLowerCase().endsWith('.png');
+    if (!isPng) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+    }
+
+    const srcW = 'naturalWidth' in source ? source.naturalWidth : source.width;
+    const srcH = 'naturalHeight' in source ? source.naturalHeight : source.height;
+
+    ctx.drawImage(source, 0, 0, srcW, srcH, 0, 0, targetWidth, targetHeight);
+
+    const outMime = isPng ? 'image/png' : 'image/jpeg';
+    const dataUrl = canvas.toDataURL(outMime, 0.92);
+
+    const base64Data = dataUrl.split(',')[1] || '';
+    const compressedSize = Math.round((base64Data.length * 3) / 4);
+    const originalSize = item.file.size;
+    const reductionPercentage =
+      originalSize > 0
+        ? Math.max(0, parseFloat((((originalSize - compressedSize) / originalSize) * 100).toFixed(1)))
+        : 0;
+
+    return {
+      success: true,
+      originalName: item.file.name,
+      originalSize,
+      compressedSize,
+      reductionPercentage,
+      width: targetWidth,
+      height: targetHeight,
+      originalWidth: item.originalWidth,
+      originalHeight: item.originalHeight,
+      format: isPng ? 'png' : 'jpeg',
+      mimeType: outMime,
+      dataUrl,
+      originalPreviewUrl: item.previewUrl,
+    };
+  };
+
   const handleProcess = async () => {
     if (images.length === 0) return;
     setError(null);
@@ -197,31 +325,37 @@ export default function ResizerTool() {
 
         const dims = getTargetDimensions(item);
 
-        const formData = new FormData();
-        formData.append('file', item.file);
-        formData.append('width', dims.width.toString());
-        formData.append('height', dims.height.toString());
-        formData.append('maintainAspectRatio', maintainRatio ? 'true' : 'false');
-        formData.append('withoutEnlargement', doNotEnlarge ? 'true' : 'false');
-        if (mode === 'percentage') {
-          // Strictly capped at 100%
-          formData.append('scalePercent', Math.min(100, Math.max(1, scalePercent)).toString());
+        try {
+          // 1. Primary: Direct high-fidelity client-side resizing (instant, avoids network "failed to fetch")
+          const clientResult = await resizeImageInBrowser(item, dims.width, dims.height);
+          processedResults.push(clientResult);
+        } catch {
+          // 2. Server fallback if client-side canvas has an exotic issue
+          const formData = new FormData();
+          formData.append('file', item.file);
+          formData.append('width', dims.width.toString());
+          formData.append('height', dims.height.toString());
+          formData.append('maintainAspectRatio', maintainRatio ? 'true' : 'false');
+          formData.append('withoutEnlargement', doNotEnlarge ? 'true' : 'false');
+          if (mode === 'percentage') {
+            formData.append('scalePercent', Math.min(100, Math.max(1, scalePercent)).toString());
+          }
+
+          const res = await fetch('/api/resize-image', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || `Failed to resize ${item.file.name}`);
+          }
+
+          processedResults.push({
+            ...data,
+            originalPreviewUrl: item.previewUrl,
+          });
         }
-
-        const res = await fetch('/api/resize-image', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || `Failed to resize ${item.file.name}`);
-        }
-
-        processedResults.push({
-          ...data,
-          originalPreviewUrl: item.previewUrl,
-        });
       }
 
       setResults(processedResults);
@@ -272,7 +406,7 @@ export default function ResizerTool() {
         ref={hiddenFileInputRef}
         type="file"
         multiple
-        accept="image/jpeg,image/jpg,image/png,image/webp"
+        accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp"
         onChange={(e) => {
           if (e.target.files && e.target.files.length > 0) {
             loadFiles(Array.from(e.target.files));
@@ -285,7 +419,7 @@ export default function ResizerTool() {
       {/* Upload Zone when no images loaded */}
       {images.length === 0 && (
         <UploadZone
-          accept="image/jpeg,image/jpg,image/png,image/webp"
+          accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp"
           multiple={true}
           maxFiles={30}
           onFilesSelected={loadFiles}

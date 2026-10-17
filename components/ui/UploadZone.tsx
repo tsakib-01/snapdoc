@@ -124,7 +124,7 @@ export default function UploadZone({
       } else if (accept.includes('image')) {
         const isImg =
           f.type.startsWith('image/') ||
-          /\.(jpe?g|png|webp|avif|bmp|tiff|gif)$/i.test(f.name);
+          /\.(jpe?g|jfif|pjpeg|pjp|png|webp|avif|bmp|tiff?|gif|heic|heif)$/i.test(f.name);
         if (!isImg) {
           setErrorMessage(`"${f.name}" is not a supported image format. Please upload JPG, PNG, or WebP.`);
           return;

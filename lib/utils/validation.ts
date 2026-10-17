@@ -4,12 +4,17 @@ export const MAX_PDF_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',
   'image/jpg',
+  'image/jfif',
+  'image/pjpeg',
+  'image/pjp',
   'image/png',
   'image/webp',
   'image/avif',
   'image/tiff',
   'image/bmp',
   'image/gif',
+  'image/heic',
+  'image/heif',
 ];
 
 export const ALLOWED_PDF_TYPES = [
@@ -26,7 +31,7 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
   }
 
   const isAllowed = ALLOWED_IMAGE_TYPES.includes(file.type) ||
-    /\.(jpe?g|png|webp|avif|tiff?|bmp|gif)$/i.test(file.name);
+    /\.(jpe?g|jfif|pjpeg|pjp|png|webp|avif|tiff?|bmp|gif|heic|heif)$/i.test(file.name);
 
   if (!isAllowed) {
     return { valid: false, error: 'Unsupported format. Please upload a JPG, PNG, WebP, AVIF, or BMP image.' };

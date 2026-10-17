@@ -16,7 +16,7 @@ export async function resizeImage(
   options: ResizeOptions
 ) {
   const originalSize = inputBuffer.length;
-  const metadata = await sharp(inputBuffer).metadata();
+  const metadata = await sharp(inputBuffer, { failOnError: false }).metadata();
   const originalWidth = metadata.width || 800;
   const originalHeight = metadata.height || 600;
 
@@ -37,13 +37,15 @@ export async function resizeImage(
     }
   }
 
-  let pipeline = sharp(inputBuffer).resize({
-    width: targetWidth,
-    height: targetHeight,
-    fit: options.maintainAspectRatio ? (options.fit || 'inside') : 'fill',
-    withoutEnlargement: options.withoutEnlargement ?? false,
-    kernel: sharp.kernel.lanczos3,
-  });
+  let pipeline = sharp(inputBuffer, { failOnError: false })
+    .rotate()
+    .resize({
+      width: targetWidth,
+      height: targetHeight,
+      fit: options.maintainAspectRatio ? (options.fit || 'inside') : 'fill',
+      withoutEnlargement: options.withoutEnlargement ?? false,
+      kernel: sharp.kernel.lanczos3,
+    });
 
   const targetFormat = options.format || (metadata.format === 'png' ? 'png' : metadata.format === 'webp' ? 'webp' : 'jpeg');
 

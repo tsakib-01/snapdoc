@@ -462,9 +462,9 @@ export default function CropperTool() {
       )}
 
       {files.length > 0 && !result && (
-        <div className="p-4 sm:p-8 rounded-3xl bg-base-100 border border-base-300 shadow-sm space-y-6 animate-in fade-in duration-150">
-          {/* Top Info Bar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-base-200 gap-3">
+        <div className="space-y-6 animate-in fade-in duration-150">
+          {/* File summary bar */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300 gap-3">
             <div className="flex items-center gap-3.5 min-w-0">
               <div className="w-12 h-12 rounded-2xl bg-base-200 border border-base-300 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
                 {originalPreviewUrl ? (
@@ -692,117 +692,73 @@ export default function CropperTool() {
             <div className="lg:col-span-5 space-y-5 flex flex-col justify-between">
               <div className="space-y-4">
                 {/* 1. Aspect Ratio Presets */}
-                <div className="space-y-2">
+                <div className="space-y-2.5 pt-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-primary" />
                       Aspect Ratio Presets
                     </label>
-                    <span className="text-[11px] font-bold text-primary font-mono">
+                    <span className="text-[11px] font-bold text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-md">
                       {getAspectRatioLabel()}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('none')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'none' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      Whole Image
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('square')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === 'square' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      1:1 Square
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('16:9')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === '16:9' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      16:9 Wide
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('4:3')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === '4:3' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      4:3 Classic
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('9:16')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === '9:16' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      9:16 Story
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('3:2')}
-                      className={`btn btn-xs sm:btn-sm rounded-xl text-xs font-semibold ${
-                        activePreset === '3:2' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      3:2 Photo
-                    </button>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
+                    {[
+                      { id: 'none', label: 'Whole Image' },
+                      { id: 'square', label: '1:1 Square' },
+                      { id: '16:9', label: '16:9 Wide' },
+                      { id: '4:3', label: '4:3 Classic' },
+                      { id: '9:16', label: '9:16 Story' },
+                      { id: '3:2', label: '3:2 Photo' },
+                    ].map((preset) => {
+                      const isSelected = activePreset === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleApplyPreset(preset.id)}
+                          className={`h-auto min-h-[38px] py-2 px-2.5 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                            isSelected
+                              ? 'bg-primary text-white border-primary shadow-xs ring-1 ring-primary'
+                              : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
+                          }`}
+                        >
+                          <span>{preset.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
                 {/* 2. Quick Margin Presets */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-base-content/70">
+                <div className="space-y-2.5 pt-1">
+                  <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 block">
                     Quick Margin Trimming
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('light')}
-                      className={`btn btn-xs rounded-xl text-xs font-semibold ${
-                        activePreset === 'light' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      Light (4%)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('standard')}
-                      className={`btn btn-xs rounded-xl text-xs font-semibold ${
-                        activePreset === 'standard' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      Standard (8%)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('header-footer')}
-                      className={`btn btn-xs rounded-xl text-xs font-semibold ${
-                        activePreset === 'header-footer' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      Top/Bottom
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset('sides')}
-                      className={`btn btn-xs rounded-xl text-xs font-semibold ${
-                        activePreset === 'sides' ? 'btn-primary' : 'btn-outline'
-                      }`}
-                    >
-                      Sides Only
-                    </button>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
+                    {[
+                      { id: 'light', label: 'Light (4%)' },
+                      { id: 'standard', label: 'Standard (8%)' },
+                      { id: 'header-footer', label: 'Top / Bottom' },
+                      { id: 'sides', label: 'Sides Only' },
+                    ].map((preset) => {
+                      const isSelected = activePreset === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleApplyPreset(preset.id)}
+                          className={`h-auto min-h-[38px] py-2 px-2 rounded-xl text-xs font-semibold border transition-all text-center flex items-center justify-center leading-snug cursor-pointer select-none ${
+                            isSelected
+                              ? 'bg-primary text-white border-primary shadow-xs ring-1 ring-primary'
+                              : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
+                          }`}
+                        >
+                          <span>{preset.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1005,7 +961,7 @@ export default function CropperTool() {
                 </div>
 
                 {/* Crop Coordinates Readout Badge */}
-                <div className="p-3 rounded-2xl bg-base-200/60 border border-base-300 flex items-center justify-between text-xs font-mono">
+                <div className="p-3 rounded-2xl bg-base-200/60 border border-base-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-xs font-mono">
                   <span className="text-base-content/70">
                     Pos: <strong>X: {cropPixels.left}px, Y: {cropPixels.top}px</strong>
                   </span>

@@ -8,6 +8,8 @@ import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument, PageSizes } from 'pdf-lib';
 
+import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+
 interface ImageToPdfToolProps {
   title?: string;
   subtitle?: string;
@@ -36,29 +38,60 @@ export default function ImageToPdfTool({
   const [error, setError] = useState<string | null>(null);
   const addMoreInputRef = useRef<HTMLInputElement>(null);
 
-  // Clean up object URLs when items change or unmount
-  useEffect(() => {
-    return () => {
-      items.forEach((item) => URL.revokeObjectURL(item.previewUrl));
-    };
-  }, [items]);
-
-  const handleFilesSelected = (newFiles: File[]) => {
-    const newItems: ImageItem[] = newFiles.map((file) => ({
+  const handleFilesSelected = async (newFiles: File[]) => {
+    const initialItems: ImageItem[] = newFiles.map((file) => ({
       id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 7)}`,
       file,
-      previewUrl: URL.createObjectURL(file),
+      previewUrl: '',
     }));
-    setItems(newItems);
+    setItems(initialItems);
+
+    const resolved = await Promise.all(
+      newFiles.map(async (file, idx) => {
+        try {
+          const preview = await getSafeImagePreview(file);
+          return { ...initialItems[idx], previewUrl: preview.previewUrl };
+        } catch {
+          try {
+            return { ...initialItems[idx], previewUrl: URL.createObjectURL(file) };
+          } catch {
+            return initialItems[idx];
+          }
+        }
+      })
+    );
+    setItems(resolved);
   };
 
-  const handleAddMoreFiles = (additionalFiles: File[]) => {
-    const newItems: ImageItem[] = additionalFiles.map((file) => ({
+  const handleAddMoreFiles = async (additionalFiles: File[]) => {
+    const startItems: ImageItem[] = additionalFiles.map((file) => ({
       id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).substring(2, 7)}`,
       file,
-      previewUrl: URL.createObjectURL(file),
+      previewUrl: '',
     }));
-    setItems((prev) => [...prev, ...newItems].slice(0, 50));
+    setItems((prev) => [...prev, ...startItems].slice(0, 50));
+
+    const resolved = await Promise.all(
+      startItems.map(async (item) => {
+        try {
+          const preview = await getSafeImagePreview(item.file);
+          return { ...item, previewUrl: preview.previewUrl };
+        } catch {
+          try {
+            return { ...item, previewUrl: URL.createObjectURL(item.file) };
+          } catch {
+            return item;
+          }
+        }
+      })
+    );
+
+    setItems((prev) =>
+      prev.map((it) => {
+        const found = resolved.find((r) => r.id === it.id);
+        return found && found.previewUrl ? found : it;
+      })
+    );
   };
 
   const moveItem = (index: number, direction: 'left' | 'right') => {
@@ -73,10 +106,6 @@ export default function ImageToPdfTool({
   };
 
   const removeItem = (index: number) => {
-    const toRemove = items[index];
-    if (toRemove?.previewUrl) {
-      URL.revokeObjectURL(toRemove.previewUrl);
-    }
     setItems(items.filter((_, i) => i !== index));
   };
 
@@ -262,11 +291,19 @@ export default function ImageToPdfTool({
               >
                 {/* Image Thumbnail Container */}
                 <div className="h-32 sm:h-36 w-full bg-base-200/40 p-2 flex items-center justify-center relative overflow-hidden">
-                  <img
-                    src={item.previewUrl}
-                    alt={item.file.name}
-                    className="h-full w-full object-contain drop-shadow-sm rounded-lg"
-                  />
+                  {item.previewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.previewUrl}
+                      alt={item.file.name}
+                      className="h-full w-full object-contain drop-shadow-sm rounded-lg"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-1.5 text-base-content/40">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      <span className="text-[10px]">Loading...</span>
+                    </div>
+                  )}
 
                   {/* Page Sequence Badge */}
                   <span className="absolute top-2 left-2 badge badge-sm bg-neutral/80 text-white backdrop-blur-sm font-bold text-[10px] shadow">

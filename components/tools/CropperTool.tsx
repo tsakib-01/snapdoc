@@ -6,11 +6,13 @@ import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 
 export default function CropperTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
 
   // Margin percentages (0% - 40%)
   const [topMargin, setTopMargin] = useState<number>(5);
@@ -24,25 +26,48 @@ export default function CropperTool() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isCancelled = false;
+
     if (files.length > 0) {
-      const url = URL.createObjectURL(files[0]);
-      setOriginalPreviewUrl(url);
-
-      const img = new Image();
-      img.onload = () => {
-        setOrigDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-        setTopMargin(5);
-        setBottomMargin(5);
-        setLeftMargin(5);
-        setRightMargin(5);
-      };
-      img.src = url;
-
-      return () => URL.revokeObjectURL(url);
+      setIsPreviewLoading(true);
+      getSafeImagePreview(files[0])
+        .then((preview) => {
+          if (!isCancelled) {
+            setOriginalPreviewUrl(preview.previewUrl);
+            setOrigDimensions({ width: preview.width, height: preview.height });
+            setTopMargin(5);
+            setBottomMargin(5);
+            setLeftMargin(5);
+            setRightMargin(5);
+            setIsPreviewLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (!isCancelled) {
+            console.error('Cropper preview error:', err);
+            try {
+              const fallbackUrl = URL.createObjectURL(files[0]);
+              setOriginalPreviewUrl(fallbackUrl);
+              const img = new Image();
+              img.onload = () => {
+                if (!isCancelled) {
+                  setOrigDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+                }
+              };
+              img.src = fallbackUrl;
+            } catch {}
+            setIsPreviewLoading(false);
+          }
+        });
     } else {
       setOriginalPreviewUrl(null);
       setOrigDimensions({ width: 0, height: 0 });
+      setIsPreviewLoading(false);
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [files]);
 
   // Apply Presets
@@ -308,9 +333,9 @@ export default function CropperTool() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-64 bg-base-100 rounded-xl border border-dashed border-base-300 flex items-center justify-center text-xs text-base-content/50">
-                  <ImageIcon className="w-8 h-8 opacity-40 mb-2 block" />
-                  Loading image preview...
+                <div className="w-full h-64 bg-base-100 rounded-xl border border-dashed border-base-300 flex flex-col items-center justify-center text-xs text-base-content/50 gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <span>Loading image preview...</span>
                 </div>
               )}
 

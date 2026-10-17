@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, ArrowRight, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { Loader2, ArrowRight, Sparkles, Check, AlertCircle, Image as ImageIcon, Eye } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 
 interface TargetCompressorToolProps {
   defaultTargetKb?: number;
@@ -34,16 +35,42 @@ export default function TargetCompressorTool({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [result, setResult] = useState<any | null>(null);
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
+  const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isCancelled = false;
+
     if (files.length > 0) {
-      const url = URL.createObjectURL(files[0]);
-      setOriginalPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
+      setIsPreviewLoading(true);
+      getSafeImagePreview(files[0])
+        .then((preview) => {
+          if (!isCancelled) {
+            setOriginalPreviewUrl(preview.previewUrl);
+            setOrigDimensions({ width: preview.width, height: preview.height });
+            setIsPreviewLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (!isCancelled) {
+            console.error('Preview error:', err);
+            try {
+              const fallbackUrl = URL.createObjectURL(files[0]);
+              setOriginalPreviewUrl(fallbackUrl);
+            } catch {}
+            setIsPreviewLoading(false);
+          }
+        });
     } else {
       setOriginalPreviewUrl(null);
+      setOrigDimensions(null);
+      setIsPreviewLoading(false);
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [files]);
 
   const handleProcess = async () => {
@@ -105,22 +132,33 @@ export default function TargetCompressorTool({
         <div className="space-y-6 animate-in fade-in duration-150">
           {/* File summary bar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300 gap-3">
-            <div className="flex items-center gap-3">
-              {originalPreviewUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={originalPreviewUrl}
-                  alt="Original thumb"
-                  className="w-12 h-12 object-cover rounded-xl border border-base-300 shadow-sm"
-                />
-              )}
-              <div>
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-14 h-14 rounded-2xl bg-base-200 border border-base-300 overflow-hidden flex items-center justify-center shrink-0 shadow-xs relative">
+                {originalPreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={originalPreviewUrl}
+                    alt="Original thumb"
+                    className="w-full h-full object-cover"
+                  />
+                ) : isPreviewLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-base-content/40" />
+                )}
+              </div>
+              <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs sm:max-w-md">
                   {files[0].name}
                 </p>
-                <p className="text-xs text-base-content/60">
-                  Original Size: <strong className="text-base-content">{formatBytes(files[0].size)}</strong>
-                </p>
+                <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
+                  <span>Original: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  {origDimensions && (
+                    <span className="badge badge-sm badge-ghost text-[10px] font-mono">
+                      {origDimensions.width} × {origDimensions.height} px
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -131,6 +169,32 @@ export default function TargetCompressorTool({
               Change File
             </button>
           </div>
+
+          {/* Visual Image Preview Card */}
+          {originalPreviewUrl && (
+            <div className="rounded-2xl border border-base-300 bg-base-100 p-3 sm:p-5 shadow-xs flex flex-col items-center justify-center space-y-3">
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-primary" />
+                  Uploaded Image Preview
+                </span>
+                {origDimensions && (
+                  <span className="badge badge-sm badge-ghost font-mono text-[11px]">
+                    {origDimensions.width} × {origDimensions.height} px
+                  </span>
+                )}
+              </div>
+
+              <div className="relative w-full max-h-[320px] sm:max-h-[380px] rounded-xl overflow-hidden bg-base-200/40 flex items-center justify-center border border-base-200 p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={originalPreviewUrl}
+                  alt={files[0].name}
+                  className="max-h-[300px] sm:max-h-[360px] w-auto max-w-full object-contain rounded-lg shadow-sm"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Target Size Selectors */}
           {!fixedTarget && (

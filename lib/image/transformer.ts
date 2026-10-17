@@ -18,11 +18,14 @@ export async function transformImage(
   options: TransformOptions
 ) {
   const originalSize = inputBuffer.length;
-  const metadata = await sharp(inputBuffer).metadata();
-  const originalWidth = metadata.width || 800;
-  const originalHeight = metadata.height || 600;
+  // Auto-orient according to EXIF first so coordinates match the user's visual preview
+  const orientedPipeline = sharp(inputBuffer, { failOnError: false }).rotate();
+  const { data: orientedBuffer, info: orientedInfo } = await orientedPipeline.toBuffer({ resolveWithObject: true });
 
-  let pipeline = sharp(inputBuffer);
+  const originalWidth = orientedInfo.width;
+  const originalHeight = orientedInfo.height;
+
+  let pipeline = sharp(orientedBuffer, { failOnError: false });
 
   // 1. Crop first if requested
   if (options.crop) {
@@ -47,7 +50,7 @@ export async function transformImage(
     pipeline = pipeline.flop(); // horizontal
   }
 
-  const targetFormat = metadata.format === 'png' ? 'png' : metadata.format === 'webp' ? 'webp' : 'jpeg';
+  const targetFormat = orientedInfo.format === 'png' ? 'png' : orientedInfo.format === 'webp' ? 'webp' : 'jpeg';
 
   if (targetFormat === 'jpeg') {
     pipeline = pipeline.jpeg({ quality: options.quality || 90, mozjpeg: true });

@@ -11,8 +11,9 @@ export async function convertImageFormat(
 ) {
   const originalSize = inputBuffer.length;
   const metadata = await sharp(inputBuffer, { failOnError: false }).metadata();
-  const originalWidth = metadata.width || 800;
-  const originalHeight = metadata.height || 600;
+  const isTransposed = metadata.orientation && metadata.orientation >= 5 && metadata.orientation <= 8;
+  const originalWidth = (isTransposed ? metadata.height : metadata.width) || 800;
+  const originalHeight = (isTransposed ? metadata.width : metadata.height) || 600;
 
   let pipeline = sharp(inputBuffer, { failOnError: false }).rotate();
   const quality = options.quality || 90;
@@ -31,14 +32,14 @@ export async function convertImageFormat(
     pipeline = pipeline.tiff({ quality });
   }
 
-  const resultBuffer = await pipeline.toBuffer();
+  const { data: resultBuffer, info } = await pipeline.toBuffer({ resolveWithObject: true });
 
   return {
     buffer: resultBuffer,
     size: resultBuffer.length,
     originalSize,
-    width: originalWidth,
-    height: originalHeight,
+    width: info.width || originalWidth,
+    height: info.height || originalHeight,
     format: options.targetFormat,
     reductionPercentage:
       originalSize > 0

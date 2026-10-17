@@ -22,6 +22,7 @@ import ComparisonViewer from '@/components/ui/ComparisonViewer';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import JSZip from 'jszip';
 
 export interface ImageItem {
@@ -65,65 +66,6 @@ export default function ResizerTool() {
 
   const hiddenFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Robust helper to safely extract natural dimensions and a reliable preview for any image (including WhatsApp, jfif, etc.)
-  const getSafePreviewAndDimensions = async (
-    file: File
-  ): Promise<{ previewUrl: string; width: number; height: number }> => {
-    if (file.size === 0) {
-      throw new Error(
-        `"${file.name}" has 0 bytes. If you dragged this from WhatsApp Web, please right-click the image in WhatsApp and select "Save image as", then upload the saved file.`
-      );
-    }
-
-    // Try createImageBitmap (modern, respects EXIF orientation automatically)
-    if (typeof createImageBitmap !== 'undefined') {
-      try {
-        const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(bitmap, 0, 0);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-          const w = bitmap.width;
-          const h = bitmap.height;
-          bitmap.close();
-          return { previewUrl: dataUrl, width: w, height: h };
-        }
-        bitmap.close();
-      } catch {
-        // Fallback to FileReader/Image
-      }
-    }
-
-    // Fallback: FileReader + HTMLImageElement
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        const img = new Image();
-        img.onload = () => {
-          resolve({
-            previewUrl: dataUrl,
-            width: img.naturalWidth || 800,
-            height: img.naturalHeight || 600,
-          });
-        };
-        img.onerror = () => {
-          const objUrl = URL.createObjectURL(file);
-          resolve({ previewUrl: objUrl, width: 800, height: 600 });
-        };
-        img.src = dataUrl;
-      };
-      reader.onerror = () => {
-        const objUrl = URL.createObjectURL(file);
-        resolve({ previewUrl: objUrl, width: 800, height: 600 });
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
   // Helper to load natural dimensions for uploaded files
   const loadFiles = async (filesToAdd: File[]) => {
     if (!filesToAdd || filesToAdd.length === 0) return;
@@ -132,7 +74,7 @@ export default function ResizerTool() {
     try {
       const newItems: ImageItem[] = await Promise.all(
         filesToAdd.map(async (file) => {
-          const { previewUrl, width: w, height: h } = await getSafePreviewAndDimensions(file);
+          const { previewUrl, width: w, height: h } = await getSafeImagePreview(file);
           return {
             id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
             file,

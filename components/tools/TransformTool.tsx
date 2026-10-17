@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader2, RotateCcw, RotateCw, FlipHorizontal, FlipVertical, Sparkles, AlertCircle } from 'lucide-react';
+import { Loader2, RotateCcw, RotateCw, FlipHorizontal, FlipVertical, Sparkles, AlertCircle, Image as ImageIcon } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 
 interface TransformToolProps {
   mode: 'rotate' | 'flip';
@@ -18,16 +20,42 @@ export default function TransformTool({ mode }: TransformToolProps) {
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [result, setResult] = useState<any | null>(null);
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
+  const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isCancelled = false;
+
     if (files.length > 0) {
-      const url = URL.createObjectURL(files[0]);
-      setOriginalPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
+      setIsPreviewLoading(true);
+      getSafeImagePreview(files[0])
+        .then((preview) => {
+          if (!isCancelled) {
+            setOriginalPreviewUrl(preview.previewUrl);
+            setOrigDimensions({ width: preview.width, height: preview.height });
+            setIsPreviewLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (!isCancelled) {
+            console.error('Transform preview error:', err);
+            try {
+              const fallbackUrl = URL.createObjectURL(files[0]);
+              setOriginalPreviewUrl(fallbackUrl);
+            } catch {}
+            setIsPreviewLoading(false);
+          }
+        });
     } else {
       setOriginalPreviewUrl(null);
+      setOrigDimensions(null);
+      setIsPreviewLoading(false);
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [files]);
 
   const handleProcess = async () => {
@@ -68,6 +96,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
     setRotateAngle(0);
     setFlipH(false);
     setFlipV(false);
+    scrollToTool();
   };
 
   return (
@@ -84,13 +113,42 @@ export default function TransformTool({ mode }: TransformToolProps) {
 
       {files.length > 0 && !result && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300">
-            <div>
-              <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs">{files[0].name}</p>
-              <p className="text-xs text-base-content/60">Size: {formatBytes(files[0].size)}</p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300 gap-3">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-14 h-14 rounded-2xl bg-base-200 border border-base-300 overflow-hidden flex items-center justify-center shrink-0 shadow-xs relative">
+                {originalPreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={originalPreviewUrl}
+                    alt="Original thumb"
+                    className="w-full h-full object-cover"
+                  />
+                ) : isPreviewLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-base-content/40" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs sm:max-w-md">
+                  {files[0].name}
+                </p>
+                <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
+                  <span>Size: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  {origDimensions && (
+                    <span className="badge badge-sm badge-ghost text-[10px] font-mono">
+                      {origDimensions.width} × {origDimensions.height} px
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
-              Change
+
+            <button
+              onClick={handleReset}
+              className="btn btn-ghost btn-xs text-base-content/60 hover:text-error"
+            >
+              Change File
             </button>
           </div>
 
@@ -164,7 +222,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
           </div>
 
           {/* Live Preview with CSS Transform */}
-          {originalPreviewUrl && (
+          {originalPreviewUrl ? (
             <div className="p-6 rounded-2xl bg-base-100 border border-base-300 flex items-center justify-center bg-transparency-grid overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -176,7 +234,12 @@ export default function TransformTool({ mode }: TransformToolProps) {
                 }}
               />
             </div>
-          )}
+          ) : isPreviewLoading ? (
+            <div className="p-12 rounded-2xl bg-base-100 border border-base-300 flex flex-col items-center justify-center gap-2 text-base-content/60">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="text-xs">Preparing image preview...</span>
+            </div>
+          ) : null}
 
           {error && (
             <div className="alert alert-error text-xs rounded-2xl py-3 shadow-sm flex items-center gap-2">

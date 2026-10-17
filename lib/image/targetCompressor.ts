@@ -31,17 +31,18 @@ export async function compressToTargetSize(
   const originalSize = inputBuffer.length;
   const targetBytes = options.targetBytes;
 
-  const metadata = await sharp(inputBuffer).metadata();
-  const originalWidth = metadata.width || 800;
-  const originalHeight = metadata.height || 600;
+  const metadata = await sharp(inputBuffer, { failOnError: false }).metadata();
+  const isTransposed = metadata.orientation && metadata.orientation >= 5 && metadata.orientation <= 8;
+  const originalWidth = (isTransposed ? metadata.height : metadata.width) || 800;
+  const originalHeight = (isTransposed ? metadata.width : metadata.height) || 600;
 
   // Auto-detect format from input if 'original' or unspecified
   let targetFormat = options.format && options.format !== 'original'
     ? options.format
     : (metadata.format === 'png' ? 'png' : metadata.format === 'webp' ? 'webp' : 'jpeg');
 
-  // Prepare base pipeline
-  let baseSharp = sharp(inputBuffer);
+  // Prepare base pipeline with EXIF auto-rotation
+  let baseSharp = sharp(inputBuffer, { failOnError: false }).rotate();
   // ONLY flatten alpha to white if converting a transparent image explicitly to JPEG
   if (targetFormat === 'jpeg' && metadata.hasAlpha) {
     baseSharp = baseSharp.flatten({ background: { r: 255, g: 255, b: 255 } });

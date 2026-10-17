@@ -983,13 +983,18 @@ export default function CropperTool() {
               <button
                 type="button"
                 onClick={handleProcess}
-                disabled={isProcessing}
-                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2"
+                disabled={isProcessing || !hasActiveCrop}
+                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
                     Cropping Image...
+                  </>
+                ) : !hasActiveCrop ? (
+                  <>
+                    <Crop className="w-5 h-5" />
+                    <span>Select Crop Area on Image First</span>
                   </>
                 ) : (
                   <>

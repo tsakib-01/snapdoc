@@ -176,8 +176,7 @@ export default function RootLayout({
             __html: `
               try {
                 const saved = localStorage.getItem('theme');
-                const pref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                document.documentElement.setAttribute('data-theme', saved || pref);
+                document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
               } catch (_) {}
             `,
           }}

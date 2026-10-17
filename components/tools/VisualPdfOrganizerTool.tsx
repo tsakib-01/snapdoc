@@ -1139,7 +1139,7 @@ export default function VisualPdfOrganizerTool({
                 </button>
               </div>
             </div>
-            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden p-2 flex items-center justify-center">
+            <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-2xl overflow-hidden p-2 flex flex-col">
               <PdfPreviewModalViewer
                 dataUrl={resultData.dataUrl}
                 filename="organized.pdf"

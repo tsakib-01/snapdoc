@@ -186,7 +186,7 @@ export default function ResultCard({
               <span className="hidden sm:inline">Download File</span>
             </button>
 
-            {dataUrl && (
+            {dataUrl && (isPdf || isImage) && (
               <button
                 type="button"
                 onClick={handleOpenPreview}
@@ -311,16 +311,18 @@ export default function ResultCard({
                 </button>
               </div>
             </div>
-            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden flex items-center justify-center p-2">
+            <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-2xl overflow-hidden flex flex-col p-2">
               {isPdf ? (
                 <PdfPreviewModalViewer dataUrl={dataUrl} filename={filename} />
               ) : (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={dataUrl}
-                  alt={filename}
-                  className="max-h-full max-w-full object-contain rounded-xl shadow-sm"
-                />
+                <div className="w-full h-full flex items-center justify-center overflow-auto p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={dataUrl}
+                    alt={filename}
+                    className="max-h-full max-w-full object-contain rounded-xl shadow-sm mx-auto my-auto"
+                  />
+                </div>
               )}
             </div>
           </div>

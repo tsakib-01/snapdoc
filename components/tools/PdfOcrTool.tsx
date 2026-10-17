@@ -473,7 +473,7 @@ export default function PdfOcrTool() {
                 </button>
               </div>
             </div>
-            <div className="flex-1 w-full bg-base-200/50 rounded-2xl overflow-hidden flex items-center justify-center p-2">
+            <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-2xl overflow-hidden flex flex-col p-2">
               <PdfPreviewModalViewer dataUrl={result.searchablePdfUrl} filename={result.filename} />
             </div>
           </div>

@@ -69,9 +69,12 @@ export default function ConverterTool({
     }
   }, [files]);
 
-  // Generate live visual preview with background color applied
+  // Generate live visual preview with background color applied (only for PNG/WebP to JPG)
   useEffect(() => {
-    if (!files || files.length === 0 || !originalPreviewUrl) {
+    const isApplicableForBg =
+      targetFormat === 'jpeg' && (sourceFormat === 'png' || sourceFormat === 'webp' || sourceFormat === 'any');
+
+    if (!files || files.length === 0 || !originalPreviewUrl || !isApplicableForBg) {
       setLivePreviewUrl(null);
       setDetectedBgType(null);
       return;
@@ -201,7 +204,7 @@ export default function ConverterTool({
     return () => {
       isCancelled = true;
     };
-  }, [files, originalPreviewUrl, backgroundColor]);
+  }, [files, originalPreviewUrl, backgroundColor, targetFormat, sourceFormat]);
 
   // High quality client-side canvas conversion (instant, bypasses server 413 limits, handles transparency)
   const convertImageInBrowser = async (
@@ -295,68 +298,71 @@ export default function ConverterTool({
 
     const isFakeCheckerboard = borderCheckerCount / borderSamples > 0.25;
 
-    // Apply real alpha blending
-    if (hasAlpha) {
-      for (let i = 0; i < data.length; i += 4) {
-        const a = data[i + 3] / 255;
-        if (a < 1) {
-          data[i] = Math.round(data[i] * a + target.r * (1 - a));
-          data[i + 1] = Math.round(data[i + 1] * a + target.g * (1 - a));
-          data[i + 2] = Math.round(data[i + 2] * a + target.b * (1 - a));
-          data[i + 3] = 255;
-        }
-      }
-    }
-
-    // Apply BFS flood-fill replacement for border-connected checkerboard pattern
-    if (isFakeCheckerboard) {
-      const visited = new Uint8Array(width * height);
-      const queue: number[] = [];
-
-      for (let x = 0; x < width; x++) {
-        if (isChecker(x * 4)) { visited[x] = 1; queue.push(x); }
-        const botIdx = (height - 1) * width + x;
-        if (isChecker(botIdx * 4)) { visited[botIdx] = 1; queue.push(botIdx); }
-      }
-      for (let y = 0; y < height; y++) {
-        const leftIdx = y * width;
-        if (!visited[leftIdx] && isChecker(leftIdx * 4)) { visited[leftIdx] = 1; queue.push(leftIdx); }
-        const rightIdx = y * width + (width - 1);
-        if (!visited[rightIdx] && isChecker(rightIdx * 4)) { visited[rightIdx] = 1; queue.push(rightIdx); }
-      }
-
-      let head = 0;
-      while (head < queue.length) {
-        const curr = queue[head++];
-        const cx = curr % width;
-        const cy = Math.floor(curr / width);
-
-        const neighbors = [
-          cx > 0 ? curr - 1 : -1,
-          cx < width - 1 ? curr + 1 : -1,
-          cy > 0 ? curr - width : -1,
-          cy < height - 1 ? curr + width : -1,
-        ];
-
-        for (const nb of neighbors) {
-          if (nb >= 0 && !visited[nb] && isChecker(nb * 4)) {
-            visited[nb] = 1;
-            queue.push(nb);
+    // Only apply background color replacement when converting to JPEG (since JPEG cannot store alpha transparency)
+    if (format === 'jpeg') {
+      // Apply real alpha blending
+      if (hasAlpha) {
+        for (let i = 0; i < data.length; i += 4) {
+          const a = data[i + 3] / 255;
+          if (a < 1) {
+            data[i] = Math.round(data[i] * a + target.r * (1 - a));
+            data[i + 1] = Math.round(data[i + 1] * a + target.g * (1 - a));
+            data[i + 2] = Math.round(data[i + 2] * a + target.b * (1 - a));
+            data[i + 3] = 255;
           }
         }
       }
 
-      for (let i = 0; i < width * height; i++) {
-        if (visited[i]) {
-          data[i * 4] = target.r;
-          data[i * 4 + 1] = target.g;
-          data[i * 4 + 2] = target.b;
-          data[i * 4 + 3] = 255;
+      // Apply BFS flood-fill replacement for border-connected checkerboard pattern
+      if (isFakeCheckerboard) {
+        const visited = new Uint8Array(width * height);
+        const queue: number[] = [];
+
+        for (let x = 0; x < width; x++) {
+          if (isChecker(x * 4)) { visited[x] = 1; queue.push(x); }
+          const botIdx = (height - 1) * width + x;
+          if (isChecker(botIdx * 4)) { visited[botIdx] = 1; queue.push(botIdx); }
+        }
+        for (let y = 0; y < height; y++) {
+          const leftIdx = y * width;
+          if (!visited[leftIdx] && isChecker(leftIdx * 4)) { visited[leftIdx] = 1; queue.push(leftIdx); }
+          const rightIdx = y * width + (width - 1);
+          if (!visited[rightIdx] && isChecker(rightIdx * 4)) { visited[rightIdx] = 1; queue.push(rightIdx); }
+        }
+
+        let head = 0;
+        while (head < queue.length) {
+          const curr = queue[head++];
+          const cx = curr % width;
+          const cy = Math.floor(curr / width);
+
+          const neighbors = [
+            cx > 0 ? curr - 1 : -1,
+            cx < width - 1 ? curr + 1 : -1,
+            cy > 0 ? curr - width : -1,
+            cy < height - 1 ? curr + width : -1,
+          ];
+
+          for (const nb of neighbors) {
+            if (nb >= 0 && !visited[nb] && isChecker(nb * 4)) {
+              visited[nb] = 1;
+              queue.push(nb);
+            }
+          }
+        }
+
+        for (let i = 0; i < width * height; i++) {
+          if (visited[i]) {
+            data[i * 4] = target.r;
+            data[i * 4 + 1] = target.g;
+            data[i * 4 + 2] = target.b;
+            data[i * 4 + 3] = 255;
+          }
         }
       }
-    }
 
-    ctx.putImageData(imgData, 0, 0);
+      ctx.putImageData(imgData, 0, 0);
+    }
 
     const mimeType = format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg';
     const q = Math.min(1, Math.max(0.01, qualityVal / 100));
@@ -513,8 +519,8 @@ export default function ConverterTool({
               </div>
             )}
 
-            {/* Transparency Background Color picker with Live Visual Preview */}
-            {(targetFormat === 'jpeg' || sourceFormat === 'png' || sourceFormat === 'webp' || fixedTarget) && (
+            {/* Transparency Background Color picker with Live Visual Preview (Only for PNG->JPG & WebP->JPG) */}
+            {targetFormat === 'jpeg' && (sourceFormat === 'png' || sourceFormat === 'webp' || sourceFormat === 'any') && (
               <div className="p-4 rounded-2xl bg-base-100 border border-base-300 space-y-3 animate-in fade-in duration-100">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <label className="text-xs font-semibold text-base-content/80 flex items-center gap-2">

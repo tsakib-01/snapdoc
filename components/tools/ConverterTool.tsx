@@ -96,16 +96,25 @@ export default function ConverterTool({
     let source: ImageBitmap | HTMLImageElement;
     if (typeof createImageBitmap !== 'undefined') {
       try {
-        source = await createImageBitmap(file, { imageOrientation: 'from-image' });
+        source = await Promise.race([
+          createImageBitmap(file, { imageOrientation: 'from-image' }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('createImageBitmap timeout')), 2500))
+        ]);
       } catch {
         source = await new Promise<HTMLImageElement>((resolve, reject) => {
           const img = new Image();
           const url = URL.createObjectURL(file);
+          const timer = setTimeout(() => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Image decode timeout'));
+          }, 2500);
           img.onload = () => {
+            clearTimeout(timer);
             URL.revokeObjectURL(url);
             resolve(img);
           };
           img.onerror = (e) => {
+            clearTimeout(timer);
             URL.revokeObjectURL(url);
             reject(e);
           };
@@ -116,11 +125,17 @@ export default function ConverterTool({
       source = await new Promise<HTMLImageElement>((resolve, reject) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
+        const timer = setTimeout(() => {
+          URL.revokeObjectURL(url);
+          reject(new Error('Image decode timeout'));
+        }, 2500);
         img.onload = () => {
+          clearTimeout(timer);
           URL.revokeObjectURL(url);
           resolve(img);
         };
         img.onerror = (e) => {
+          clearTimeout(timer);
           URL.revokeObjectURL(url);
           reject(e);
         };
@@ -244,13 +259,16 @@ export default function ConverterTool({
     scrollToTool();
   };
 
+  const displaySource = sourceFormat === 'any' ? 'image' : sourceFormat.toUpperCase();
+  const displayTarget = targetFormat === 'jpeg' ? 'JPG' : targetFormat.toUpperCase();
+
   const acceptTypes =
     sourceFormat === 'jpg'
-      ? 'image/jpeg,image/jpg,image/*,.jpg,.jpeg,.jfif,.pjpeg'
+      ? 'image/jpeg,image/jpg,image/*,.jpg,.jpeg,.jfif,.pjpeg,.png,.webp'
       : sourceFormat === 'png'
-      ? 'image/png,image/*,.png'
+      ? 'image/png,image/*,.png,.PNG,.jpg,.jpeg,.jfif,.pjpeg,.webp'
       : sourceFormat === 'webp'
-      ? 'image/webp,image/*,.webp'
+      ? 'image/webp,image/*,.webp,.WEBP,.jpg,.jpeg,.jfif,.pjpeg,.png'
       : 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
 
   return (
@@ -260,8 +278,8 @@ export default function ConverterTool({
           accept={acceptTypes}
           files={files}
           onFilesSelected={setFiles}
-          title={`Upload ${sourceFormat.toUpperCase()} image to convert`}
-          subtitle={`Convert seamlessly to ${targetFormat.toUpperCase()}`}
+          title={`Upload ${displaySource} image to convert`}
+          subtitle={`Convert seamlessly to ${displayTarget}`}
         />
       )}
 
@@ -394,23 +412,25 @@ export default function ConverterTool({
             ) : (
               <>
                 <ArrowRightLeft className="w-5 h-5" />
-                Convert to {targetFormat.toUpperCase()}
+                Convert to {displayTarget}
               </>
             )}
           </button>
         </div>
       )}
 
-      {result && originalPreviewUrl && (
+      {result && (
         <div className="space-y-6">
-          <ComparisonViewer
-            originalUrl={originalPreviewUrl}
-            processedUrl={result.dataUrl}
-            originalSize={result.originalSize}
-            processedSize={result.compressedSize}
-            originalDimensions={{ width: result.width, height: result.height }}
-            processedDimensions={{ width: result.width, height: result.height }}
-          />
+          {originalPreviewUrl && (
+            <ComparisonViewer
+              originalUrl={originalPreviewUrl}
+              processedUrl={result.dataUrl}
+              originalSize={result.originalSize}
+              processedSize={result.compressedSize}
+              originalDimensions={{ width: result.width, height: result.height }}
+              processedDimensions={{ width: result.width, height: result.height }}
+            />
+          )}
 
           <ResultCard
             originalSize={result.originalSize}
@@ -418,7 +438,7 @@ export default function ConverterTool({
             reductionPercentage={result.reductionPercentage}
             filename={`${result.originalName.replace(/\.[^/.]+$/, '')}.${result.format === 'jpeg' ? 'jpg' : result.format}`}
             dataUrl={result.dataUrl}
-            format={result.format.toUpperCase()}
+            format={result.format === 'jpeg' ? 'JPG' : result.format.toUpperCase()}
             dimensions={{ width: result.width, height: result.height }}
             onReset={handleReset}
             hideHeader={true}

@@ -145,15 +145,48 @@ export default function ImageToPdfTool({
         } else if (fType.includes('png') || fName.endsWith('.png')) {
           embedImg = await pdfDoc.embedPng(fileBuffer);
         } else {
-          const imgBitmap = await createImageBitmap(item.file);
-          const canvas = document.createElement('canvas');
-          canvas.width = imgBitmap.width;
-          canvas.height = imgBitmap.height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(imgBitmap, 0, 0);
-          const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.92));
-          if (blob) {
-            embedImg = await pdfDoc.embedJpg(await blob.arrayBuffer());
+          try {
+            const imgBitmap = await Promise.race([
+              createImageBitmap(item.file),
+              new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+            ]);
+            const canvas = document.createElement('canvas');
+            canvas.width = imgBitmap.width;
+            canvas.height = imgBitmap.height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(imgBitmap, 0, 0);
+            const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.92));
+            if (blob) {
+              embedImg = await pdfDoc.embedJpg(await blob.arrayBuffer());
+            }
+          } catch {
+            const blob = await new Promise<Blob | null>((resolve) => {
+              const img = new Image();
+              const url = URL.createObjectURL(item.file);
+              const timer = setTimeout(() => {
+                URL.revokeObjectURL(url);
+                resolve(null);
+              }, 2500);
+              img.onload = () => {
+                clearTimeout(timer);
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+                canvas.toBlob(resolve, 'image/jpeg', 0.92);
+              };
+              img.onerror = () => {
+                clearTimeout(timer);
+                URL.revokeObjectURL(url);
+                resolve(null);
+              };
+              img.src = url;
+            });
+            if (blob) {
+              embedImg = await pdfDoc.embedJpg(await blob.arrayBuffer());
+            }
           }
         }
 
@@ -301,6 +334,13 @@ export default function ImageToPdfTool({
                       src={item.previewUrl}
                       alt={item.file.name}
                       className="h-full w-full object-contain drop-shadow-sm rounded-lg"
+                      onError={() => {
+                        try {
+                          const fallbackUrl = URL.createObjectURL(item.file);
+                          item.previewUrl = fallbackUrl;
+                          setItems((prev) => [...prev]);
+                        } catch {}
+                      }}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-1.5 text-base-content/40">

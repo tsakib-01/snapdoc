@@ -166,6 +166,7 @@ export default function ImageToPdfTool({
       setResult({
         success: true,
         filename: `converted_images_${Date.now()}.pdf`,
+        fileSize: blob.size,
         pdfSize: blob.size,
         originalSize: totalOrigSize,
         pageCount: items.length,
@@ -428,15 +429,15 @@ export default function ImageToPdfTool({
             <div>
               <h4 className="font-bold text-base text-base-content">PDF Document Created Successfully</h4>
               <p className="text-xs text-base-content/60 mt-0.5">
-                Contains {result.pageCount} pages ({formatBytes(result.fileSize)})
+                Contains {result.pageCount} pages ({formatBytes(result.fileSize ?? result.pdfSize ?? 0)})
               </p>
             </div>
           </div>
 
           <ResultCard
             originalSize={totalOriginalSize}
-            newSize={result.fileSize}
-            filename="converted_images.pdf"
+            newSize={result.fileSize ?? result.pdfSize ?? 0}
+            filename={result.filename || "converted_images.pdf"}
             dataUrl={result.dataUrl}
             format="PDF"
             extraInfo={`${result.pageCount} Pages`}

@@ -824,6 +824,7 @@ export default function ResizerTool() {
                 format={results[0].format}
                 dimensions={{ width: results[0].width, height: results[0].height }}
                 onReset={handleReset}
+                hideHeader={true}
               />
             </div>
           )}

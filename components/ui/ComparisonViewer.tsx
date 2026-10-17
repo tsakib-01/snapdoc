@@ -27,33 +27,34 @@ export default function ComparisonViewer({
   return (
     <div className="w-full space-y-4">
       {/* Mode switcher bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-base-200">
-        <span className="text-xs font-semibold text-base-content/70">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-base-200">
+        <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
+          <Eye className="w-3.5 h-3.5 text-primary" />
           Visual Quality Preview
         </span>
-        <div className="flex items-center gap-1 bg-base-200 p-1 rounded-xl">
+        <div className="inline-flex items-center self-start sm:self-auto gap-1 bg-base-200/80 p-1 rounded-xl border border-base-300 max-w-full">
           <button
             type="button"
             onClick={() => setViewMode('side-by-side')}
-            className={`btn btn-xs rounded-lg ${
+            className={`btn btn-xs h-7 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               viewMode === 'side-by-side'
-                ? 'btn-primary font-semibold shadow-sm'
-                : 'btn-ghost text-base-content/60'
+                ? 'btn-primary text-white shadow-xs'
+                : 'btn-ghost text-base-content/70 hover:text-base-content'
             }`}
           >
-            <SplitSquareVertical className="w-3.5 h-3.5 mr-1" />
+            <SplitSquareVertical className="w-3.5 h-3.5 mr-1.5 shrink-0" />
             Side by Side
           </button>
           <button
             type="button"
             onClick={() => setViewMode('toggle')}
-            className={`btn btn-xs rounded-lg ${
+            className={`btn btn-xs h-7 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               viewMode === 'toggle'
-                ? 'btn-primary font-semibold shadow-sm'
-                : 'btn-ghost text-base-content/60'
+                ? 'btn-primary text-white shadow-xs'
+                : 'btn-ghost text-base-content/70 hover:text-base-content'
             }`}
           >
-            <Layers className="w-3.5 h-3.5 mr-1" />
+            <Layers className="w-3.5 h-3.5 mr-1.5 shrink-0" />
             Toggle View
           </button>
         </div>

@@ -211,12 +211,12 @@ export default function PageNumbererTool() {
               {activeThumbnail ? (
                 <div
                   style={{ aspectRatio: `${activeThumbnail.aspectRatio}` }}
-                  className="relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-xl shadow-lg overflow-hidden border border-base-300 select-none my-2"
+                  className="relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-none shadow-lg border border-base-300 select-none my-2"
                 >
                   <img
                     src={activeThumbnail.dataUrl}
                     alt={`Page ${currentPage}`}
-                    className="w-full h-full object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none rounded-none"
                   />
 
                   {/* Stamp Badge with Live Font Size, Font Color, and Background Color */}
@@ -289,7 +289,7 @@ export default function PageNumbererTool() {
                         currentPage === pg.pageNumber ? 'border-primary bg-primary/10 scale-105' : 'border-base-200 opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded object-contain bg-white" />
+                      <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded-none object-contain bg-white" />
                       <span className="block text-[9px] font-bold text-center mt-0.5">{pg.pageNumber}</span>
                     </button>
                   ))}

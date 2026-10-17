@@ -1201,7 +1201,7 @@ export default function VisualPdfOrganizerTool({
               <img
                 src={zoomPage.dataUrl}
                 alt={`Page ${zoomPage.pageNumber}`}
-                className="max-h-full object-contain rounded-lg shadow-md"
+                className="max-h-full object-contain rounded-none shadow-md bg-white"
                 style={{
                   transform: `rotate(${zoomPage.rotation}deg)`,
                 }}

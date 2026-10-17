@@ -235,7 +235,7 @@ export default function CropperTool() {
               </div>
 
               {originalPreviewUrl ? (
-                <div className="relative max-w-full max-h-[420px] rounded-xl overflow-hidden border border-base-300 shadow-md inline-block select-none bg-white">
+                <div className="relative max-w-full max-h-[420px] rounded-none border border-base-300 shadow-md inline-block select-none bg-white">
                   {/* Base Image */}
                   <img
                     src={originalPreviewUrl}
@@ -295,7 +295,7 @@ export default function CropperTool() {
                       left: `${leftMargin}%`,
                       right: `${rightMargin}%`,
                     }}
-                    className="absolute border-2 border-dashed border-emerald-500 rounded pointer-events-none shadow-sm transition-all duration-75 flex items-center justify-center"
+                    className="absolute border-2 border-dashed border-emerald-500 rounded-none pointer-events-none shadow-sm transition-all duration-75 flex items-center justify-center"
                   >
                     <span className="bg-emerald-600/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">
                       Crop Area

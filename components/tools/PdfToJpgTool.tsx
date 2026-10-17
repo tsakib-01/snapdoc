@@ -258,7 +258,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                   <img
                     src={p.dataUrl}
                     alt={`Page ${p.pageNumber}`}
-                    className="max-h-[240px] max-w-full object-contain rounded border border-base-300 shadow-sm"
+                    className="max-h-[240px] max-w-full object-contain rounded-none border border-base-300 shadow-sm"
                   />
                 </div>
 

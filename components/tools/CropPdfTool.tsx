@@ -54,17 +54,17 @@ export default function CropPdfTool() {
   // Scope: 'all' = apply to every page, 'current' = apply only to active page
   const [cropScope, setCropScope] = useState<'all' | 'current'>('all');
 
-  // Active margins (percentages 0% to 45%)
-  const [topMargin, setTopMargin] = useState<number>(8);
-  const [bottomMargin, setBottomMargin] = useState<number>(8);
-  const [leftMargin, setLeftMargin] = useState<number>(8);
-  const [rightMargin, setRightMargin] = useState<number>(8);
+  // Active margins (percentages 0% to 45%) - default 0 (no crop until user selects)
+  const [topMargin, setTopMargin] = useState<number>(0);
+  const [bottomMargin, setBottomMargin] = useState<number>(0);
+  const [leftMargin, setLeftMargin] = useState<number>(0);
+  const [rightMargin, setRightMargin] = useState<number>(0);
 
   // Per-page crop storage for 'current' mode
   const [pageCrops, setPageCrops] = useState<Record<number, CropMargins>>({});
 
   // Active preset tracking
-  const [activePreset, setActivePreset] = useState<string>('standard');
+  const [activePreset, setActivePreset] = useState<string>('none');
 
   // Processing state
   const [processing, setProcessing] = useState<boolean>(false);
@@ -147,11 +147,11 @@ export default function CropPdfTool() {
     setResultData(null);
     setLoadingThumbnails(true);
     setPageCrops({});
-    setTopMargin(8);
-    setBottomMargin(8);
-    setLeftMargin(8);
-    setRightMargin(8);
-    setActivePreset('standard');
+    setTopMargin(0);
+    setBottomMargin(0);
+    setLeftMargin(0);
+    setRightMargin(0);
+    setActivePreset('none');
 
     try {
       const { thumbnails } = await extractPdfThumbnails(selectedFile);
@@ -421,10 +421,16 @@ export default function CropPdfTool() {
     setError(null);
     setPageCrops({});
     setCropScope('all');
+    setTopMargin(0);
+    setBottomMargin(0);
+    setLeftMargin(0);
+    setRightMargin(0);
+    setActivePreset('none');
   };
 
   const activeThumbnail = pages[currentPage - 1];
 
+  const hasActiveCrop = topMargin > 0 || bottomMargin > 0 || leftMargin > 0 || rightMargin > 0;
   const cropBoxWidth = 100 - leftMargin - rightMargin;
   const cropBoxHeight = 100 - topMargin - bottomMargin;
 
@@ -517,134 +523,148 @@ export default function CropPdfTool() {
                     aspectRatio: `${activeThumbnail.aspectRatio}`,
                     touchAction: 'none',
                   }}
-                  className={`relative w-full max-w-[340px] sm:max-w-[420px] bg-white rounded-2xl shadow-xl overflow-hidden border border-base-300 select-none my-1 cursor-crosshair ${
+                  className={`relative w-full max-w-[340px] sm:max-w-[420px] bg-white rounded-none shadow-xl border border-base-300 select-none my-1 cursor-crosshair ${
                     isDragging ? 'select-none' : ''
                   }`}
                 >
-                  {/* Base Page Image */}
+                  {/* Base Page Image - Sharp 90-degree corners to show exact document dimensions */}
                   <img
                     src={activeThumbnail.dataUrl}
                     alt={`Page ${currentPage}`}
                     draggable={false}
-                    className="w-full h-full object-contain pointer-events-none block"
+                    className="w-full h-full object-contain pointer-events-none block rounded-none"
                   />
 
-                  {/* Shaded Trim Areas (Dimmed backdrop over areas to be trimmed) */}
-                  {/* Top */}
-                  <div
-                    style={{ top: 0, left: 0, right: 0, height: `${topMargin}%` }}
-                    className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-b border-red-500/40 pointer-events-none transition-none"
-                  />
-                  {/* Bottom */}
-                  <div
-                    style={{ bottom: 0, left: 0, right: 0, height: `${bottomMargin}%` }}
-                    className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-t border-red-500/40 pointer-events-none transition-none"
-                  />
-                  {/* Left */}
-                  <div
-                    style={{
-                      top: `${topMargin}%`,
-                      bottom: `${bottomMargin}%`,
-                      left: 0,
-                      width: `${leftMargin}%`,
-                    }}
-                    className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-r border-red-500/40 pointer-events-none transition-none"
-                  />
-                  {/* Right */}
-                  <div
-                    style={{
-                      top: `${topMargin}%`,
-                      bottom: `${bottomMargin}%`,
-                      right: 0,
-                      width: `${rightMargin}%`,
-                    }}
-                    className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-l border-red-500/40 pointer-events-none transition-none"
-                  />
-
-                  {/* ACTIVE CROP BOX (Interactive draggable & resizable) */}
-                  <div
-                    onPointerDown={(e) => handlePointerDown(e, 'move')}
-                    style={{
-                      top: `${topMargin}%`,
-                      bottom: `${bottomMargin}%`,
-                      left: `${leftMargin}%`,
-                      right: `${rightMargin}%`,
-                    }}
-                    className="absolute border-2 border-emerald-500 bg-emerald-500/5 shadow-2xl cursor-move transition-none"
-                  >
-                    {/* Size badge inside box */}
-                    <div className="absolute top-1.5 left-1.5 pointer-events-none">
-                      <span className="badge badge-xs bg-emerald-600 text-white font-bold text-[9px] px-1.5 py-0.5 shadow">
-                        Crop Area
-                      </span>
+                  {/* Clean un-cropped state prompt */}
+                  {!hasActiveCrop && !isDragging && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none bg-black/[0.02] p-4 text-center">
+                      <div className="bg-base-100/95 backdrop-blur-sm px-3.5 py-2 rounded-xl shadow-md border border-base-300 flex items-center gap-2 text-xs font-semibold text-base-content/85">
+                        <Crop className="w-4 h-4 text-primary animate-pulse" />
+                        <span>Click & drag to select crop area</span>
+                      </div>
                     </div>
+                  )}
 
-                    {/* Corner Handles (with generous touch-target areas for mobile) */}
-                    {/* Top-Left */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'nw')}
-                      className="absolute -top-3.5 -left-3.5 w-7 h-7 flex items-center justify-center cursor-nwse-resize z-20 touch-none"
-                    >
-                      <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
-                    </div>
+                  {/* Shaded Trim Areas and Active Crop Box (Only visible when user has selected a crop or is dragging) */}
+                  {(hasActiveCrop || isDragging) && (
+                    <>
+                      {/* Top */}
+                      <div
+                        style={{ top: 0, left: 0, right: 0, height: `${topMargin}%` }}
+                        className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-b border-red-500/40 pointer-events-none transition-none"
+                      />
+                      {/* Bottom */}
+                      <div
+                        style={{ bottom: 0, left: 0, right: 0, height: `${bottomMargin}%` }}
+                        className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-t border-red-500/40 pointer-events-none transition-none"
+                      />
+                      {/* Left */}
+                      <div
+                        style={{
+                          top: `${topMargin}%`,
+                          bottom: `${bottomMargin}%`,
+                          left: 0,
+                          width: `${leftMargin}%`,
+                        }}
+                        className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-r border-red-500/40 pointer-events-none transition-none"
+                      />
+                      {/* Right */}
+                      <div
+                        style={{
+                          top: `${topMargin}%`,
+                          bottom: `${bottomMargin}%`,
+                          right: 0,
+                          width: `${rightMargin}%`,
+                        }}
+                        className="absolute bg-slate-900/50 backdrop-blur-[0.5px] border-l border-red-500/40 pointer-events-none transition-none"
+                      />
 
-                    {/* Top-Right */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'ne')}
-                      className="absolute -top-3.5 -right-3.5 w-7 h-7 flex items-center justify-center cursor-nesw-resize z-20 touch-none"
-                    >
-                      <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
-                    </div>
+                      {/* ACTIVE CROP BOX (Interactive draggable & resizable, rectangular sharp corners) */}
+                      <div
+                        onPointerDown={(e) => handlePointerDown(e, 'move')}
+                        style={{
+                          top: `${topMargin}%`,
+                          bottom: `${bottomMargin}%`,
+                          left: `${leftMargin}%`,
+                          right: `${rightMargin}%`,
+                        }}
+                        className="absolute border-2 border-emerald-500 bg-emerald-500/5 shadow-2xl cursor-move transition-none rounded-none"
+                      >
+                        {/* Size badge inside box */}
+                        <div className="absolute top-1.5 left-1.5 pointer-events-none">
+                          <span className="badge badge-xs bg-emerald-600 text-white font-bold text-[9px] px-1.5 py-0.5 shadow">
+                            Crop Area
+                          </span>
+                        </div>
 
-                    {/* Bottom-Right */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'se')}
-                      className="absolute -bottom-3.5 -right-3.5 w-7 h-7 flex items-center justify-center cursor-nwse-resize z-20 touch-none"
-                    >
-                      <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
-                    </div>
+                        {/* Corner Handles */}
+                        {/* Top-Left */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'nw')}
+                          className="absolute -top-3.5 -left-3.5 w-7 h-7 flex items-center justify-center cursor-nwse-resize z-20 touch-none"
+                        >
+                          <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
+                        </div>
 
-                    {/* Bottom-Left */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'sw')}
-                      className="absolute -bottom-3.5 -left-3.5 w-7 h-7 flex items-center justify-center cursor-nesw-resize z-20 touch-none"
-                    >
-                      <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
-                    </div>
+                        {/* Top-Right */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'ne')}
+                          className="absolute -top-3.5 -right-3.5 w-7 h-7 flex items-center justify-center cursor-nesw-resize z-20 touch-none"
+                        >
+                          <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
+                        </div>
 
-                    {/* Mid-Edge Handles */}
-                    {/* Top */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'n')}
-                      className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-6 flex items-center justify-center cursor-ns-resize z-10 touch-none"
-                    >
-                      <div className="w-5 h-1.5 bg-white border border-emerald-600 rounded-full shadow" />
-                    </div>
+                        {/* Bottom-Right */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'se')}
+                          className="absolute -bottom-3.5 -right-3.5 w-7 h-7 flex items-center justify-center cursor-nwse-resize z-20 touch-none"
+                        >
+                          <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
+                        </div>
 
-                    {/* Bottom */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 's')}
-                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-6 flex items-center justify-center cursor-ns-resize z-10 touch-none"
-                    >
-                      <div className="w-5 h-1.5 bg-white border border-emerald-600 rounded-full shadow" />
-                    </div>
+                        {/* Bottom-Left */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'sw')}
+                          className="absolute -bottom-3.5 -left-3.5 w-7 h-7 flex items-center justify-center cursor-nesw-resize z-20 touch-none"
+                        >
+                          <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md" />
+                        </div>
 
-                    {/* Left */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'w')}
-                      className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-8 flex items-center justify-center cursor-ew-resize z-10 touch-none"
-                    >
-                      <div className="w-1.5 h-5 bg-white border border-emerald-600 rounded-full shadow" />
-                    </div>
+                        {/* Mid-Edge Handles */}
+                        {/* Top */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'n')}
+                          className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-6 flex items-center justify-center cursor-ns-resize z-10 touch-none"
+                        >
+                          <div className="w-5 h-1.5 bg-white border border-emerald-600 rounded-full shadow" />
+                        </div>
 
-                    {/* Right */}
-                    <div
-                      onPointerDown={(e) => handlePointerDown(e, 'e')}
-                      className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-8 flex items-center justify-center cursor-ew-resize z-10 touch-none"
-                    >
-                      <div className="w-1.5 h-5 bg-white border border-emerald-600 rounded-full shadow" />
-                    </div>
-                  </div>
+                        {/* Bottom */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 's')}
+                          className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-6 flex items-center justify-center cursor-ns-resize z-10 touch-none"
+                        >
+                          <div className="w-5 h-1.5 bg-white border border-emerald-600 rounded-full shadow" />
+                        </div>
+
+                        {/* Left */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'w')}
+                          className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-8 flex items-center justify-center cursor-ew-resize z-10 touch-none"
+                        >
+                          <div className="w-1.5 h-5 bg-white border border-emerald-600 rounded-full shadow" />
+                        </div>
+
+                        {/* Right */}
+                        <div
+                          onPointerDown={(e) => handlePointerDown(e, 'e')}
+                          className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-8 flex items-center justify-center cursor-ew-resize z-10 touch-none"
+                        >
+                          <div className="w-1.5 h-5 bg-white border border-emerald-600 rounded-full shadow" />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="w-full h-64 bg-base-100 rounded-2xl border border-dashed border-base-300 flex flex-col items-center justify-center text-xs text-base-content/50">
@@ -704,7 +724,7 @@ export default function CropPdfTool() {
                           <img
                             src={pg.dataUrl}
                             alt={`P${pg.pageNumber}`}
-                            className="w-full h-auto rounded-lg object-contain bg-white"
+                            className="w-full h-auto rounded-none object-contain bg-white"
                           />
                           <span className="block text-[9px] font-bold text-center mt-0.5">
                             {pg.pageNumber}
@@ -991,13 +1011,18 @@ export default function CropPdfTool() {
                 <button
                   type="button"
                   onClick={handleProcess}
-                  disabled={processing}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold text-sm"
+                  disabled={processing || !hasActiveCrop}
+                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold text-sm disabled:opacity-50"
                 >
                   {processing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Cropping PDF Pages...</span>
+                    </>
+                  ) : !hasActiveCrop ? (
+                    <>
+                      <Crop className="w-4 h-4" />
+                      <span>Select Crop Area on Document First</span>
                     </>
                   ) : (
                     <>

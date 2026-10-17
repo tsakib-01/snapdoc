@@ -1902,11 +1902,11 @@ export default function SignPdfTool() {
                     currentPage === pg.pageNumber ? 'border-primary bg-primary/5 shadow-md' : 'border-base-200 hover:border-base-300'
                   }`}
                 >
-                  <div className="w-full bg-white rounded-lg shadow-sm overflow-hidden flex items-center justify-center">
+                  <div className="w-full bg-white rounded-none shadow-sm flex items-center justify-center">
                     <img
                       src={pg.dataUrl}
                       alt={`Page ${pg.pageNumber}`}
-                      className="w-full h-auto object-contain"
+                      className="w-full h-auto object-contain rounded-none"
                     />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-base-content/70">
@@ -1935,7 +1935,7 @@ export default function SignPdfTool() {
                     aspectRatio: `${pages[currentPage - 1].aspectRatio}`,
                     touchAction: isDragging || isResizing ? 'none' : 'auto',
                   }}
-                  className="relative bg-white shadow-xl rounded-lg overflow-hidden select-none border border-base-300 my-auto w-full max-w-full sm:max-w-[900px]"
+                  className="relative bg-white shadow-xl rounded-none select-none border border-base-300 my-auto w-full max-w-full sm:max-w-[900px]"
                 >
                   {/* Rendered PDF Page Background */}
                   <img

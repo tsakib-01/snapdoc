@@ -532,7 +532,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
         <div className={`my-auto max-w-full flex flex-col items-center shrink-0 ${loading || error ? 'hidden' : ''}`}>
           <canvas
             ref={canvasRef}
-            className={`rounded-lg shadow-md border border-base-300/50 transition-opacity duration-150 bg-white block ${
+            className={`rounded-none shadow-md border border-base-300/50 transition-opacity duration-150 bg-white block ${
               rendering ? 'opacity-70' : 'opacity-100'
             }`}
           />

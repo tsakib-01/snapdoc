@@ -323,7 +323,7 @@ export default function ResultCard({
                   <img
                     src={dataUrl}
                     alt={filename}
-                    className="max-h-full max-w-full object-contain rounded-xl shadow-sm mx-auto my-auto"
+                    className="max-h-full max-w-full object-contain rounded-none shadow-sm mx-auto my-auto"
                   />
                 </div>
               )}

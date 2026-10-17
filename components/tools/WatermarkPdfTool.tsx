@@ -291,12 +291,12 @@ export default function WatermarkPdfTool() {
               {activeThumbnail ? (
                 <div
                   style={{ aspectRatio: `${activeThumbnail.aspectRatio}` }}
-                  className="@container relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-xl shadow-lg overflow-hidden border border-base-300 select-none my-2 flex items-center justify-center"
+                  className="@container relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-none shadow-lg border border-base-300 select-none my-2 flex items-center justify-center"
                 >
                   <img
                     src={activeThumbnail.dataUrl}
                     alt={`Page ${currentPage}`}
-                    className="w-full h-full object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none rounded-none"
                   />
 
                   {/* Live Watermark Overlay matching PDF Arial/Helvetica */}
@@ -348,7 +348,7 @@ export default function WatermarkPdfTool() {
                         currentPage === pg.pageNumber ? 'border-primary bg-primary/10 scale-105' : 'border-base-200 opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded object-contain bg-white" />
+                      <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded-none object-contain bg-white" />
                       <span className="block text-[9px] font-bold text-center mt-0.5">{pg.pageNumber}</span>
                     </button>
                   ))}

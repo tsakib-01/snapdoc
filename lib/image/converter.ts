@@ -37,9 +37,7 @@ export async function convertImageFormat(
 
   if (options.targetFormat === 'jpeg') {
     const bg = options.backgroundColor ? parseHexColor(options.backgroundColor) : { r: 255, g: 255, b: 255 };
-    if (metadata.hasAlpha) {
-      pipeline = pipeline.flatten({ background: bg });
-    }
+    pipeline = pipeline.flatten({ background: bg });
     pipeline = pipeline.jpeg({ quality, mozjpeg: true });
   } else if (options.targetFormat === 'png') {
     pipeline = pipeline.png({ compressionLevel: 9 });

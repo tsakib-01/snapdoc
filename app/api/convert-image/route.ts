@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error('Convert image error:', err);
     return NextResponse.json(
-      { error: 'Failed to convert image. Please check file format.' },
+      { error: err?.message || 'Failed to convert image. Please check file format.' },
       { status: 500 }
     );
   }

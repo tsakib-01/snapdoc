@@ -28,6 +28,13 @@ export default function ConverterTool({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setTargetFormat(initialTarget);
+    setFiles([]);
+    setResult(null);
+    setError(null);
+  }, [initialTarget, sourceFormat]);
+
+  useEffect(() => {
     if (files.length > 0) {
       const url = URL.createObjectURL(files[0]);
       setOriginalPreviewUrl(url);
@@ -106,6 +113,11 @@ export default function ConverterTool({
     const mimeType = format === 'png' ? 'image/png' : format === 'webp' ? 'image/webp' : 'image/jpeg';
     const q = Math.min(1, Math.max(0.01, qualityVal / 100));
     const dataUrl = canvas.toDataURL(mimeType, q);
+
+    // If browser doesn't support WebP in canvas, it falls back to PNG dataUrl; trigger server fallback
+    if (format === 'webp' && !dataUrl.startsWith('data:image/webp')) {
+      throw new Error('WebP canvas export not supported by browser, falling back to server');
+    }
 
     const base64Data = dataUrl.split(',')[1] || '';
     const compressedSize = Math.round((base64Data.length * 3) / 4);
@@ -192,12 +204,12 @@ export default function ConverterTool({
 
   const acceptTypes =
     sourceFormat === 'jpg'
-      ? 'image/jpeg,image/jpg'
+      ? 'image/jpeg,image/jpg,.jpg,.jpeg,.jfif,.pjpeg'
       : sourceFormat === 'png'
-      ? 'image/png'
+      ? 'image/png,.png'
       : sourceFormat === 'webp'
-      ? 'image/webp'
-      : 'image/jpeg,image/jpg,image/png,image/webp';
+      ? 'image/webp,.webp'
+      : 'image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp';
 
   return (
     <div className="w-full space-y-6">

@@ -495,7 +495,12 @@ export async function convertPdfToExcel(
   const getWorker = async () => {
     if (!ocrWorker) {
       const { createWorker } = await import('tesseract.js');
-      ocrWorker = await createWorker(language);
+      const lang = language === 'swa' ? 'swa+ara+eng' : (language === 'eng' ? 'eng' : `${language}+eng`);
+      try {
+        ocrWorker = await createWorker(lang);
+      } catch {
+        ocrWorker = await createWorker(language);
+      }
     }
     return ocrWorker;
   };

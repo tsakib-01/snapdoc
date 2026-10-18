@@ -84,8 +84,17 @@ export async function processPdfOcr(
   const pdfjs = await loadPdfJs();
 
   // Combine selected language with English to ensure both national characters
-  // and numbers/Latin punctuation are recognized with maximum accuracy
-  const ocrLang = language === 'eng' ? 'eng' : `${language}+eng`;
+  // and numbers/Latin punctuation are recognized with maximum accuracy.
+  // For Swahili (Kiswahili), include both Latin script (Kizungu) and Arabic script (Kiarabu / Ajami)
+  // so dual-script Swahili documents, Quranic verses, and historical texts are recognized accurately.
+  let ocrLang: string;
+  if (language === 'swa') {
+    ocrLang = 'swa+ara+eng';
+  } else if (language === 'eng') {
+    ocrLang = 'eng';
+  } else {
+    ocrLang = `${language}+eng`;
+  }
 
   report(`Loading ${language.toUpperCase()} OCR language models...`, 10);
 
@@ -296,8 +305,8 @@ export async function processPdfOcr(
         const page = await pdf.getPage(p);
         const origVp = page.getViewport({ scale: 1.0 });
 
-        // High resolution 2.0x scale (150-200 DPI) for maximum OCR accuracy
-        const ocrScale = 2.0;
+        // High resolution 2.5x scale (180-220 DPI) for maximum OCR accuracy on complex scripts & diacritics
+        const ocrScale = 2.5;
         const ocrVp = page.getViewport({ scale: ocrScale });
 
         const canvas = document.createElement('canvas');

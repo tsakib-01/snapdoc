@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, Zap, Lock } from 'lucide-react';
-import LanguageSelector from '@/components/ui/LanguageSelector';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function Footer() {
@@ -73,8 +72,8 @@ export default function Footer() {
               )}
             </p>
 
-            <div className="mt-3">
-              <LanguageSelector />
+            <div className="text-xs text-base-content/60 mt-3">
+              Developed by <span className="font-medium text-base-content/80">White Stone</span>
             </div>
 
             <div className="text-xs text-base-content/50 mt-2">

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, Sparkles, ChevronDown, Image, FileText, Menu, X, ShieldCheck } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import SearchModal from './SearchModal';
+import LanguageSelector from '@/components/ui/LanguageSelector';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function Header() {
@@ -160,6 +161,11 @@ export default function Header() {
               <span className="whitespace-nowrap">{t('privacyBadge', '100% In-Memory')}</span>
             </div>
 
+            {/* Language Selector */}
+            <div className="hidden sm:inline-flex items-center shrink-0">
+              <LanguageSelector placement="bottom" />
+            </div>
+
             {/* Theme Toggle */}
             <ThemeToggle />
 
@@ -205,21 +211,27 @@ export default function Header() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-base-200 flex gap-2">
-              <Link
-                href="/guides"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="btn btn-outline btn-sm flex-1"
-              >
-                {t('guides', 'Guides')}
-              </Link>
-              <Link
-                href="/tools"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="btn btn-primary btn-sm flex-1"
-              >
-                {t('toolsResources', 'All Tools')}
-              </Link>
+            <div className="pt-2 border-t border-base-200 flex flex-col gap-2.5">
+              <div className="flex sm:hidden items-center justify-between px-1">
+                <span className="text-xs font-semibold text-base-content/70">{t('language', 'Language')}</span>
+                <LanguageSelector placement="bottom" />
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href="/guides"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="btn btn-outline btn-sm flex-1"
+                >
+                  {t('guides', 'Guides')}
+                </Link>
+                <Link
+                  href="/tools"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="btn btn-primary btn-sm flex-1"
+                >
+                  {t('toolsResources', 'All Tools')}
+                </Link>
+              </div>
             </div>
           </div>
         )}

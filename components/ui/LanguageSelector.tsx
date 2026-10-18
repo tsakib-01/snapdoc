@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Globe, Check, ChevronUp, X } from 'lucide-react';
+import { Globe, Check, ChevronUp, ChevronDown, X } from 'lucide-react';
 import {
   COLUMN_1_LANGUAGES,
   COLUMN_2_LANGUAGES,
@@ -14,7 +14,12 @@ import {
 export { COLUMN_1_LANGUAGES, COLUMN_2_LANGUAGES, COLUMN_3_LANGUAGES, ALL_LANGUAGES };
 export type { SiteLanguage };
 
-export default function LanguageSelector() {
+interface LanguageSelectorProps {
+  placement?: 'bottom' | 'top';
+  className?: string;
+}
+
+export default function LanguageSelector({ placement = 'bottom', className = '' }: LanguageSelectorProps) {
   const { language, setLanguage, currentLanguageObj, t } = useLanguage();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
@@ -74,32 +79,43 @@ export default function LanguageSelector() {
 
   const isRtl = currentLanguageObj?.dir === 'rtl' || language === 'ar';
 
+  const popoverPositionClass =
+    placement === 'bottom'
+      ? `top-full mt-2 z-50 ${isRtl ? 'left-0 sm:left-0 right-auto' : 'right-0 sm:right-0 left-auto'}`
+      : `bottom-full mb-3 z-50 ${isRtl ? 'right-0 left-auto' : 'left-0 right-auto'}`;
+
   return (
-    <div ref={containerRef} className={`relative inline-block ${isRtl ? 'text-right' : 'text-left'}`}>
-      {/* Trigger Button replacing "Developed by Tasnim Sakib" */}
+    <div ref={containerRef} className={`relative inline-block ${isRtl ? 'text-right' : 'text-left'} ${className}`}>
+      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-base-100 hover:bg-base-200 border border-base-300 shadow-2xs hover:border-primary/50 text-xs font-semibold text-base-content transition-all group"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-base-100 hover:bg-base-200 border border-base-300 shadow-2xs hover:border-primary/50 text-xs font-semibold text-base-content transition-all group shrink-0"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         <Globe className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:rotate-12" />
-        <span>{mounted ? currentLanguageObj.nativeName : 'English'}</span>
-        <ChevronUp
-          className={`w-3.5 h-3.5 text-base-content/60 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
+        <span className="whitespace-nowrap">{mounted ? currentLanguageObj.nativeName : 'English'}</span>
+        {placement === 'bottom' ? (
+          <ChevronDown
+            className={`w-3.5 h-3.5 text-base-content/60 transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        ) : (
+          <ChevronUp
+            className={`w-3.5 h-3.5 text-base-content/60 transition-transform duration-200 ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        )}
       </button>
 
-      {/* 3-Column Mega Menu Popover (Opens Upward from Footer, shifts left in RTL) */}
+      {/* 3-Column Mega Menu Popover */}
       {isOpen && (
         <div
           dir={isRtl ? 'rtl' : 'ltr'}
-          className={`absolute bottom-full mb-3 z-50 w-[92vw] sm:w-[580px] md:w-[660px] max-w-[96vw] bg-base-100 rounded-3xl border border-base-300 shadow-2xl p-5 sm:p-6 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl ${
-            isRtl ? 'right-0 left-auto' : 'left-0 right-auto'
-          }`}
+          className={`absolute w-[92vw] sm:w-[580px] md:w-[660px] max-w-[96vw] bg-base-100 rounded-3xl border border-base-300 shadow-2xl p-5 sm:p-6 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl ${popoverPositionClass}`}
           role="dialog"
           aria-label={t('selectLanguage', 'Language Selector Mega Menu')}
         >

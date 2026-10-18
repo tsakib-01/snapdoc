@@ -5,19 +5,21 @@ import { Loader2, Scissors, Sparkles, AlertCircle, FileText, Check } from 'lucid
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 export default function SplitPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [splitMode, setSplitMode] = useState<'range' | 'all'>('range');
   const [rangeInput, setRangeInput] = useState<string>('1-3');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleProcess = async () => {
     if (files.length === 0) return;
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     try {
@@ -39,11 +41,12 @@ export default function SplitPdfTool() {
         throw new Error(data.error || 'Failed to split PDF.');
       }
 
-      setResult(data);
+      await finishProgress(() => {
+        setResult(data);
+      });
     } catch (err: any) {
+      resetProgress();
       setError(err.message || 'Error occurred while splitting PDF.');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -147,24 +150,15 @@ export default function SplitPdfTool() {
             </div>
           )}
 
-          <button
-            type="button"
+          <ProcessingButton
             onClick={handleProcess}
-            disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+            isProcessing={isProcessing}
+            progress={progress}
+            loadingLabel="Splitting PDF"
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Splitting PDF...
-              </>
-            ) : (
-              <>
-                <Scissors className="w-5 h-5" />
-                {splitMode === 'range' ? `Extract Pages (${rangeInput})` : 'Split All Pages to ZIP'}
-              </>
-            )}
-          </button>
+            <Scissors className="w-5 h-5" />
+            {splitMode === 'range' ? `Extract Pages (${rangeInput})` : 'Split All Pages to ZIP'}
+          </ProcessingButton>
         </div>
       )}
 

@@ -7,6 +7,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { addPageNumbersToPdf } from '@/lib/pdf/pageNumberer';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 export default function PageNumbererTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,7 +24,7 @@ export default function PageNumbererTool() {
   const [fontColor, setFontColor] = useState<string>('#000000');
   const [bgColor, setBgColor] = useState<string>('transparent');
 
-  const [processing, setProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [resultData, setResultData] = useState<{
     dataUrl: string;
     filename: string;
@@ -51,7 +53,7 @@ export default function PageNumbererTool() {
   const handleProcess = async () => {
     if (!file) return;
 
-    setProcessing(true);
+    startProgress();
     setError(null);
 
     try {
@@ -72,10 +74,12 @@ export default function PageNumbererTool() {
       const dataUrl = URL.createObjectURL(blob);
       const baseName = file.name.replace(/\.[^/.]+$/, '');
 
-      setResultData({
-        dataUrl,
-        filename: `${baseName}_numbered.pdf`,
-        size: blob.size,
+      await finishProgress(() => {
+        setResultData({
+          dataUrl,
+          filename: `${baseName}_numbered.pdf`,
+          size: blob.size,
+        });
       });
     } catch (err: any) {
       console.warn('Client-side processing fallback to API:', err);
@@ -101,17 +105,18 @@ export default function PageNumbererTool() {
           throw new Error(data.error || 'Failed to number PDF.');
         }
 
-        setResultData({
-          dataUrl: data.dataUrl,
-          filename: data.filename,
-          size: data.size,
+        await finishProgress(() => {
+          setResultData({
+            dataUrl: data.dataUrl,
+            filename: data.filename,
+            size: data.size,
+          });
         });
       } catch (apiErr: any) {
         console.error(apiErr);
+        resetProgress();
         setError(apiErr.message || err.message || 'Error adding page numbers.');
       }
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -486,25 +491,15 @@ export default function PageNumbererTool() {
               )}
 
               <div className="pt-2">
-                <button
-                  type="button"
+                <ProcessingButton
                   onClick={handleProcess}
-                  disabled={processing}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold h-auto min-h-[3rem] py-2.5 px-3 text-center leading-snug flex items-center justify-center"
+                  isProcessing={isProcessing}
+                  progress={progress}
+                  loadingLabel="Numbering PDF"
                 >
-                  {processing ? (
-                    <>
-                      <span className="loading loading-spinner loading-xs" />
-                      <span>Numbering PDF...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Hash className="w-4 h-4" />
-                      <span>Add Page Numbers</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+                  <Hash className="w-4 h-4" />
+                  <span>Add Page Numbers</span>
+                </ProcessingButton>
               </div>
             </div>
           </div>

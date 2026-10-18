@@ -7,6 +7,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 interface TransformToolProps {
   mode: 'rotate' | 'flip';
@@ -17,7 +19,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
   const [rotateAngle, setRotateAngle] = useState<number>(0);
   const [flipH, setFlipH] = useState<boolean>(false);
   const [flipV, setFlipV] = useState<boolean>(false);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
   const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -75,7 +77,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
   const handleProcess = async () => {
     if (files.length === 0) return;
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     try {
@@ -95,11 +97,12 @@ export default function TransformTool({ mode }: TransformToolProps) {
         throw new Error(data.error || 'Transformation failed');
       }
 
-      setResult(data);
+      await finishProgress(() => {
+        setResult(data);
+      });
     } catch (err: any) {
+      resetProgress();
       setError(err.message || 'Error transforming image.');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -272,24 +275,15 @@ export default function TransformTool({ mode }: TransformToolProps) {
             </div>
           )}
 
-          <button
-            type="button"
+          <ProcessingButton
             onClick={handleProcess}
-            disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+            isProcessing={isProcessing}
+            progress={progress}
+            loadingLabel="Applying Transformation"
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Applying Transformation...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Apply & Download Image
-              </>
-            )}
-          </button>
+            <Sparkles className="w-5 h-5" />
+            Apply & Download Image
+          </ProcessingButton>
         </div>
       )}
 

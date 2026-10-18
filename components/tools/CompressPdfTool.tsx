@@ -7,6 +7,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { compressPdf } from '@/lib/browser-converters/pdf-compress';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 type CompressionLevel = 'extreme' | 'recommended' | 'low';
 
@@ -69,8 +71,7 @@ const LEVELS: LevelOption[] = [
 export default function CompressPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
   const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('recommended');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [progressText, setProgressText] = useState<string>('Optimizing PDF Structure...');
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress, setProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,18 +83,16 @@ export default function CompressPdfTool() {
       document.activeElement.blur();
     }
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     const file = files[0];
     const originalSize = file.size;
 
     try {
-      setProgressText('Analyzing PDF structure...');
-
       const data = await compressPdf(file, {
         quality: selectedOption.quality,
-        onProgress: (pct) => setProgressText(`Optimizing PDF streams & images (${pct}%)...`),
+        onProgress: (pct) => setProgress(pct),
       });
 
       if (!data || !data.size || data.size <= 0) {
@@ -104,22 +103,23 @@ export default function CompressPdfTool() {
       const finalSize = isAlreadyMaxCompressed ? originalSize : data.size;
       const reductionPercentage = isAlreadyMaxCompressed ? 0 : (data.reductionPercentage ?? 0);
 
-      setResult({
-        success: true,
-        filename: data.filename,
-        originalSize,
-        compressedSize: finalSize,
-        reductionPercentage,
-        pageCount: data.pageCount || 1,
-        dataUrl: data.dataUrl,
-        isAlreadyMaxCompressed,
-        levelName: selectedOption.title,
+      await finishProgress(() => {
+        setResult({
+          success: true,
+          filename: data.filename,
+          originalSize,
+          compressedSize: finalSize,
+          reductionPercentage,
+          pageCount: data.pageCount || 1,
+          dataUrl: data.dataUrl,
+          isAlreadyMaxCompressed,
+          levelName: selectedOption.title,
+        });
       });
     } catch (err: any) {
       console.error(err);
+      resetProgress();
       setError(err.message || 'Error occurred while compressing PDF.');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -241,24 +241,15 @@ export default function CompressPdfTool() {
             </div>
           )}
 
-          <button
-            type="button"
+          <ProcessingButton
             onClick={handleProcess}
-            disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+            isProcessing={isProcessing}
+            progress={progress}
+            loadingLabel="Compressing PDF"
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {progressText}
-              </>
-            ) : (
-              <>
-                <Minimize2 className="w-5 h-5" />
-                Compress PDF Document
-              </>
-            )}
-          </button>
+            <Minimize2 className="w-5 h-5" />
+            Compress PDF Document
+          </ProcessingButton>
         </div>
       )}
 

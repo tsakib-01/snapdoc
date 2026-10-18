@@ -22,6 +22,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 type DragHandle =
   | 'draw'
@@ -58,7 +60,7 @@ export default function CropperTool() {
   const [activePreset, setActivePreset] = useState<string>('none');
 
   // Processing state
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -375,7 +377,7 @@ export default function CropperTool() {
       document.activeElement.blur();
     }
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     try {
@@ -393,7 +395,9 @@ export default function CropperTool() {
         throw new Error(data.error || 'Server crop failed, using client-side engine.');
       }
 
-      setResult(data);
+      await finishProgress(() => {
+        setResult(data);
+      });
     } catch (err: any) {
       // Client-side fallback using Canvas
       try {
@@ -428,21 +432,22 @@ export default function CropperTool() {
         const dataUrl = canvas.toDataURL(mime, 0.92);
         const approxSize = Math.round((dataUrl.length * 3) / 4);
 
-        setResult({
-          success: true,
-          originalName: files[0].name,
-          originalSize: files[0].size,
-          compressedSize: approxSize,
-          width: cropPixels.width,
-          height: cropPixels.height,
-          format: mime.split('/')[1] || 'jpeg',
-          dataUrl,
+        await finishProgress(() => {
+          setResult({
+            success: true,
+            originalName: files[0].name,
+            originalSize: files[0].size,
+            compressedSize: approxSize,
+            width: cropPixels.width,
+            height: cropPixels.height,
+            format: mime.split('/')[1] || 'jpeg',
+            dataUrl,
+          });
         });
       } catch (fallbackErr: any) {
+        resetProgress();
         setError(fallbackErr.message || 'Error occurred while cropping image.');
       }
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -1009,18 +1014,14 @@ export default function CropperTool() {
               )}
 
               {/* Action Button */}
-              <button
-                type="button"
+              <ProcessingButton
                 onClick={handleProcess}
-                disabled={isProcessing || !hasActiveCrop}
-                className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 disabled:opacity-50 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+                isProcessing={isProcessing}
+                progress={progress}
+                loadingLabel="Cropping"
+                disabled={!hasActiveCrop}
               >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Cropping Image...
-                  </>
-                ) : !hasActiveCrop ? (
+                {!hasActiveCrop ? (
                   <>
                     <Crop className="w-5 h-5" />
                     <span>Select Crop Area on Image First</span>
@@ -1028,10 +1029,10 @@ export default function CropperTool() {
                 ) : (
                   <>
                     <Crop className="w-5 h-5" />
-                    Crop Image ({cropPixels.width} × {cropPixels.height} px)
+                    <span>Crop Image ({cropPixels.width} × {cropPixels.height} px)</span>
                   </>
                 )}
-              </button>
+              </ProcessingButton>
             </div>
           </div>
         </div>

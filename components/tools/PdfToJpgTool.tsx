@@ -6,6 +6,8 @@ import UploadZone from '@/components/ui/UploadZone';
 import JSZip from 'jszip';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 interface ExtractedPage {
   pageNumber: number;
@@ -43,7 +45,7 @@ interface PdfToJpgToolProps {
 
 export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps) {
   const [files, setFiles] = useState<File[]>([]);
-  const [isRendering, setIsRendering] = useState<boolean>(false);
+  const { isProcessing, progress, setProgress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [pages, setPages] = useState<ExtractedPage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [zipProgress, setZipProgress] = useState<boolean>(false);
@@ -56,7 +58,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
   const handleConvert = async () => {
     if (files.length === 0) return;
     setError(null);
-    setIsRendering(true);
+    startProgress();
     setPages([]);
 
     try {
@@ -94,16 +96,19 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
             dataUrl,
             size: byteLength,
           });
+
+          setProgress(Math.max(14, Math.round((pageNum / totalPages) * 98)));
         }
       }
 
-      setPages(renderedPages);
-      scrollToTool({ force: true });
+      await finishProgress(() => {
+        setPages(renderedPages);
+        scrollToTool({ force: true });
+      });
     } catch (err: any) {
       console.error('PDF to Image conversion error:', err);
+      resetProgress();
       setError('Failed to extract pages from PDF. Please make sure the PDF is valid and not password-protected.');
-    } finally {
-      setIsRendering(false);
     }
   };
 
@@ -189,24 +194,15 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
             </div>
           )}
 
-          <button
-            type="button"
+          <ProcessingButton
             onClick={handleConvert}
-            disabled={isRendering}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+            isProcessing={isProcessing}
+            progress={progress}
+            loadingLabel={`Extracting ${label} Pages`}
           >
-            {isRendering ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Extracting & Rendering High-DPI Pages...
-              </>
-            ) : (
-              <>
-                <ImageIcon className="w-5 h-5" />
-                Convert PDF to {label}
-              </>
-            )}
-          </button>
+            <ImageIcon className="w-5 h-5" />
+            Convert PDF to {label}
+          </ProcessingButton>
         </div>
       )}
 

@@ -9,6 +9,8 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument, PageSizes } from 'pdf-lib';
 
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 interface ImageToPdfToolProps {
   title?: string;
@@ -33,7 +35,7 @@ export default function ImageToPdfTool({
   const [pageSize, setPageSize] = useState<'A4' | 'LETTER' | 'FIT'>('A4');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'auto'>('portrait');
   const [margin, setMargin] = useState<'none' | 'small' | 'large'>('small');
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const addMoreInputRef = useRef<HTMLInputElement>(null);
@@ -119,7 +121,7 @@ export default function ImageToPdfTool({
       document.activeElement.blur();
     }
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     try {
@@ -233,14 +235,16 @@ export default function ImageToPdfTool({
       const dataUrl = URL.createObjectURL(blob);
       const totalOrigSize = items.reduce((acc, it) => acc + it.file.size, 0);
 
-      setResult({
-        success: true,
-        filename: `converted_images_${Date.now()}.pdf`,
-        fileSize: blob.size,
-        pdfSize: blob.size,
-        originalSize: totalOrigSize,
-        pageCount: items.length,
-        dataUrl,
+      await finishProgress(() => {
+        setResult({
+          success: true,
+          filename: `converted_images_${Date.now()}.pdf`,
+          fileSize: blob.size,
+          pdfSize: blob.size,
+          originalSize: totalOrigSize,
+          pageCount: items.length,
+          dataUrl,
+        });
       });
     } catch (err: any) {
       console.warn('Client image-to-pdf fallback to API:', err);
@@ -264,12 +268,13 @@ export default function ImageToPdfTool({
           throw new Error(data.error || 'Failed to generate PDF.');
         }
 
-        setResult(data);
+        await finishProgress(() => {
+          setResult(data);
+        });
       } catch (apiErr: any) {
+        resetProgress();
         setError(apiErr.message || err.message || 'Error occurred while creating PDF.');
       }
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -484,24 +489,15 @@ export default function ImageToPdfTool({
             </div>
           )}
 
-          <button
-            type="button"
+          <ProcessingButton
             onClick={handleProcess}
-            disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+            isProcessing={isProcessing}
+            progress={progress}
+            loadingLabel="Generating PDF"
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Generating PDF Document...
-              </>
-            ) : (
-              <>
-                <FileText className="w-5 h-5" />
-                Convert {items.length} {fileTypeLabel}{items.length === 1 ? '' : 's'} to PDF
-              </>
-            )}
-          </button>
+            <FileText className="w-5 h-5" />
+            Convert {items.length} {fileTypeLabel}{items.length === 1 ? '' : 's'} to PDF
+          </ProcessingButton>
         </div>
       )}
 

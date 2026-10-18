@@ -34,6 +34,8 @@ import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument } from 'pdf-lib';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 export interface PdfMergeItem {
   id: string;
@@ -54,7 +56,7 @@ export default function MergePdfTool() {
   const [showResultPreviewModal, setShowResultPreviewModal] = useState<boolean>(false);
   const [createdTimestamp, setCreatedTimestamp] = useState<string>('');
 
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,7 +247,7 @@ export default function MergePdfTool() {
     if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     // 1. Client-Side High Performance Merge via pdf-lib
@@ -296,15 +298,16 @@ export default function MergePdfTool() {
       });
       setCreatedTimestamp(`${dateStr} • ${timeStr}`);
 
-      setResult({
-        success: true,
-        filename: 'merged-file.pdf',
-        pageCount,
-        originalSize: totalOriginalSize,
-        fileSize: mergedBytes.length,
-        dataUrl: blobUrl,
+      await finishProgress(() => {
+        setResult({
+          success: true,
+          filename: 'merged-file.pdf',
+          pageCount,
+          originalSize: totalOriginalSize,
+          fileSize: mergedBytes.length,
+          dataUrl: blobUrl,
+        });
       });
-      setIsProcessing(false);
       return;
     } catch (clientErr: any) {
       console.warn('Client merge error, checking server fallback:', clientErr);
@@ -313,8 +316,8 @@ export default function MergePdfTool() {
         clientErr?.message?.includes('password-protected') ||
         clientErr?.message?.includes('valid, uncorrupted PDF document')
       ) {
+        resetProgress();
         setError(clientErr.message);
-        setIsProcessing(false);
         return;
       }
 
@@ -358,14 +361,15 @@ export default function MergePdfTool() {
         });
         setCreatedTimestamp(`${dateStr} • ${timeStr}`);
 
-        setResult({
-          ...data,
-          filename: data.filename || 'merged-file.pdf',
+        await finishProgress(() => {
+          setResult({
+            ...data,
+            filename: data.filename || 'merged-file.pdf',
+          });
         });
       } catch (err: any) {
+        resetProgress();
         setError(err.message || clientErr.message || 'Error occurred while merging PDFs.');
-      } finally {
-        setIsProcessing(false);
       }
     }
   };
@@ -836,21 +840,16 @@ export default function MergePdfTool() {
 
           {/* Bottom Primary Merge Button */}
           <div className="pt-2">
-            <button
-              type="button"
+            <ProcessingButton
               onClick={handleProcess}
-              disabled={isProcessing || items.length < 2 || !allThumbnailsLoaded}
-              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-3 transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+              isProcessing={isProcessing}
+              progress={progress}
+              disabled={items.length < 2 || !allThumbnailsLoaded}
+              loadingLabel="Merging PDFs"
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Merging PDFs...</span>
-                </>
-              ) : (
-                <span className="text-base sm:text-lg font-bold">Merge PDFs</span>
-              )}
-            </button>
+              <Layers className="w-5 h-5" />
+              <span className="text-base sm:text-lg font-bold">Merge PDFs</span>
+            </ProcessingButton>
           </div>
         </div>
       )}

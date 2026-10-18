@@ -27,6 +27,8 @@ import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHe
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument } from 'pdf-lib';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 type DragHandle =
   | 'draw'
@@ -69,7 +71,7 @@ export default function CropPdfTool() {
   const [activePreset, setActivePreset] = useState<string>('none');
 
   // Processing state
-  const [processing, setProcessing] = useState<boolean>(false);
+  const { isProcessing: processing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [resultData, setResultData] = useState<{
     dataUrl: string;
     filename: string;
@@ -327,8 +329,8 @@ export default function CropPdfTool() {
       document.activeElement.blur();
     }
 
-    setProcessing(true);
     setError(null);
+    startProgress();
 
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -405,16 +407,17 @@ export default function CropPdfTool() {
       const dataUrl = URL.createObjectURL(blob);
       const baseName = file.name.replace(/\.[^/.]+$/, '');
 
-      setResultData({
-        dataUrl,
-        filename: `${baseName}_cropped.pdf`,
-        size: blob.size,
+      await finishProgress(() => {
+        setResultData({
+          dataUrl,
+          filename: `${baseName}_cropped.pdf`,
+          size: blob.size,
+        });
       });
     } catch (err: any) {
       console.error('Crop processing failed:', err);
+      resetProgress();
       setError(err.message || 'Failed to crop PDF document. Please try again.');
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -1020,18 +1023,14 @@ export default function CropPdfTool() {
 
               {/* Action Button */}
               <div className="pt-2">
-                <button
-                  type="button"
+                <ProcessingButton
                   onClick={handleProcess}
-                  disabled={processing || !hasActiveCrop}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold text-sm disabled:opacity-50 h-auto min-h-[3rem] py-2.5 px-3 text-center leading-snug flex items-center justify-center"
+                  isProcessing={processing}
+                  progress={progress}
+                  loadingLabel="Cropping PDF"
+                  disabled={!hasActiveCrop}
                 >
-                  {processing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Cropping PDF Pages...</span>
-                    </>
-                  ) : !hasActiveCrop ? (
+                  {!hasActiveCrop ? (
                     <>
                       <Crop className="w-4 h-4" />
                       <span>Select Crop Area on Document First</span>
@@ -1047,7 +1046,7 @@ export default function CropPdfTool() {
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
-                </button>
+                </ProcessingButton>
               </div>
             </div>
           </div>

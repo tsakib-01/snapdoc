@@ -5,14 +5,15 @@ import { Layers, Download, Loader2, RotateCcw, ArrowRight, ShieldCheck, FileChec
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 type FlattenMode = 'annotations' | 'uneditable';
 
 export default function FlattenPdfTool() {
   const [file, setFile] = useState<File | null>(null);
   const [mode, setMode] = useState<FlattenMode>('annotations');
-  const [processing, setProcessing] = useState<boolean>(false);
-  const [progressText, setProgressText] = useState<string>('Flattening PDF...');
+  const { isProcessing, progress, setProgress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [resultData, setResultData] = useState<{
     dataUrl: string;
     filename: string;
@@ -120,16 +121,15 @@ export default function FlattenPdfTool() {
   const handleProcess = async () => {
     if (!file) return;
 
-    setProcessing(true);
+    startProgress();
     setError(null);
-    setProgressText(mode === 'uneditable' ? 'Rendering pages as images...' : 'Locking annotations & forms...');
 
     try {
       let result: { blob: Blob; dataUrl: string; size: number };
 
       if (mode === 'uneditable') {
         result = await flattenToUneditableImages(file, (pct) => {
-          setProgressText(`Rendering uneditable pages (${pct}%)...`);
+          setProgress(Math.min(98, Math.max(14, pct)));
         });
       } else {
         result = await flattenAnnotations(file);
@@ -138,17 +138,18 @@ export default function FlattenPdfTool() {
       const baseName = file.name.replace(/\.[^/.]+$/, '');
       const suffix = mode === 'uneditable' ? '_uneditable' : '_flattened';
 
-      setResultData({
-        dataUrl: result.dataUrl,
-        filename: `${baseName}${suffix}.pdf`,
-        size: result.size,
-        mode,
+      await finishProgress(() => {
+        setResultData({
+          dataUrl: result.dataUrl,
+          filename: `${baseName}${suffix}.pdf`,
+          size: result.size,
+          mode,
+        });
       });
     } catch (err: any) {
       console.error('Flatten error:', err);
+      resetProgress();
       setError(err?.message || 'Error occurred while flattening PDF.');
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -285,24 +286,15 @@ export default function FlattenPdfTool() {
             )}
 
             {/* Continue Button */}
-            <button
-              type="button"
+            <ProcessingButton
               onClick={handleProcess}
-              disabled={processing}
-              className="btn btn-primary w-full py-4 h-auto rounded-2xl text-white font-bold gap-2 text-base shadow-xl shadow-primary/20"
+              isProcessing={isProcessing}
+              progress={progress}
+              loadingLabel="Flattening PDF"
             >
-              {processing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>{progressText}</span>
-                </>
-              ) : (
-                <>
-                  <span>Continue</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
+              <Layers className="w-5 h-5" />
+              Flatten PDF
+            </ProcessingButton>
           </div>
         </div>
       )}

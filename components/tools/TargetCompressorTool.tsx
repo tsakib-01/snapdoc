@@ -8,6 +8,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 interface TargetCompressorToolProps {
   defaultTargetKb?: number;
@@ -32,7 +34,7 @@ export default function TargetCompressorTool({
   const [targetKb, setTargetKb] = useState<number>(defaultTargetKb);
   const [customKb, setCustomKb] = useState<string>('');
   const [isCustom, setIsCustom] = useState<boolean>(false);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
   const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -93,7 +95,7 @@ export default function TargetCompressorTool({
       document.activeElement.blur();
     }
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     try {
@@ -113,11 +115,12 @@ export default function TargetCompressorTool({
         throw new Error(data.error || 'Compression failed');
       }
 
-      setResult(data);
+      await finishProgress(() => {
+        setResult(data);
+      });
     } catch (err: any) {
+      resetProgress();
       setError(err.message || 'Something went wrong during compression.');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -315,39 +318,32 @@ export default function TargetCompressorTool({
           )}
 
           <div className="pt-2">
-            <button
-              type="button"
+            <ProcessingButton
               onClick={handleProcess}
-              disabled={isProcessing}
-              className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/25 gap-2 hover:scale-[1.01] transition-transform h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+              isProcessing={isProcessing}
+              progress={progress}
+              loadingLabel="Compressing"
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Compressing with Precision Engine...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Compress to {isCustom ? `${customKb || '50'} KB` : `${targetKb} KB`}
-                </>
-              )}
-            </button>
+              <Sparkles className="w-5 h-5" />
+              Compress to {isCustom ? `${customKb || '50'} KB` : `${targetKb} KB`}
+            </ProcessingButton>
           </div>
         </div>
       )}
 
       {/* 3. Result View */}
-      {result && originalPreviewUrl && (
+      {result && (
         <div className="space-y-6">
-          <ComparisonViewer
-            originalUrl={originalPreviewUrl}
-            processedUrl={result.dataUrl}
-            originalSize={result.originalSize}
-            processedSize={result.compressedSize}
-            originalDimensions={{ width: result.originalWidth, height: result.originalHeight }}
-            processedDimensions={{ width: result.width, height: result.height }}
-          />
+          {originalPreviewUrl && (
+            <ComparisonViewer
+              originalUrl={originalPreviewUrl}
+              processedUrl={result.dataUrl}
+              originalSize={result.originalSize}
+              processedSize={result.compressedSize}
+              originalDimensions={{ width: result.originalWidth, height: result.originalHeight }}
+              processedDimensions={{ width: result.width, height: result.height }}
+            />
+          )}
 
           <ResultCard
             originalSize={result.originalSize}

@@ -7,6 +7,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 function parseHexColor(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace('#', '');
@@ -35,7 +37,7 @@ export default function WatermarkPdfTool() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
-  const [processing, setProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [resultData, setResultData] = useState<{
     dataUrl: string;
     filename: string;
@@ -75,7 +77,7 @@ export default function WatermarkPdfTool() {
   const handleProcess = async () => {
     if (!file) return;
 
-    setProcessing(true);
+    startProgress();
     setError(null);
 
     try {
@@ -185,10 +187,12 @@ export default function WatermarkPdfTool() {
       const dataUrl = URL.createObjectURL(blob);
       const baseName = file.name.replace(/\.[^/.]+$/, '');
 
-      setResultData({
-        dataUrl,
-        filename: `${baseName}_watermarked.pdf`,
-        size: blob.size,
+      await finishProgress(() => {
+        setResultData({
+          dataUrl,
+          filename: `${baseName}_watermarked.pdf`,
+          size: blob.size,
+        });
       });
     } catch (err: any) {
       console.warn('Client watermark fallback to API:', err);
@@ -217,16 +221,17 @@ export default function WatermarkPdfTool() {
           throw new Error(data.error || 'Failed to watermark PDF.');
         }
 
-        setResultData({
-          dataUrl: data.dataUrl,
-          filename: data.filename,
-          size: data.size,
+        await finishProgress(() => {
+          setResultData({
+            dataUrl: data.dataUrl,
+            filename: data.filename,
+            size: data.size,
+          });
         });
       } catch (apiErr: any) {
+        resetProgress();
         setError(apiErr.message || err.message || 'Error adding watermark.');
       }
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -469,25 +474,15 @@ export default function WatermarkPdfTool() {
               )}
 
               <div className="pt-2">
-                <button
-                  type="button"
+                <ProcessingButton
                   onClick={handleProcess}
-                  disabled={processing}
-                  className="btn btn-primary w-full rounded-2xl gap-2 shadow-lg shadow-primary/25 font-bold h-auto min-h-[3rem] py-2.5 px-3 text-center leading-snug flex items-center justify-center"
+                  isProcessing={isProcessing}
+                  progress={progress}
+                  loadingLabel="Stamping Watermark"
                 >
-                  {processing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Stamping Watermark...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Stamp className="w-4 h-4" />
-                      <span>Apply Watermark</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+                  <Stamp className="w-4 h-4" />
+                  <span>Apply Watermark</span>
+                </ProcessingButton>
               </div>
             </div>
           </div>

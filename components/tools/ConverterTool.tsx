@@ -8,6 +8,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 interface ConverterToolProps {
   sourceFormat?: 'jpg' | 'png' | 'webp' | 'any';
@@ -23,7 +25,7 @@ export default function ConverterTool({
   const [files, setFiles] = useState<File[]>([]);
   const [targetFormat, setTargetFormat] = useState<'jpeg' | 'png' | 'webp'>(initialTarget);
   const [quality, setQuality] = useState<number>(90);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [result, setResult] = useState<any | null>(null);
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
   const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -201,7 +203,7 @@ export default function ConverterTool({
       document.activeElement.blur();
     }
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResult(null);
 
     const file = files[0];
@@ -209,7 +211,9 @@ export default function ConverterTool({
       // 1. Primary: Direct high-performance client-side conversion (instant, zero network upload, prevents 413)
       try {
         const clientResult = await convertImageInBrowser(file, targetFormat, quality);
-        setResult(clientResult);
+        await finishProgress(() => {
+          setResult(clientResult);
+        });
         return;
       } catch (clientErr) {
         console.warn('Client-side conversion fallback to server:', clientErr);
@@ -244,11 +248,12 @@ export default function ConverterTool({
         throw new Error(data.error || 'Conversion failed');
       }
 
-      setResult(data);
+      await finishProgress(() => {
+        setResult(data);
+      });
     } catch (err: any) {
+      resetProgress();
       setError(err.message || 'Error occurred while converting image format.');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -398,24 +403,15 @@ export default function ConverterTool({
             </div>
           )}
 
-          <button
-            type="button"
+          <ProcessingButton
             onClick={handleProcess}
-            disabled={isProcessing}
-            className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
+            isProcessing={isProcessing}
+            progress={progress}
+            loadingLabel={`Converting to ${displayTarget}`}
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Converting Format...
-              </>
-            ) : (
-              <>
-                <ArrowRightLeft className="w-5 h-5" />
-                Convert to {displayTarget}
-              </>
-            )}
-          </button>
+            <ArrowRightLeft className="w-5 h-5" />
+            Convert to {displayTarget}
+          </ProcessingButton>
         </div>
       )}
 

@@ -9,6 +9,8 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 
 import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { convertExcelToPdf } from '@/lib/browser-converters/excel-to-pdf';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 
 interface DocToPdfToolProps {
   initialFormat?: 'txt' | 'csv' | 'html' | 'word' | 'excel';
@@ -26,7 +28,7 @@ export default function DocToPdfTool({
   const [format, setFormat] = useState<'txt' | 'csv' | 'html'>(
     initialFormat === 'csv' || initialFormat === 'excel' ? 'csv' : 'txt'
   );
-  const [processing, setProcessing] = useState<boolean>(false);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [resultData, setResultData] = useState<{
     dataUrl: string;
     filename: string;
@@ -40,7 +42,7 @@ export default function DocToPdfTool({
       document.activeElement.blur();
     }
 
-    setProcessing(true);
+    startProgress();
     setError(null);
 
     try {
@@ -52,12 +54,13 @@ export default function DocToPdfTool({
           initialFormat === 'word')
       ) {
         const result = await convertDocumentDirect('word-to-pdf', file);
-        setResultData({
-          dataUrl: result.url,
-          filename: result.filename,
-          size: result.size,
+        await finishProgress(() => {
+          setResultData({
+            dataUrl: result.url,
+            filename: result.filename,
+            size: result.size,
+          });
         });
-        setProcessing(false);
         return;
       }
 
@@ -70,12 +73,13 @@ export default function DocToPdfTool({
           initialFormat === 'excel')
       ) {
         const result = await convertExcelToPdf(file);
-        setResultData({
-          dataUrl: result.dataUrl,
-          filename: result.filename,
-          size: result.size,
+        await finishProgress(() => {
+          setResultData({
+            dataUrl: result.dataUrl,
+            filename: result.filename,
+            size: result.size,
+          });
         });
-        setProcessing(false);
         return;
       }
 
@@ -99,16 +103,17 @@ export default function DocToPdfTool({
         throw new Error(data.error || 'Failed to convert document to PDF.');
       }
 
-      setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
+      await finishProgress(() => {
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+        });
       });
     } catch (err: any) {
       console.error(err);
+      resetProgress();
       setError(err.message || 'Error converting document.');
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -154,10 +159,10 @@ export default function DocToPdfTool({
               <button
                 type="button"
                 onClick={handleProcess}
-                disabled={!textContent.trim() || processing}
+                disabled={!textContent.trim() || isProcessing}
                 className="btn btn-primary btn-sm rounded-xl gap-2 shadow-md shadow-primary/20"
               >
-                {processing ? (
+                {isProcessing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Converting...</span>
@@ -206,24 +211,16 @@ export default function DocToPdfTool({
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t border-base-200">
-            <button
+          <div className="pt-4 border-t border-base-200">
+            <ProcessingButton
               onClick={handleProcess}
-              disabled={processing}
-              className="btn btn-primary px-8 gap-2 shadow-lg shadow-primary/20"
+              isProcessing={isProcessing}
+              progress={progress}
+              loadingLabel="Converting Document"
             >
-              {processing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Converting to PDF...</span>
-                </>
-              ) : (
-                <>
-                  <span>Convert to PDF</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+              <span>Convert to PDF</span>
+              <ArrowRight className="w-4 h-4" />
+            </ProcessingButton>
           </div>
         </div>
       )}

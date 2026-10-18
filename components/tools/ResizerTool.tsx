@@ -23,6 +23,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
+import { useProgressAction } from '@/lib/hooks/useProgressAction';
+import ProcessingButton from '@/components/ui/ProcessingButton';
 import JSZip from 'jszip';
 
 export interface ImageItem {
@@ -52,8 +54,7 @@ export default function ResizerTool() {
   const [scalePercent, setScalePercent] = useState<number>(50); // Capped at 100%
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
 
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  const [processProgress, setProcessProgress] = useState<{ current: number; total: number } | null>(null);
+  const { isProcessing, progress, startProgress, finishProgress, resetProgress, setProgress } = useProgressAction();
   const [results, setResults] = useState<any[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState<boolean>(false);
@@ -183,7 +184,7 @@ export default function ResizerTool() {
     setHeight('');
     setScalePercent(50);
     setSelectedPreset(null);
-    setProcessProgress(null);
+    resetProgress();
     scrollToTool();
   };
 
@@ -298,16 +299,16 @@ export default function ResizerTool() {
       document.activeElement.blur();
     }
     setError(null);
-    setIsProcessing(true);
+    startProgress();
     setResults(null);
-    setProcessProgress({ current: 0, total: images.length });
 
     try {
       const processedResults: any[] = [];
 
       for (let i = 0; i < images.length; i++) {
         const item = images[i];
-        setProcessProgress({ current: i + 1, total: images.length });
+        const stepProgress = Math.min(96, Math.max(15, Math.round(((i + 1) / images.length) * 90)));
+        setProgress(stepProgress);
 
         const dims = getTargetDimensions(item);
 
@@ -344,12 +345,12 @@ export default function ResizerTool() {
         }
       }
 
-      setResults(processedResults);
+      await finishProgress(() => {
+        setResults(processedResults);
+      });
     } catch (err: any) {
+      resetProgress();
       setError(err.message || 'Error resizing image(s).');
-    } finally {
-      setIsProcessing(false);
-      setProcessProgress(null);
     }
   };
 
@@ -780,29 +781,16 @@ export default function ResizerTool() {
             )}
 
             {/* Action CTA Button */}
-            <button
-              type="button"
+            <ProcessingButton
               onClick={handleProcess}
-              disabled={isProcessing || images.length === 0}
-              className="btn btn-primary btn-md sm:btn-lg rounded-xl w-full font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer h-auto min-h-[3rem] py-3 px-3 text-center leading-snug"
+              isProcessing={isProcessing}
+              progress={progress}
+              loadingLabel={images.length > 1 ? `Resizing ${images.length} Images` : 'Resizing Image'}
+              disabled={images.length === 0}
             >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                  <span>
-                    Resizing{' '}
-                    {processProgress
-                      ? `${processProgress.current}/${processProgress.total}...`
-                      : '...'}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span>Resize {images.length > 1 ? `${images.length} Images` : 'Image'}</span>
-                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                </>
-              )}
-            </button>
+              <span>Resize {images.length > 1 ? `${images.length} Images` : 'Image'}</span>
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            </ProcessingButton>
           </div>
         </div>
       )}

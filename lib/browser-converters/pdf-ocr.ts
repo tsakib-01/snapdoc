@@ -7,7 +7,10 @@
  *     with an invisible text layer aligned to word coordinates.
  *  2. Converts scanned images (.png, .jpg) into searchable PDFs.
  *  3. Extracts clean, formatted, machine-readable plain text for copy-paste and editing.
+ *  4. Native multilingual support with full German (ä, ö, ü, ß), French, Spanish, Italian, Portuguese.
  */
+
+import { loadPdfJs } from '@/lib/pdf/pdfThumbnailHelper';
 
 export interface PageOcrData {
   pageNum: number;
@@ -38,17 +41,6 @@ function assertBrowser(): void {
   }
 }
 
-const workerUrl = (v: string) =>
-  `https://cdn.jsdelivr.net/npm/pdfjs-dist@${v}/build/pdf.worker.min.mjs`;
-
-async function loadPdfJs(): Promise<any> {
-  const pdfjs: any = await import('pdfjs-dist');
-  if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl(pdfjs.version);
-  }
-  return pdfjs;
-}
-
 function collectWords(data: any): any[] {
   if (Array.isArray(data?.words) && data.words.length) return data.words;
   const words: any[] = [];
@@ -64,9 +56,16 @@ function collectWords(data: any): any[] {
   return words;
 }
 
-// Clean text for WinAnsi encoding supported by PDF Helvetica standard font
+// Clean text for WinAnsi encoding supported by PDF Helvetica standard font,
+// preserving German umlauts and mapping typographic punctuation to ASCII equivalents
 function sanitizeText(str: string): string {
-  return str.replace(/[^\u0020-\u007E\u00A0-\u00FF]/g, ' ').trim();
+  return str
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\u20AC/g, 'EUR')
+    .replace(/[^\u0020-\u007E\u00A0-\u00FF]/g, ' ')
+    .trim();
 }
 
 export async function processPdfOcr(
@@ -84,10 +83,38 @@ export async function processPdfOcr(
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
   const pdfjs = await loadPdfJs();
 
-  // Create Tesseract worker with specified language
-  const worker = await createWorker(language);
+  // Combine selected language with English to ensure both national characters (e.g. German ä,ö,ü,ß)
+  // and numbers/Latin punctuation are recognized with maximum accuracy
+  const ocrLang =
+    language === 'deu'
+      ? 'deu+eng'
+      : language === 'eng'
+      ? 'eng+deu'
+      : `${language}+eng`;
 
-  report('Loading document...', 10);
+  report(`Loading ${language === 'deu' ? 'German' : language.toUpperCase()} OCR language models...`, 10);
+
+  // Create Tesseract worker with specified language and live progress reporter
+  const worker = await createWorker(ocrLang, 1, {
+    logger: (m: any) => {
+      if (m.status === 'downloading tesseract core') {
+        report('Downloading OCR core engine...', Math.round(m.progress * 8));
+      } else if (m.status === 'loading tesseract core') {
+        report('Loading OCR core...', 8);
+      } else if (m.status === 'downloading traineddata') {
+        report(`Downloading ${language.toUpperCase()} language model...`, 10 + Math.round((m.progress || 0) * 15));
+      } else if (m.status === 'loading language traineddata') {
+        report('Loading language model...', 25);
+      } else if (m.status === 'initializing api') {
+        report('Initializing OCR engine...', 28);
+      } else if (m.status === 'recognizing text') {
+        const pagePct = Math.round((m.progress || 0) * 100);
+        report(`Recognizing text... ${pagePct}%`, Math.min(95, 30 + Math.round((m.progress || 0) * 60)));
+      }
+    },
+  });
+
+  report('Loading document...', 15);
 
   const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|tiff?)$/i.test(file.name);
   const pagesData: PageOcrData[] = [];
@@ -124,14 +151,32 @@ export async function processPdfOcr(
       const ctx = canvas.getContext('2d')!;
       ctx.drawImage(img, 0, 0);
 
-      report('Recognizing characters with Optical Character Recognition...', 40);
-      const { data } = await worker.recognize(canvas, {}, { blocks: true });
-      const thumbnail = canvas.toDataURL('image/jpeg', 0.6);
+      // Generate pristine thumbnail for Scanned Page Preview before Tesseract processing
+      const thumbScale = Math.min(1.0, 700 / Math.max(width, height));
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = Math.ceil(width * thumbScale);
+      thumbCanvas.height = Math.ceil(height * thumbScale);
+      const thumbCtx = thumbCanvas.getContext('2d')!;
+      thumbCtx.fillStyle = '#ffffff';
+      thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+      thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+      const thumbnail = thumbCanvas.toDataURL('image/jpeg', 0.85);
+      thumbCanvas.width = thumbCanvas.height = 0;
+
+      report('Recognizing German / multilingual characters...', 40);
+      let pageText = '';
+      let words: any[] = [];
+      try {
+        const { data } = await worker.recognize(canvas, {}, { blocks: true });
+        words = collectWords(data);
+        pageText = (data.text || '').trim();
+      } catch (recErr) {
+        console.warn('OCR recognize error on image:', recErr);
+      }
+
       canvas.width = canvas.height = 0;
       URL.revokeObjectURL(objectUrl);
 
-      const words = collectWords(data);
-      const pageText = (data.text || '').trim();
       const wordCount = pageText ? pageText.split(/\s+/).filter(Boolean).length : 0;
       totalWords += wordCount;
 
@@ -153,7 +198,6 @@ export async function processPdfOcr(
       if (file.type === 'image/png' || /\.png$/i.test(file.name)) {
         embeddedImg = await outputDoc.embedPng(imgBytes);
       } else {
-        // Convert to clean JPEG bytes if needed
         const b64 = thumbnail.split(',')[1] || thumbnail;
         const bin = atob(b64);
         const jBytes = new Uint8Array(bin.length);
@@ -177,7 +221,7 @@ export async function processPdfOcr(
         if (!cleanStr) continue;
 
         const wX = w.bbox.x0 * scaleX;
-        const wY = pdfH - (w.bbox.y1 * scaleY);
+        const wY = pdfH - w.bbox.y1 * scaleY;
         const wH = Math.max(5, Math.min(72, (w.bbox.y1 - w.bbox.y0) * scaleY));
 
         try {
@@ -200,21 +244,44 @@ export async function processPdfOcr(
       const arrayBuffer = await file.arrayBuffer();
       const originalBytes = new Uint8Array(arrayBuffer);
 
-      // Load for PDF.js page rendering (pass slice so worker doesn't detach)
-      const pdf = await pdfjs.getDocument({
-        data: originalBytes.slice(),
-        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
-        cMapPacked: true,
-        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
-      }).promise;
+      // Load for PDF.js page rendering with automatic inline fallback
+      let pdf: any;
+      try {
+        const loadingTask = pdfjs.getDocument({
+          data: originalBytes.slice(),
+          cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+        });
+        pdf = await loadingTask.promise;
+      } catch (workerErr) {
+        console.warn('Standard PDF.js worker failed, falling back to inline mode:', workerErr);
+        const fallbackTask = pdfjs.getDocument({
+          data: originalBytes.slice(),
+          disableWorker: true,
+          cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+          cMapPacked: true,
+          standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+        });
+        pdf = await fallbackTask.promise;
+      }
+
       const numPages = pdf.numPages;
 
       // Load into pdf-lib to overlay searchable text directly onto existing pages
-      outputDoc = await PDFDocument.load(originalBytes, { ignoreEncryption: true });
+      // Fallback gracefully to creating a fresh searchable document if original encryption/xref forbids loading
+      let isOverlayMode = true;
+      try {
+        outputDoc = await PDFDocument.load(originalBytes, { ignoreEncryption: true });
+      } catch (pdfLibErr) {
+        console.warn('PDFDocument.load failed, creating fresh searchable PDF:', pdfLibErr);
+        outputDoc = await PDFDocument.create();
+        isOverlayMode = false;
+      }
       const font = await outputDoc.embedFont(StandardFonts.Helvetica);
 
       for (let p = 1; p <= numPages; p++) {
-        report(`Scanning & recognizing page ${p} of ${numPages}...`, 15 + Math.round((p / numPages) * 70));
+        report(`Scanning & recognizing page ${p} of ${numPages}...`, 20 + Math.round((p / numPages) * 70));
 
         const page = await pdf.getPage(p);
         const origVp = page.getViewport({ scale: 1.0 });
@@ -230,15 +297,41 @@ export async function processPdfOcr(
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        await page.render({ canvasContext: ctx, viewport: ocrVp, canvas }).promise;
+        await page.render({
+          canvasContext: ctx,
+          viewport: ocrVp,
+        }).promise;
+
+        // Capture crisp, reliable thumbnail for Scanned Page Preview immediately
+        let thumbnail = '';
+        try {
+          const thumbScale = Math.min(1.0, 700 / Math.max(origVp.width, origVp.height));
+          const thumbCanvas = document.createElement('canvas');
+          thumbCanvas.width = Math.ceil(origVp.width * thumbScale);
+          thumbCanvas.height = Math.ceil(origVp.height * thumbScale);
+          const thumbCtx = thumbCanvas.getContext('2d')!;
+          thumbCtx.fillStyle = '#ffffff';
+          thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+          thumbCtx.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+          thumbnail = thumbCanvas.toDataURL('image/jpeg', 0.85);
+          thumbCanvas.width = thumbCanvas.height = 0;
+        } catch {
+          thumbnail = canvas.toDataURL('image/jpeg', 0.6);
+        }
 
         // Perform OCR on this page
-        const { data } = await worker.recognize(canvas, {}, { blocks: true });
-        const thumbnail = canvas.toDataURL('image/jpeg', 0.5);
-        canvas.width = canvas.height = 0; // Release canvas memory
+        let pageText = '';
+        let words: any[] = [];
+        try {
+          const { data } = await worker.recognize(canvas, {}, { blocks: true });
+          words = collectWords(data);
+          pageText = (data.text || '').trim();
+        } catch (ocrErr) {
+          console.warn(`OCR recognize failed on page ${p}:`, ocrErr);
+        }
 
-        const words = collectWords(data);
-        const pageText = (data.text || '').trim();
+        canvas.width = canvas.height = 0; // Release OCR canvas memory
+
         const wordCount = pageText ? pageText.split(/\s+/).filter(Boolean).length : 0;
         totalWords += wordCount;
 
@@ -251,7 +344,21 @@ export async function processPdfOcr(
         fullTextParts.push(`--- Page ${p} ---\n\n${pageText}`);
 
         // Overlay searchable text into pdf-lib page
-        const pdfPage = outputDoc.getPage(p - 1);
+        let pdfPage: any;
+        if (isOverlayMode) {
+          pdfPage = outputDoc.getPage(p - 1);
+        } else {
+          pdfPage = outputDoc.addPage([origVp.width, origVp.height]);
+          try {
+            const b64 = thumbnail.split(',')[1] || thumbnail;
+            const bin = atob(b64);
+            const jBytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) jBytes[i] = bin.charCodeAt(i);
+            const embeddedImg = await outputDoc.embedJpg(jBytes);
+            pdfPage.drawImage(embeddedImg, { x: 0, y: 0, width: origVp.width, height: origVp.height });
+          } catch {}
+        }
+
         const pageH = origVp.height;
 
         for (const w of words) {
@@ -261,7 +368,7 @@ export async function processPdfOcr(
 
           // Map OCR canvas coordinates back to 72 DPI PDF coordinates
           const wX = w.bbox.x0 / ocrScale;
-          const wY = pageH - (w.bbox.y1 / ocrScale);
+          const wY = pageH - w.bbox.y1 / ocrScale;
           const wH = Math.max(5, Math.min(72, (w.bbox.y1 - w.bbox.y0) / ocrScale));
 
           try {
@@ -278,7 +385,7 @@ export async function processPdfOcr(
           }
         }
 
-        page.cleanup();
+        page.cleanup?.();
       }
 
       await pdf.destroy?.();
@@ -287,12 +394,7 @@ export async function processPdfOcr(
     report('Finalizing searchable document...', 92);
 
     const pdfBytes = await outputDoc.save({ useObjectStreams: true });
-    const safeBuffer = pdfBytes.buffer.slice(
-      pdfBytes.byteOffset,
-      pdfBytes.byteOffset + pdfBytes.byteLength
-    ) as ArrayBuffer;
-
-    const searchablePdfBlob = new Blob([safeBuffer], { type: 'application/pdf' });
+    const searchablePdfBlob = new Blob([pdfBytes as unknown as BlobPart], { type: 'application/pdf' });
     const searchablePdfUrl = URL.createObjectURL(searchablePdfBlob);
 
     const baseName = file.name.replace(/\.[^./\\]+$/, '') || 'document';

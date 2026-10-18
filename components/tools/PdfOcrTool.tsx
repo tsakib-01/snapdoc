@@ -24,6 +24,7 @@ import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { processPdfOcr, PdfOcrResult } from '@/lib/browser-converters/pdf-ocr';
+import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 
 const LANGUAGES = [
   { code: 'eng', name: 'English' },
@@ -36,6 +37,7 @@ const LANGUAGES = [
 
 export default function PdfOcrTool() {
   const [file, setFile] = useState<File | null>(null);
+  const [stagedPreview, setStagedPreview] = useState<string | null>(null);
   const [language, setLanguage] = useState<string>('eng');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [progress, setProgress] = useState<{ stage: string; percent: number }>({
@@ -49,11 +51,26 @@ export default function PdfOcrTool() {
   const [editedText, setEditedText] = useState<string>('');
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
-  const handleFileSelected = (selectedFiles: File[]) => {
+  const handleFileSelected = async (selectedFiles: File[]) => {
     if (selectedFiles.length === 0) return;
-    setFile(selectedFiles[0]);
+    const selected = selectedFiles[0];
+    setFile(selected);
     setResult(null);
     setError(null);
+
+    // Provide instant staged preview of first page
+    if (selected.type.startsWith('image/')) {
+      setStagedPreview(URL.createObjectURL(selected));
+    } else {
+      try {
+        const { thumbnails } = await extractPdfThumbnails(selected, { maxPages: 1, scale: 0.5 });
+        if (thumbnails[0]?.dataUrl) {
+          setStagedPreview(thumbnails[0].dataUrl);
+        }
+      } catch (err) {
+        console.warn('Staged preview extraction skipped:', err);
+      }
+    }
   };
 
   const handleRunOcr = async () => {
@@ -103,6 +120,7 @@ export default function PdfOcrTool() {
 
   const handleReset = () => {
     setFile(null);
+    setStagedPreview(null);
     setResult(null);
     setError(null);
     setEditedText('');
@@ -156,9 +174,15 @@ export default function PdfOcrTool() {
         <div className="space-y-6 animate-in fade-in duration-150">
           <div className="flex items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300">
             <div className="flex items-center gap-3 truncate">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <ScanText className="w-5 h-5" />
-              </div>
+              {stagedPreview ? (
+                <div className="w-11 h-14 rounded-lg overflow-hidden border border-base-300 bg-white shrink-0 shadow-xs flex items-center justify-center p-0.5">
+                  <img src={stagedPreview} alt="Preview" className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <ScanText className="w-5 h-5" />
+                </div>
+              )}
               <div className="truncate">
                 <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs sm:max-w-md">
                   {file.name}
@@ -372,15 +396,32 @@ export default function PdfOcrTool() {
               {/* Left: Thumbnail of current page */}
               {result.pages[selectedPageIndex] && (
                 <div className="md:col-span-4 flex flex-col space-y-2">
-                  <span className="text-[11px] uppercase font-bold text-base-content/50">
-                    Scanned Page Preview ({selectedPageIndex + 1} of {result.pages.length})
-                  </span>
-                  <div className="relative rounded-2xl overflow-hidden border border-base-300 bg-base-200/50 shadow-inner max-h-[350px] flex items-center justify-center p-2">
-                    <img
-                      src={result.pages[selectedPageIndex].thumbnail}
-                      alt={`Page ${selectedPageIndex + 1}`}
-                      className="max-h-[330px] w-auto object-contain rounded-lg shadow-sm"
-                    />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] uppercase font-bold text-base-content/60">
+                      Scanned Page Preview ({selectedPageIndex + 1} of {result.pages.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPreviewModal(true)}
+                      className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Full view</span>
+                    </button>
+                  </div>
+                  <div className="relative rounded-2xl overflow-hidden border border-base-300 bg-base-200/50 shadow-inner min-h-[220px] max-h-[350px] flex items-center justify-center p-2">
+                    {result.pages[selectedPageIndex].thumbnail ? (
+                      <img
+                        src={result.pages[selectedPageIndex].thumbnail}
+                        alt={`Page ${selectedPageIndex + 1}`}
+                        className="max-h-[330px] w-auto object-contain rounded-lg shadow-sm bg-white"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-2 text-base-content/40 p-4">
+                        <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
+                        <span className="text-xs font-semibold">Page {selectedPageIndex + 1}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-base-content/60 px-1">
                     <span>Detected words:</span>

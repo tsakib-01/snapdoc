@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, X, ArrowRight, Sparkles, Layers, FileText, FileImage, Minimize2, Maximize2, Crop, RotateCw } from 'lucide-react';
 import { TOOLS, ToolMeta } from '@/lib/config/tools';
 import { useLanguage, getToolTranslationKey } from '@/lib/i18n/LanguageContext';
@@ -25,36 +26,57 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpen?: () => void;
 }
 
-export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
+export default function SearchModal({ isOpen, onClose, onOpen }: SearchModalProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      const isK = e.key === 'k' || e.key === 'K' || e.code === 'KeyK';
+      const isModifier = (e.metaKey || e.ctrlKey) && !e.altKey;
+
+      if (isModifier && isK) {
         e.preventDefault();
+        e.stopPropagation();
         if (isOpen) {
           onClose();
         } else {
-          // Open
-          setQuery('');
+          onOpen?.();
         }
-      }
-      if (e.key === 'Escape' && isOpen) {
+      } else if (e.key === 'Escape' && isOpen) {
+        e.preventDefault();
+        e.stopPropagation();
         onClose();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, onOpen]);
 
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+      setQuery('');
+      const focusSearchInput = () => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.select();
+        }
+      };
+
+      focusSearchInput();
+      const frameId = requestAnimationFrame(focusSearchInput);
+      const timer = setTimeout(focusSearchInput, 50);
+
+      return () => {
+        cancelAnimationFrame(frameId);
+        clearTimeout(timer);
+      };
     }
   }, [isOpen]);
 
@@ -72,8 +94,19 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         );
       });
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && results.length > 0) {
+      e.preventDefault();
+      onClose();
+      router.push(`/${results[0].slug}`);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-2xl bg-base-100 rounded-2xl shadow-2xl border border-base-300 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -83,9 +116,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           <Search className="w-5 h-5 text-base-content/40 shrink-0" />
           <input
             ref={inputRef}
+            autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleInputKeyDown}
             placeholder={t('heroSearchPlaceholder', "Search tools (e.g. '10kb', 'convert png', 'merge pdf', 'resize')...")}
             className="w-full bg-transparent border-none outline-none text-base-content placeholder:text-base-content/40 text-base"
           />

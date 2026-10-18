@@ -226,7 +226,11 @@ export default function Header() {
       </header>
 
       {/* Global Search Modal */}
-      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onOpen={() => setIsSearchOpen(true)}
+      />
     </>
   );
 }

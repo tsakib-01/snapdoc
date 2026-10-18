@@ -1473,18 +1473,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<string>('en');
 
   useEffect(() => {
-    let saved = localStorage.getItem('snapdoc_lang') || 'en';
-    // Migrate legacy 3-letter codes to standard 2-letter codes if stored
-    if (saved === 'hin') saved = 'hi';
-    if (saved === 'pol') saved = 'pl';
-    if (saved === 'tur') saved = 'tr';
-    if (saved === 'cat') saved = 'ca';
-    if (saved === 'ukr') saved = 'uk';
-    if (saved === 'vie') saved = 'vi';
-    if (saved === 'bul') saved = 'bg';
-
-    setLanguageState(saved);
-    applyHtmlLang(saved);
+    // Multi-language is turned off: enforce English and clean up legacy language preferences
+    try {
+      localStorage.removeItem('snapdoc_lang');
+    } catch (_) {}
+    setLanguageState('en');
+    applyHtmlLang('en');
   }, []);
 
   const applyHtmlLang = (code: string) => {

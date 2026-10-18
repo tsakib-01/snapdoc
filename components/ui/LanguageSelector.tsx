@@ -20,6 +20,11 @@ interface LanguageSelectorProps {
 }
 
 export default function LanguageSelector({ placement = 'bottom', className = '' }: LanguageSelectorProps) {
+  // Multi-language is currently turned off
+  return null;
+}
+
+function DisabledLanguageSelector({ placement = 'bottom', className = '' }: LanguageSelectorProps) {
   const { language, setLanguage, currentLanguageObj, t } = useLanguage();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);

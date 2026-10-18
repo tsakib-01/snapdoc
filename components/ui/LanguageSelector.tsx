@@ -99,6 +99,30 @@ export default function LanguageSelector() {
       script.async = true;
       document.body.appendChild(script);
     }
+
+    // Suppress Google Translate top banner iframe and keep body.style.top at 0px
+    const enforceZeroTop = () => {
+      if (document.body.style.top && document.body.style.top !== '0px') {
+        document.body.style.top = '0px';
+      }
+      const banner = document.querySelectorAll<HTMLElement>(
+        '.goog-te-banner-frame, iframe.skiptranslate, body > .skiptranslate, body > div[class*="skiptranslate"]'
+      );
+      banner.forEach((b) => {
+        b.style.display = 'none';
+        b.style.visibility = 'hidden';
+        b.style.height = '0px';
+      });
+    };
+
+    enforceZeroTop();
+    const observer = new MutationObserver(enforceZeroTop);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'], childList: true });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   // Handle click outside to close mega menu

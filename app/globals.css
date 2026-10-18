@@ -136,20 +136,32 @@ body {
 /* Google Translate widget reset to keep website design 100% clean and native */
 .goog-te-banner-frame,
 .goog-te-banner-frame.skiptranslate,
-iframe.goog-te-banner-frame {
+iframe.goog-te-banner-frame,
+iframe.skiptranslate,
+.skiptranslate iframe,
+body > .skiptranslate,
+body > div[class*="skiptranslate"],
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover {
   display: none !important;
   visibility: hidden !important;
   height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
+html,
 body {
   top: 0px !important;
   position: static !important;
-}
-
-#goog-gt-tt,
-.goog-te-balloon-frame {
-  display: none !important;
+  margin-top: 0px !important;
+  transform: none !important;
 }
 
 .goog-text-highlight {

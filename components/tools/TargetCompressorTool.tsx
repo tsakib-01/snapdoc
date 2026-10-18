@@ -16,6 +16,7 @@ import { compressToTargetSizeInBrowser } from '@/lib/browser-converters/image-co
 interface TargetCompressorToolProps {
   defaultTargetKb?: number;
   fixedTarget?: boolean;
+  targetFormat?: 'jpeg' | 'webp' | 'png' | 'original';
 }
 
 const PRESET_SIZES = [
@@ -31,6 +32,7 @@ const PRESET_SIZES = [
 export default function TargetCompressorTool({
   defaultTargetKb = 50,
   fixedTarget = false,
+  targetFormat = 'jpeg',
 }: TargetCompressorToolProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [targetKb, setTargetKb] = useState<number>(defaultTargetKb);
@@ -108,7 +110,7 @@ export default function TargetCompressorTool({
       try {
         const clientResult = await compressToTargetSizeInBrowser(file, {
           targetKb: activeKb,
-          format: 'original',
+          format: targetFormat,
         });
         await finishProgress(() => {
           setResult(clientResult);
@@ -122,7 +124,7 @@ export default function TargetCompressorTool({
       const formData = new FormData();
       formData.append('file', file);
       formData.append('targetKb', activeKb.toString());
-      formData.append('format', 'original');
+      formData.append('format', targetFormat);
 
       const res = await fetch('/api/compress-target', {
         method: 'POST',
@@ -139,7 +141,7 @@ export default function TargetCompressorTool({
       try {
         const fallbackClientResult = await compressToTargetSizeInBrowser(file, {
           targetKb: activeKb,
-          format: 'original',
+          format: targetFormat,
         });
         await finishProgress(() => {
           setResult(fallbackClientResult);

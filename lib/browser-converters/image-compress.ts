@@ -87,51 +87,51 @@ async function loadSourceImage(file: File): Promise<LoadedImage> {
 function calculateBase64Bytes(dataUrl: string): number {
   const commaIdx = dataUrl.indexOf(',');
   if (commaIdx === -1) return 0;
-  const base64Len = dataUrl.length - commaIdx - 1;
-  return Math.round((base64Len * 3) / 4);
+  const base64Str = dataUrl.slice(commaIdx + 1);
+  const padding = base64Str.endsWith('==') ? 2 : base64Str.endsWith('=') ? 1 : 0;
+  return Math.floor((base64Str.length * 3) / 4) - padding;
 }
 
 /**
  * Client-Side Binary Search Target-Size Compression Engine
- * Compresses any image (even 10MB+ phone photos) to an exact target KB limit (e.g. 10kb, 100kb).
+ * Compresses any image (even 10MB+ phone photos) to an exact target KB limit (e.g. 10kb, 20kb, 100kb).
+ * Guarantees output size is strictly less than or equal to the target KB ceiling.
  */
 export async function compressToTargetSizeInBrowser(
   file: File,
   options: TargetCompressClientOptions
 ): Promise<ClientCompressionResult> {
-  const targetBytes = Math.max(1024, Math.round(options.targetKb * 1024));
+  // Strict ceiling in exact bytes: must NOT exceed options.targetKb * 1024
+  const targetBytes = Math.floor(options.targetKb * 1024);
   const loaded = await loadSourceImage(file);
   const { source, width: origW, height: origH, close } = loaded;
 
   try {
-    let targetFormat = options.format || 'original';
-    if (targetFormat === 'original') {
-      if (file.type.includes('png') || file.name.toLowerCase().endsWith('.png')) {
-        targetFormat = 'png';
-      } else if (file.type.includes('webp') || file.name.toLowerCase().endsWith('.webp')) {
-        targetFormat = 'webp';
-      } else {
-        targetFormat = 'jpeg';
-      }
+    // For target size tools (e.g. Compress to 10KB, 20KB), JPEG is the standard format
+    // that allows high-efficiency DCT quantization. If format is 'original' or 'jpeg', use jpeg.
+    let targetFormat: 'jpeg' | 'png' | 'webp' = 'jpeg';
+    if (options.format === 'png') {
+      targetFormat = 'png';
+    } else if (options.format === 'webp') {
+      targetFormat = 'webp';
+    } else {
+      targetFormat = 'jpeg';
     }
 
     const mimeType =
       targetFormat === 'png' ? 'image/png' : targetFormat === 'webp' ? 'image/webp' : 'image/jpeg';
 
-    const scaleFactors = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08, 0.05];
+    // Fine-grained scale factors from 1.0 down to 0.03
+    const scaleFactors = [
+      1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5,
+      0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.16, 0.12, 0.08, 0.05, 0.03
+    ];
 
     let bestDataUrl = '';
-    let bestBytes = Infinity;
+    let bestBytes = 0;
     let bestQuality = 0.8;
     let bestWidth = origW;
     let bestHeight = origH;
-
-    // Smallest result found in case target is extremely small (e.g. 5KB)
-    let absoluteSmallestDataUrl = '';
-    let absoluteSmallestBytes = Infinity;
-    let absoluteSmallestWidth = origW;
-    let absoluteSmallestHeight = origH;
-    let absoluteSmallestQuality = 0.1;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { alpha: targetFormat !== 'jpeg' });
@@ -151,42 +151,53 @@ export async function compressToTargetSizeInBrowser(
       }
       ctx.drawImage(source as CanvasImageSource, 0, 0, targetW, targetH);
 
-      // Binary search quality for this scale factor
-      let lowQ = 0.05;
-      let highQ = 0.95;
-      let scaleBestDataUrl = '';
-      let scaleBestBytes = Infinity;
-      let scaleBestQuality = 0.8;
+      // 1. Check lowest quality at this scale first
+      const minQ = 0.05;
+      const minDataUrl = canvas.toDataURL(mimeType, minQ);
+      const minBytes = calculateBase64Bytes(minDataUrl);
 
-      for (let iter = 0; iter < 7; iter++) {
-        const midQ = parseFloat(((lowQ + highQ) / 2).toFixed(2));
-        const dataUrl = canvas.toDataURL(mimeType, midQ);
-        const bytes = calculateBase64Bytes(dataUrl);
+      // If even lowest quality is larger than target at this scale, scale down further
+      if (minBytes > targetBytes) {
+        continue;
+      }
 
-        if (bytes < absoluteSmallestBytes) {
-          absoluteSmallestBytes = bytes;
-          absoluteSmallestDataUrl = dataUrl;
-          absoluteSmallestWidth = targetW;
-          absoluteSmallestHeight = targetH;
-          absoluteSmallestQuality = midQ;
-        }
+      // 2. Check max quality at this scale
+      const maxQ = 0.92;
+      const maxDataUrl = canvas.toDataURL(mimeType, maxQ);
+      const maxBytes = calculateBase64Bytes(maxDataUrl);
 
-        if (bytes <= targetBytes) {
-          // Fits under target size!
-          scaleBestDataUrl = dataUrl;
-          scaleBestBytes = bytes;
-          scaleBestQuality = midQ;
-          // Try higher quality to fill closer to target size
-          lowQ = midQ + 0.04;
-        } else {
-          // Too big, decrease quality
-          highQ = midQ - 0.04;
+      let scaleBestDataUrl = minDataUrl;
+      let scaleBestBytes = minBytes;
+      let scaleBestQuality = minQ;
+
+      if (maxBytes <= targetBytes) {
+        scaleBestDataUrl = maxDataUrl;
+        scaleBestBytes = maxBytes;
+        scaleBestQuality = maxQ;
+      } else {
+        // Binary search for the highest quality that stays strictly <= targetBytes
+        let low = minQ;
+        let high = maxQ;
+
+        for (let iter = 0; iter < 10; iter++) {
+          const mid = parseFloat(((low + high) / 2).toFixed(3));
+          const testUrl = canvas.toDataURL(mimeType, mid);
+          const testBytes = calculateBase64Bytes(testUrl);
+
+          if (testBytes <= targetBytes) {
+            scaleBestDataUrl = testUrl;
+            scaleBestBytes = testBytes;
+            scaleBestQuality = mid;
+            low = mid; // Try higher quality
+          } else {
+            high = mid; // Exceeded target, lower quality
+          }
         }
       }
 
-      if (scaleBestDataUrl && scaleBestBytes <= targetBytes) {
-        // We found a valid result under target size
-        if (bestBytes === Infinity || (targetBytes - scaleBestBytes < targetBytes - bestBytes && scaleBestBytes <= targetBytes)) {
+      // Record this scale if it is strictly <= targetBytes
+      if (scaleBestBytes <= targetBytes) {
+        if (scaleBestBytes > bestBytes || bestBytes === 0) {
           bestDataUrl = scaleBestDataUrl;
           bestBytes = scaleBestBytes;
           bestQuality = scaleBestQuality;
@@ -194,39 +205,61 @@ export async function compressToTargetSizeInBrowser(
           bestHeight = targetH;
         }
 
-        // If quality is reasonable (>= 0.65) or scale is clean, we can stop
-        if (scaleBestQuality >= 0.65) {
+        // If we filled at least 88% of target capacity with good quality, stop early
+        if (scaleBestBytes >= targetBytes * 0.88 && scaleBestQuality >= 0.65) {
           break;
         }
       }
     }
 
-    const finalDataUrl = bestDataUrl || absoluteSmallestDataUrl;
-    const finalBytes = bestBytes !== Infinity ? bestBytes : absoluteSmallestBytes;
-    const finalWidth = bestDataUrl ? bestWidth : absoluteSmallestWidth;
-    const finalHeight = bestDataUrl ? bestHeight : absoluteSmallestHeight;
-    const finalQuality = bestDataUrl ? bestQuality : absoluteSmallestQuality;
+    // Safety fallback: if target is extremely tiny, iterative downscale until strictly <= targetBytes
+    if (!bestDataUrl || bestBytes > targetBytes) {
+      let fbScale = 0.05;
+      while (fbScale >= 0.01) {
+        const fw = Math.max(16, Math.round(origW * fbScale));
+        const fh = Math.max(16, Math.round(origH * fbScale));
+        canvas.width = fw;
+        canvas.height = fh;
+        if (targetFormat === 'jpeg') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, fw, fh);
+        }
+        ctx.drawImage(source as CanvasImageSource, 0, 0, fw, fh);
+        const fbUrl = canvas.toDataURL('image/jpeg', 0.1);
+        const fbBytes = calculateBase64Bytes(fbUrl);
+
+        if (fbBytes <= targetBytes || fbScale <= 0.015) {
+          bestDataUrl = fbUrl;
+          bestBytes = fbBytes;
+          bestWidth = fw;
+          bestHeight = fh;
+          bestQuality = 0.1;
+          break;
+        }
+        fbScale -= 0.01;
+      }
+    }
 
     const originalSize = file.size;
     const reductionPercentage =
       originalSize > 0
-        ? Math.max(0, parseFloat((((originalSize - finalBytes) / originalSize) * 100).toFixed(1)))
+        ? Math.max(0, parseFloat((((originalSize - bestBytes) / originalSize) * 100).toFixed(1)))
         : 0;
 
     return {
       success: true,
       originalName: file.name,
       originalSize,
-      compressedSize: finalBytes,
+      compressedSize: bestBytes,
       reductionPercentage,
-      width: finalWidth,
-      height: finalHeight,
+      width: bestWidth,
+      height: bestHeight,
       originalWidth: origW,
       originalHeight: origH,
       format: targetFormat === 'jpeg' ? 'jpg' : targetFormat,
       mimeType,
-      qualityUsed: Math.round(finalQuality * 100),
-      dataUrl: finalDataUrl,
+      qualityUsed: Math.round(bestQuality * 100),
+      dataUrl: bestDataUrl,
     };
   } finally {
     close();

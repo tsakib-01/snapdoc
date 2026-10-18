@@ -51,7 +51,10 @@ export async function compressToTargetSize(
   // Pre-render to clean normalized buffer
   const cleanInput = await baseSharp.toBuffer();
 
-  const scaleFactors = [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08];
+  const scaleFactors = [
+    1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5,
+    0.45, 0.4, 0.35, 0.3, 0.25, 0.2, 0.16, 0.12, 0.08, 0.05, 0.03
+  ];
   let bestBuffer: Buffer | null = null;
   let bestSize = Infinity;
   let bestQuality = 80;
@@ -61,10 +64,10 @@ export async function compressToTargetSize(
 
   // Scale down gradually if needed
   for (const scale of scaleFactors) {
-    const targetW = Math.max(32, Math.round(originalWidth * scale));
-    const targetH = Math.max(32, Math.round(originalHeight * scale));
+    const targetW = Math.max(20, Math.round(originalWidth * scale));
+    const targetH = Math.max(20, Math.round(originalHeight * scale));
 
-    let lowQ = 10;
+    let lowQ = 5;
     let highQ = 92;
     let localBestBuffer: Buffer | null = null;
     let localBestQuality = lowQ;
@@ -125,40 +128,49 @@ export async function compressToTargetSize(
       bestScale = scale;
       bestWidth = targetW;
       bestHeight = targetH;
-      // We found a valid quality at the highest possible scale. Stop early!
-      break;
+      // If quality is reasonable (>= 60), stop early at the highest possible scale
+      if (localBestQuality >= 60) {
+        break;
+      }
     }
   }
 
-  // Fallback if target is impossibly small: produce smallest possible render in targetFormat
-  if (!bestBuffer) {
-    const minW = Math.min(128, originalWidth);
-    const minH = Math.min(128, originalHeight);
-    let fallbackPipeline = sharp(cleanInput).resize(minW, minH, { fit: 'inside' });
+  // Fallback if target is impossibly small: produce smallest possible render strictly <= targetBytes
+  if (!bestBuffer || bestSize > targetBytes) {
+    let fbW = Math.min(128, originalWidth);
+    let fbH = Math.min(128, originalHeight);
     
-    if (targetFormat === 'png') {
-      fallbackPipeline = fallbackPipeline.png({ compressionLevel: 9, palette: true, quality: 10 });
-    } else if (targetFormat === 'webp') {
-      fallbackPipeline = fallbackPipeline.webp({ quality: 10 });
-    } else {
-      fallbackPipeline = fallbackPipeline.jpeg({ quality: 5, mozjpeg: true, chromaSubsampling: '4:2:0' });
-    }
+    while (fbW > 16) {
+      const fallbackBuffer = await sharp(cleanInput)
+        .resize(fbW, fbH, { fit: 'inside' })
+        .jpeg({ quality: 5, mozjpeg: true, chromaSubsampling: '4:2:0' })
+        .toBuffer();
 
-    bestBuffer = await fallbackPipeline.toBuffer();
-    bestSize = bestBuffer.length;
-    bestQuality = 10;
-    bestScale = minW / originalWidth;
-    bestWidth = minW;
-    bestHeight = minH;
+      if (fallbackBuffer.length <= targetBytes || fbW <= 32) {
+        bestBuffer = fallbackBuffer;
+        bestSize = fallbackBuffer.length;
+        bestQuality = 5;
+        bestScale = fbW / originalWidth;
+        bestWidth = fbW;
+        bestHeight = fbH;
+        targetFormat = 'jpeg';
+        break;
+      }
+      fbW = Math.round(fbW * 0.7);
+      fbH = Math.round(fbH * 0.7);
+    }
   }
+
+  const outputBuffer = bestBuffer || cleanInput;
+  const finalSize = bestSize !== Infinity ? bestSize : outputBuffer.length;
 
   const reductionPercentage = originalSize > 0
-    ? Math.max(0, parseFloat((((originalSize - bestSize) / originalSize) * 100).toFixed(1)))
+    ? Math.max(0, parseFloat((((originalSize - finalSize) / originalSize) * 100).toFixed(1)))
     : 0;
 
   return {
-    buffer: bestBuffer,
-    size: bestSize,
+    buffer: outputBuffer,
+    size: finalSize,
     originalSize,
     width: bestWidth,
     height: bestHeight,

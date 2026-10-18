@@ -13,38 +13,38 @@ export default function Footer() {
     <footer className="mt-auto border-t border-base-300 bg-base-200/50 text-base-content transition-colors">
       {/* Privacy & Trust Bar */}
       <div className="border-b border-base-300 py-6 bg-base-100/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          <div className="flex items-center justify-start gap-3 text-left">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
-              <h4 className="font-semibold text-sm">{t('privacyTitle', '100% Privacy Focused')}</h4>
-              <p className="text-xs text-base-content/60">
+            <div className="text-left">
+              <h4 className="font-semibold text-sm text-left">{t('privacyTitle', '100% Privacy Focused')}</h4>
+              <p className="text-xs text-base-content/60 text-left">
                 {t('privacyDesc', 'Files processed in memory and never saved to disk or database.')}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-center md:justify-start gap-3">
+          <div className="flex items-center justify-start gap-3 text-left">
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Zap className="w-5 h-5" />
             </div>
-            <div>
-              <h4 className="font-semibold text-sm">{t('fastTitle', 'Lightning Fast')}</h4>
-              <p className="text-xs text-base-content/60">
+            <div className="text-left">
+              <h4 className="font-semibold text-sm text-left">{t('fastTitle', 'Lightning Fast')}</h4>
+              <p className="text-xs text-base-content/60 text-left">
                 {t('fastDesc', 'Engineered with high-speed performance architecture.')}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-center md:justify-start gap-3">
+          <div className="flex items-center justify-start gap-3 text-left">
             <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
               <Lock className="w-5 h-5" />
             </div>
-            <div>
-              <h4 className="font-semibold text-sm">{t('freeTitle', 'Free Forever & No Signup')}</h4>
-              <p className="text-xs text-base-content/60">
+            <div className="text-left">
+              <h4 className="font-semibold text-sm text-left">{t('freeTitle', 'Free Forever & No Signup')}</h4>
+              <p className="text-xs text-base-content/60 text-left">
                 {t('freeDesc', 'No account required, no watermark, no hidden subscription traps.')}
               </p>
             </div>

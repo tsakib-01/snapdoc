@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import {
@@ -24,6 +26,7 @@ import {
   ScanText,
 } from 'lucide-react';
 import { ToolMeta } from '@/lib/config/tools';
+import { useLanguage, getToolTranslationKey } from '@/lib/i18n/LanguageContext';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   Minimize2: <Minimize2 className="w-5 h-5 text-blue-500" />,
@@ -52,6 +55,12 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 export default function ToolCard({ tool }: { tool: ToolMeta }) {
+  const { t } = useLanguage();
+  const toolKey = getToolTranslationKey(tool.slug);
+  const toolName = t(toolKey, tool.name);
+  const toolDescription = t(`${toolKey}Desc`, tool.description);
+  const openToolText = t('openTool', 'Use Tool Free');
+
   return (
     <Link
       href={`/${tool.slug}`}
@@ -70,15 +79,15 @@ export default function ToolCard({ tool }: { tool: ToolMeta }) {
         </div>
 
         <h3 className="font-semibold text-base text-base-content group-hover:text-primary transition-colors flex items-center gap-1.5">
-          {tool.name}
+          {toolName}
         </h3>
         <p className="text-xs text-base-content/65 mt-1.5 line-clamp-2 leading-relaxed">
-          {tool.description}
+          {toolDescription}
         </p>
       </div>
 
       <div className="mt-4 pt-3 border-t border-base-200 flex items-center justify-between text-xs font-semibold text-primary">
-        <span>Use Tool Free</span>
+        <span>{openToolText}</span>
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </div>
     </Link>

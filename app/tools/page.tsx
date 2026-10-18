@@ -6,8 +6,10 @@ import { Search, Sparkles } from 'lucide-react';
 import { TOOLS, CATEGORIES } from '@/lib/config/tools';
 import ToolCard from '@/components/ui/ToolCard';
 import AdSlot from '@/components/ui/AdSlot';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function AllToolsPage() {
+  const { t } = useLanguage();
   const [selectedCat, setSelectedCat] = useState<string>('all');
   const [query, setQuery] = useState<string>('');
 
@@ -28,10 +30,10 @@ export default function AllToolsPage() {
       {/* Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-base-content">
-          All Image & PDF Tools
+          {t('allToolsTitle', 'All Image & PDF Tools')}
         </h1>
         <p className="text-sm text-base-content/70">
-          Browse our complete catalog of {TOOLS.length} free online utilities.
+          {t('allToolsSubtitle', `Browse our complete catalog of ${TOOLS.length} free online utilities.`)}
         </p>
 
         {/* Search */}
@@ -42,7 +44,7 @@ export default function AllToolsPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by keyword, tool name, or feature..."
+              placeholder={t('searchPlaceholderFull', 'Search by keyword, tool name, or feature...')}
               className="w-full px-4 py-3 bg-transparent border-none outline-none text-sm text-base-content"
             />
             {query && (
@@ -59,19 +61,34 @@ export default function AllToolsPage() {
 
       {/* Categories */}
       <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-2 no-scrollbar">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCat(cat.id)}
-            className={`btn btn-sm rounded-xl whitespace-nowrap px-4 font-semibold ${
-              selectedCat === cat.id
-                ? 'btn-primary text-white shadow-md shadow-primary/20'
-                : 'btn-ghost bg-base-100 border border-base-300 text-base-content/70'
-            }`}
-          >
-            {cat.name} ({cat.count})
-          </button>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const catName =
+            cat.id === 'all'
+              ? t('catAll', cat.name)
+              : cat.id === 'image'
+              ? t('catImage', cat.name)
+              : cat.id === 'pdf'
+              ? t('catPdf', cat.name)
+              : cat.id === 'convert'
+              ? t('catConvert', cat.name)
+              : cat.id === 'organize'
+              ? t('catOrganize', cat.name)
+              : cat.name;
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCat(cat.id)}
+              className={`btn btn-sm rounded-xl whitespace-nowrap px-4 font-semibold ${
+                selectedCat === cat.id
+                  ? 'btn-primary text-white shadow-md shadow-primary/20'
+                  : 'btn-ghost bg-base-100 border border-base-300 text-base-content/70'
+              }`}
+            >
+              {catName} ({cat.count})
+            </button>
+          );
+        })}
       </div>
 
       {/* Grid */}
@@ -80,7 +97,7 @@ export default function AllToolsPage() {
           filtered.map((tool) => <ToolCard key={tool.id} tool={tool} />)
         ) : (
           <div className="col-span-full py-12 text-center text-base-content/60">
-            No tools matched your criteria.
+            {t('noToolsFound', 'No tools matched your criteria.')}
           </div>
         )}
       </div>

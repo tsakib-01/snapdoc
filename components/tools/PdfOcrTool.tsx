@@ -25,6 +25,7 @@ import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { processPdfOcr, PdfOcrResult } from '@/lib/browser-converters/pdf-ocr';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 const LANGUAGES = [
   { code: 'eng', name: 'English' },
@@ -57,6 +58,7 @@ const LANGUAGES = [
 ];
 
 export default function PdfOcrTool() {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [stagedPreview, setStagedPreview] = useState<string | null>(null);
   const [language, setLanguage] = useState<string>('eng');
@@ -218,7 +220,7 @@ export default function PdfOcrTool() {
               disabled={isProcessing}
               className="btn btn-ghost btn-xs text-base-content/60 hover:text-error shrink-0"
             >
-              Change
+              {t('changeFile', 'Change')}
             </button>
           </div>
 
@@ -226,7 +228,7 @@ export default function PdfOcrTool() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-primary" />
-                OCR Language
+                {t('recLanguage', 'OCR Language')}
               </span>
               <select
                 value={language}
@@ -287,7 +289,7 @@ export default function PdfOcrTool() {
                 className="btn btn-primary btn-md sm:btn-lg rounded-2xl w-full text-white font-bold shadow-xl shadow-primary/20 gap-2 h-auto min-h-[3rem] py-3 px-3 text-center leading-snug flex items-center justify-center"
               >
                 <ScanText className="w-5 h-5 shrink-0" />
-                <span>Start OCR & Extract Text</span>
+                <span>{t('startOcr', 'Start OCR & Extract Text')}</span>
               </button>
             )}
           </div>
@@ -341,7 +343,7 @@ export default function PdfOcrTool() {
                 className="btn btn-primary btn-md rounded-2xl gap-2 font-bold px-6 shadow-lg shadow-primary/20 w-full sm:flex-1 text-white h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center"
               >
                 <FileSearch className="w-4 h-4 shrink-0" />
-                <span>Download Searchable PDF</span>
+                <span>{t('download', 'Download')} Searchable PDF</span>
               </a>
 
               <button
@@ -350,7 +352,7 @@ export default function PdfOcrTool() {
                 className="btn btn-ghost border border-base-300 btn-md rounded-2xl gap-2 font-bold px-5 text-base-content hover:bg-base-200 w-full sm:w-auto h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center"
               >
                 <Eye className="w-4 h-4 shrink-0" />
-                <span>Preview</span>
+                <span>{t('preview', 'Preview')}</span>
               </button>
 
               <button
@@ -359,7 +361,7 @@ export default function PdfOcrTool() {
                 className="btn btn-outline btn-md rounded-2xl gap-2 font-bold px-5 w-full sm:w-auto h-auto min-h-[2.75rem] py-2.5 text-center leading-snug flex items-center justify-center"
               >
                 <Download className="w-4 h-4 shrink-0" />
-                <span>Download .TXT</span>
+                <span>{t('download', 'Download')} .TXT</span>
               </button>
 
               <button
@@ -370,7 +372,7 @@ export default function PdfOcrTool() {
                 }`}
               >
                 {copied ? <Check className="w-4 h-4 shrink-0" /> : <Copy className="w-4 h-4 shrink-0" />}
-                <span>{copied ? 'Copied!' : 'Copy Text'}</span>
+                <span>{copied ? t('copied', 'Copied!') : t('copyText', 'Copy Text')}</span>
               </button>
             </div>
           </div>
@@ -486,7 +488,7 @@ export default function PdfOcrTool() {
                 className="btn btn-ghost btn-sm rounded-xl gap-2 text-xs"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>OCR Another Document</span>
+                <span>{t('ocrAnother', 'OCR Another Document')}</span>
               </button>
 
               <button
@@ -495,7 +497,7 @@ export default function PdfOcrTool() {
                 className="btn btn-primary btn-sm rounded-xl text-white gap-2 font-bold px-6 shadow-md shadow-primary/20 text-xs"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'Copied to Clipboard' : 'Copy Full Text'}</span>
+                <span>{copied ? t('copied', 'Copied to Clipboard') : t('copyText', 'Copy Full Text')}</span>
               </button>
             </div>
           </div>
@@ -527,7 +529,7 @@ export default function PdfOcrTool() {
                   className="btn btn-xs btn-primary font-bold gap-1 rounded-lg text-white px-2 sm:px-3"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden sm:inline">{t('download', 'Download')}</span>
                 </a>
                 <button
                   type="button"

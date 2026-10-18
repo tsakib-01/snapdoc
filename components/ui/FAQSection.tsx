@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, HelpCircle } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface FAQ {
   q: string;
@@ -10,6 +11,7 @@ interface FAQ {
 
 export default function FAQSection({ faqs }: { faqs: FAQ[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const { t } = useLanguage();
 
   if (!faqs || faqs.length === 0) return null;
 
@@ -18,7 +20,7 @@ export default function FAQSection({ faqs }: { faqs: FAQ[] }) {
       <div className="flex items-center gap-2 mb-6">
         <HelpCircle className="w-5 h-5 text-primary" />
         <h3 className="text-xl font-bold text-base-content">
-          Frequently Asked Questions
+          {t('faqTitle', 'Frequently Asked Questions')}
         </h3>
       </div>
 

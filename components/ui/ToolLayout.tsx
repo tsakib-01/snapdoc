@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { ChevronRight, CheckCircle, Sparkles, BookOpen, ArrowRight } from 'lucide-react';
@@ -6,6 +8,7 @@ import { getRelatedGuidesForTool } from '@/lib/config/guides';
 import FAQSection from './FAQSection';
 import AdSlot from './AdSlot';
 import ToolCard from './ToolCard';
+import { useLanguage, getToolTranslationKey } from '@/lib/i18n/LanguageContext';
 
 interface ToolLayoutProps {
   tool: ToolMeta;
@@ -15,6 +18,11 @@ interface ToolLayoutProps {
 }
 
 export default function ToolLayout({ tool, children, isWide = false, noCardWrapper = false }: ToolLayoutProps) {
+  const { t } = useLanguage();
+  const toolKey = getToolTranslationKey(tool.slug);
+  const toolName = t(toolKey, tool.name);
+  const toolDescription = t(`${toolKey}Desc`, tool.description);
+
   const relatedTools = TOOLS.filter(
     (t) => t.id !== tool.id && (t.category === tool.category || t.popular)
   ).slice(0, 3);
@@ -135,10 +143,10 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
             </span>
           )}
           <h1 className={`${isWide ? 'text-lg sm:text-2xl md:text-3xl lg:text-4xl' : 'text-2xl sm:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-base-content`}>
-            {tool.name}
+            {toolName}
           </h1>
           <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed">
-            {tool.description}
+            {toolDescription}
           </p>
         </div>
 
@@ -161,7 +169,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
           {/* Left: Deep Overview & Features */}
           <div className="space-y-4">
             <h2 className="text-xl sm:text-2xl font-bold text-base-content">
-              About {tool.name}
+              {t('aboutTool', 'About')} {toolName}
             </h2>
             <p className="text-xs sm:text-sm text-base-content/75 leading-relaxed">
               {tool.longDescription}
@@ -169,7 +177,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
 
             <div className="space-y-2 pt-2">
               <h3 className="text-sm font-bold text-base-content uppercase tracking-wider">
-                Key Features & Benefits
+                {t('keyFeatures', 'Key Features & Benefits')}
               </h3>
               <ul className="space-y-2">
                 {tool.features.map((feat, idx) => (
@@ -186,7 +194,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
           <div className="p-6 rounded-3xl bg-base-200/40 border border-base-300 space-y-4">
             <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              How to Use {tool.shortName || tool.name}
+              {t('howToUse', 'How to Use')} {toolName}
             </h3>
             <ol className="space-y-3">
               {tool.howTo.map((item, idx) => (
@@ -212,13 +220,13 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-base-content flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
-                <span>Helpful Guides & Tutorials</span>
+                <span>{t('helpfulGuides', 'Helpful Guides & Tutorials')}</span>
               </h3>
               <Link
                 href="/guides"
                 className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
               >
-                <span>View all guides</span>
+                <span>{t('viewAllGuides', 'View all guides')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -241,7 +249,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
                     </p>
                   </div>
                   <div className="pt-3 text-xs font-semibold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    <span>Read guide</span>
+                    <span>{t('readGuide', 'Read guide')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>
                 </Link>
@@ -254,7 +262,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
         {relatedTools.length > 0 && (
           <div className="pt-8 border-t border-base-300 space-y-4">
             <h3 className="text-lg font-bold text-base-content">
-              Explore Related Utilities
+              {t('relatedToolsTitle', 'Explore Related Utilities')}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {relatedTools.map((rel) => (

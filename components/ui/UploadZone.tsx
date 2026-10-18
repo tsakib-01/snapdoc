@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { UploadCloud, FileImage, FileText, FileSpreadsheet, AlertCircle, X, CheckCircle2, Loader2 } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 function getFileStyle(filename: string = '', mimeType: string = '') {
   const lowerName = filename.toLowerCase();
@@ -86,8 +87,12 @@ export default function UploadZone({
   loading = false,
   loadingMessage,
 }: UploadZoneProps) {
+  const { t } = useLanguage();
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const displayTitle = title === 'Drag & drop your files here' ? t('dropTitle', title) : title;
+  const displaySubtitle = subtitle === 'or click to browse from your device' ? t('dropSubtitle', subtitle) : subtitle;
   const [internalLoading, setInternalLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingFileName, setLoadingFileName] = useState<string>('');
@@ -326,18 +331,18 @@ export default function UploadZone({
           </div>
 
           <h3 className="text-sm sm:text-lg font-bold text-base-content">
-            {title}
+            {displayTitle}
           </h3>
           <p className="text-[11px] sm:text-sm text-base-content/60 mt-1">
-            {subtitle}
+            {displaySubtitle}
           </p>
 
           <div className="mt-4 sm:mt-5 flex flex-wrap items-center justify-center gap-2">
             <span className="btn btn-primary btn-sm rounded-xl px-4 sm:px-5 shadow-sm font-semibold text-xs sm:text-sm">
-              Choose File{multiple ? 's' : ''}
+              {multiple ? t('chooseFiles', 'Choose Files') : t('chooseFile', 'Choose File')}
             </span>
             <span className="text-[10px] sm:text-[11px] text-base-content/50 px-2 py-1 bg-base-200 rounded-lg">
-              {accept.includes('pdf') ? 'PDF up to 100MB' : 'JPG, PNG, WebP up to 50MB'}
+              {accept.includes('pdf') ? t('pdfLimit', 'PDF up to 100MB') : t('imageLimit', 'JPG, PNG, WebP up to 50MB')}
             </span>
           </div>
         </div>
@@ -363,7 +368,7 @@ export default function UploadZone({
       {files.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-base-content/70 font-semibold px-1">
-            <span>Uploaded {files.length} {files.length === 1 ? 'file' : 'files'}</span>
+            <span>{t('uploaded', 'Uploaded')} {files.length} {files.length === 1 ? 'file' : 'files'}</span>
             {multiple && files.length > 1 && (
               <span className="text-[11px] font-normal text-base-content/50">
                 (Max {maxFiles} files)
@@ -402,7 +407,7 @@ export default function UploadZone({
                         onFileRemove(idx);
                       }}
                       className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error ml-2"
-                      title="Remove file"
+                      title={t('removeFile', 'Remove file')}
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

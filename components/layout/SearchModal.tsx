@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, X, ArrowRight, Sparkles, Layers, FileText, FileImage, Minimize2, Maximize2, Crop, RotateCw } from 'lucide-react';
 import { TOOLS, ToolMeta } from '@/lib/config/tools';
+import { useLanguage, getToolTranslationKey } from '@/lib/i18n/LanguageContext';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   Minimize2: <Minimize2 className="w-4 h-4 text-blue-500" />,
@@ -27,6 +28,7 @@ interface SearchModalProps {
 }
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
+  const { t } = useLanguage();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -84,7 +86,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tools (e.g. '10kb', 'convert png', 'merge pdf', 'resize')..."
+            placeholder={t('heroSearchPlaceholder', "Search tools (e.g. '10kb', 'convert png', 'merge pdf', 'resize')...")}
             className="w-full bg-transparent border-none outline-none text-base-content placeholder:text-base-content/40 text-base"
           />
           {query && (
@@ -106,39 +108,45 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         {/* Results List */}
         <div className="max-h-[60vh] overflow-y-auto p-2 divide-y divide-base-200">
           {results.length > 0 ? (
-            results.map((tool) => (
-              <Link
-                key={tool.id}
-                href={`/${tool.slug}`}
-                onClick={onClose}
-                className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200/80 transition-colors group cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    {ICON_MAP[tool.icon] || <FileText className="w-4 h-4 text-primary" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-base-content group-hover:text-primary transition-colors">
-                        {tool.name}
-                      </span>
-                      {tool.badge && (
-                        <span className="badge badge-xs badge-primary font-medium">
-                          {tool.badge}
-                        </span>
-                      )}
+            results.map((tool) => {
+              const toolKey = getToolTranslationKey(tool.slug);
+              const toolName = t(toolKey, tool.name);
+              const toolDesc = t(`${toolKey}Desc`, tool.description);
+
+              return (
+                <Link
+                  key={tool.id}
+                  href={`/${tool.slug}`}
+                  onClick={onClose}
+                  className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200/80 transition-colors group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-base-200 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      {ICON_MAP[tool.icon] || <FileText className="w-4 h-4 text-primary" />}
                     </div>
-                    <p className="text-xs text-base-content/60 line-clamp-1">
-                      {tool.description}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-base-content group-hover:text-primary transition-colors">
+                          {toolName}
+                        </span>
+                        {tool.badge && (
+                          <span className="badge badge-xs badge-primary font-medium">
+                            {tool.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-base-content/60 line-clamp-1">
+                        {toolDesc}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-base-content/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-              </Link>
-            ))
+                  <ArrowRight className="w-4 h-4 text-base-content/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                </Link>
+              );
+            })
           ) : (
             <div className="py-12 text-center text-base-content/50">
-              <p className="text-sm font-medium">No tools found matching &quot;{query}&quot;</p>
+              <p className="text-sm font-medium">{t('noToolsMatching', 'No tools found matching')} &quot;{query}&quot;</p>
               <p className="text-xs mt-1">Try searching for &quot;compress&quot;, &quot;pdf&quot;, &quot;convert&quot;, or &quot;10kb&quot;.</p>
             </div>
           )}
@@ -147,7 +155,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
         {/* Footer info */}
         <div className="px-4 py-2 bg-base-200/50 border-t border-base-300 flex items-center justify-between text-xs text-base-content/50">
           <span>{TOOLS.length} total free online tools</span>
-          <span className="hidden sm:inline">Press ESC to close</span>
+          <span className="hidden sm:inline">{t('pressEsc', 'Press ESC to close')}</span>
         </div>
       </div>
     </div>

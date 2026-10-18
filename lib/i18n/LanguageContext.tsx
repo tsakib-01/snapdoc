@@ -1,6 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { PAGE_TRANSLATIONS, getToolTranslationKey } from './pageTranslations';
+
+export { getToolTranslationKey };
 
 export interface SiteLanguage {
   code: string;
@@ -1383,6 +1386,14 @@ if (TRANSLATIONS.tur) {
 TRANSLATIONS.sw = TRANSLATIONS.swa = TRANSLATIONS.sw;
 TRANSLATIONS.bn = TRANSLATIONS.ben = TRANSLATIONS.bn;
 TRANSLATIONS.zh = TRANSLATIONS['zh-CN'];
+
+// Merge full page translations across all languages
+for (const [langCode, pageDict] of Object.entries(PAGE_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], pageDict);
+}
 
 interface LanguageContextType {
   language: string;

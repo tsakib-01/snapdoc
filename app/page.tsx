@@ -18,8 +18,10 @@ import {
 import { TOOLS, CATEGORIES, ToolMeta } from '@/lib/config/tools';
 import ToolCard from '@/components/ui/ToolCard';
 import AdSlot from '@/components/ui/AdSlot';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function HomePage() {
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -46,15 +48,15 @@ export default function HomePage() {
           {/* Tagline Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20 shadow-sm animate-in fade-in duration-300">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Fast, Free & 100% In-Memory Processing</span>
+            <span>{t('heroBadge', 'Fast, Free & 100% In-Memory Processing')}</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-base-content leading-tight">
-            Free Online <span className="text-primary bg-gradient-to-r from-primary to-cyan-500 bg-clip-text text-transparent">Image & PDF</span> Tools
+            {t('heroTitle', 'Free Online Image & PDF Tools')}
           </h1>
 
           <p className="text-base sm:text-lg text-base-content/75 max-w-2xl mx-auto leading-relaxed">
-            Compress, resize, convert, merge, split, and optimize your files in seconds. No signup required, zero storage, and 100% private.
+            {t('heroSubtitle', 'Compress, resize, convert, merge, split, and optimize your files in seconds. No signup required, zero storage, and 100% private.')}
           </p>
 
           {/* Quick Hero Search Input */}
@@ -65,7 +67,7 @@ export default function HomePage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search any tool (e.g. 10KB, compress, PNG to JPG, PDF merge)..."
+                placeholder={t('heroSearchPlaceholder', 'Search any tool (e.g. 10KB, compress, PNG to JPG, PDF merge)...')}
                 className="w-full px-4 py-3.5 bg-transparent border-none outline-none text-sm sm:text-base text-base-content placeholder:text-base-content/40"
               />
               {searchQuery && (
@@ -82,7 +84,7 @@ export default function HomePage() {
 
           {/* Popular Search Shortcuts */}
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-base-content/60 pt-1">
-            <span className="font-semibold text-base-content/70">Popular:</span>
+            <span className="font-semibold text-base-content/70">{t('popularLabel', 'Popular:')}</span>
             <Link href="/compress-jpg-to-10kb" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
               JPG to 10KB
             </Link>
@@ -109,22 +111,37 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Category Tabs */}
         <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-2 no-scrollbar">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => {
-                setSelectedCategory(cat.id);
-                setSearchQuery('');
-              }}
-              className={`btn btn-sm rounded-xl whitespace-nowrap px-4 font-semibold transition-all cursor-pointer ${
-                selectedCategory === cat.id
-                  ? 'btn-primary text-white shadow-md shadow-primary/20'
-                  : 'btn-ghost bg-base-100 border border-base-300 text-base-content/70 hover:text-base-content'
-              }`}
-            >
-              {cat.name} ({cat.count})
-            </button>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const catName =
+              cat.id === 'all'
+                ? t('catAll', cat.name)
+                : cat.id === 'image'
+                ? t('catImage', cat.name)
+                : cat.id === 'pdf'
+                ? t('catPdf', cat.name)
+                : cat.id === 'convert'
+                ? t('catConvert', cat.name)
+                : cat.id === 'organize'
+                ? t('catOrganize', cat.name)
+                : cat.name;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  setSearchQuery('');
+                }}
+                className={`btn btn-sm rounded-xl whitespace-nowrap px-4 font-semibold transition-all cursor-pointer ${
+                  selectedCategory === cat.id
+                    ? 'btn-primary text-white shadow-md shadow-primary/20'
+                    : 'btn-ghost bg-base-100 border border-base-300 text-base-content/70 hover:text-base-content'
+                }`}
+              >
+                {catName} ({cat.count})
+              </button>
+            );
+          })}
         </div>
 
         {/* Tools Grid */}
@@ -191,25 +208,25 @@ export default function HomePage() {
             <div className="p-4 rounded-2xl bg-base-200/50 border border-base-200 space-y-1">
               <div className="flex items-center gap-2 text-primary font-bold text-sm">
                 <CheckCircle2 className="w-4 h-4" />
-                Guaranteed Target Size
+                {t('feature1Title', 'Guaranteed Target Size')}
               </div>
-              <p className="text-xs text-base-content/60">Hits your exact KB ceiling reliably.</p>
+              <p className="text-xs text-base-content/60">{t('feature1Desc', 'Hits your exact KB ceiling reliably.')}</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-base-200/50 border border-base-200 space-y-1">
               <div className="flex items-center gap-2 text-emerald-500 font-bold text-sm">
                 <ShieldCheck className="w-4 h-4" />
-                Zero File Storage
+                {t('feature2Title', 'Zero File Storage')}
               </div>
-              <p className="text-xs text-base-content/60">Processed strictly in memory buffer.</p>
+              <p className="text-xs text-base-content/60">{t('feature2Desc', 'Processed strictly in memory buffer.')}</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-base-200/50 border border-base-200 space-y-1">
               <div className="flex items-center gap-2 text-amber-500 font-bold text-sm">
                 <Zap className="w-4 h-4" />
-                Sub-Second Speed
+                {t('feature3Title', 'Sub-Second Speed')}
               </div>
-              <p className="text-xs text-base-content/60">Optimized for instant browser response.</p>
+              <p className="text-xs text-base-content/60">{t('feature3Desc', 'Optimized for instant browser response.')}</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-base-200/50 border border-base-200 space-y-1">

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Globe, Check, ChevronUp, X } from 'lucide-react';
 
 export interface SiteLanguage {
   code: string;
@@ -9,7 +9,8 @@ export interface SiteLanguage {
   nativeName: string;
 }
 
-export const SITE_LANGUAGES: SiteLanguage[] = [
+// 27 languages matching the exact 3-column structure (9 per column)
+export const COLUMN_1_LANGUAGES: SiteLanguage[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
@@ -19,6 +20,9 @@ export const SITE_LANGUAGES: SiteLanguage[] = [
   { code: 'ja', name: 'Japanese', nativeName: '日本語' },
   { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   { code: 'ko', name: 'Korean', nativeName: '한국어' },
+];
+
+export const COLUMN_2_LANGUAGES: SiteLanguage[] = [
   { code: 'zh-CN', name: 'Chinese Simplified', nativeName: '中文 (简体)' },
   { code: 'zh-TW', name: 'Chinese Traditional', nativeName: '中文 (繁體)' },
   { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
@@ -28,25 +32,35 @@ export const SITE_LANGUAGES: SiteLanguage[] = [
   { code: 'el', name: 'Greek', nativeName: 'Ελληνικά' },
   { code: 'hin', name: 'Hindi', nativeName: 'हिन्दी' },
   { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
+];
+
+export const COLUMN_3_LANGUAGES: SiteLanguage[] = [
   { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu' },
-  { code: 'pl', name: 'Polish', nativeName: 'Polski' },
+  { code: 'pol', name: 'Polish', nativeName: 'Polski' },
   { code: 'sv', name: 'Swedish', nativeName: 'Svenska' },
   { code: 'th', name: 'Thai', nativeName: 'ภาษาไทย' },
-  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
+  { code: 'tur', name: 'Turkish', nativeName: 'Türkçe' },
   { code: 'uk', name: 'Ukrainian', nativeName: 'Українська' },
   { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
   { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' },
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
 ];
 
+export const ALL_LANGUAGES: SiteLanguage[] = [
+  ...COLUMN_1_LANGUAGES,
+  ...COLUMN_2_LANGUAGES,
+  ...COLUMN_3_LANGUAGES,
+];
+
 export default function LanguageSelector() {
   const [currentLang, setCurrentLang] = useState<string>('en');
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
 
-    // Read active language from cookie or localStorage
     const getCookie = (name: string) => {
       const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
       return match ? decodeURIComponent(match[2]) : null;
@@ -69,7 +83,7 @@ export default function LanguageSelector() {
         new (window as any).google.translate.TranslateElement(
           {
             pageLanguage: 'en',
-            includedLanguages: SITE_LANGUAGES.map((l) => l.code).join(','),
+            includedLanguages: ALL_LANGUAGES.map((l) => l.code).join(','),
             autoDisplay: false,
           },
           'google_translate_element'
@@ -87,8 +101,34 @@ export default function LanguageSelector() {
     }
   }, []);
 
+  // Handle click outside to close mega menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
   const handleLanguageChange = (langCode: string) => {
     setCurrentLang(langCode);
+    setIsOpen(false);
     localStorage.setItem('preferred_language', langCode);
 
     const hostname = window.location.hostname;
@@ -117,24 +157,126 @@ export default function LanguageSelector() {
     }
   };
 
+  const activeLangObj = ALL_LANGUAGES.find((l) => l.code === currentLang) || ALL_LANGUAGES[0];
+
   return (
-    <div className="notranslate flex items-center gap-2">
+    <div ref={containerRef} className="notranslate relative inline-block text-left">
       <div id="google_translate_element" className="hidden" style={{ display: 'none' }} />
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-base-100 border border-base-300 shadow-2xs hover:border-primary/40 transition-colors">
-        <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
-        <select
-          aria-label="Select Language"
-          value={mounted ? currentLang : 'en'}
-          onChange={(e) => handleLanguageChange(e.target.value)}
-          className="bg-transparent text-xs font-medium text-base-content cursor-pointer focus:outline-hidden py-0.5 pr-1"
+
+      {/* Trigger Button replacing "Developed by Tasnim Sakib" */}
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-base-100 hover:bg-base-200 border border-base-300 shadow-2xs hover:border-primary/50 text-xs font-semibold text-base-content transition-all group"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
+        <Globe className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:rotate-12" />
+        <span>{mounted ? activeLangObj.nativeName : 'English'}</span>
+        <ChevronUp className={`w-3.5 h-3.5 text-base-content/60 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* 3-Column Mega Menu Popover (Opens Upward from Footer) */}
+      {isOpen && (
+        <div
+          className="absolute bottom-full left-0 mb-3 z-50 w-[92vw] sm:w-[580px] md:w-[660px] max-w-[96vw] bg-base-100 rounded-3xl border border-base-300 shadow-2xl p-5 sm:p-6 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl"
+          role="dialog"
+          aria-label="Language Selector Mega Menu"
         >
-          {SITE_LANGUAGES.map((lang) => (
-            <option key={lang.code} value={lang.code} className="bg-base-100 text-base-content">
-              {lang.code === 'en' ? 'English' : `${lang.nativeName} (${lang.name})`}
-            </option>
-          ))}
-        </select>
-      </div>
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-base-200">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-primary" />
+              <span className="font-extrabold text-xs uppercase tracking-wider text-base-content">
+                Select Your Language
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="btn btn-ghost btn-xs btn-circle text-base-content/60 hover:text-base-content"
+              aria-label="Close language menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* 3 Columns Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-h-[60vh] sm:max-h-none overflow-y-auto sm:overflow-visible pr-1 sm:pr-0">
+            {/* Column 1 */}
+            <div className="flex flex-col space-y-1">
+              {COLUMN_1_LANGUAGES.map((lang) => {
+                const isSelected = currentLang === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => handleLanguageChange(lang.code)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left ${
+                      isSelected
+                        ? 'bg-primary/10 text-primary font-bold shadow-2xs'
+                        : 'text-base-content/80 hover:bg-base-200/70 hover:text-base-content font-medium'
+                    }`}
+                  >
+                    <span className="w-4 flex items-center justify-center shrink-0">
+                      {isSelected ? <Check className="w-3.5 h-3.5 text-primary stroke-[2.5]" /> : null}
+                    </span>
+                    <span className="truncate">{lang.nativeName}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Column 2 */}
+            <div className="flex flex-col space-y-1 border-t sm:border-t-0 sm:border-l border-base-200 pt-2 sm:pt-0 sm:pl-3">
+              {COLUMN_2_LANGUAGES.map((lang) => {
+                const isSelected = currentLang === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => handleLanguageChange(lang.code)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left ${
+                      isSelected
+                        ? 'bg-primary/10 text-primary font-bold shadow-2xs'
+                        : 'text-base-content/80 hover:bg-base-200/70 hover:text-base-content font-medium'
+                    }`}
+                  >
+                    <span className="w-4 flex items-center justify-center shrink-0">
+                      {isSelected ? <Check className="w-3.5 h-3.5 text-primary stroke-[2.5]" /> : null}
+                    </span>
+                    <span className="truncate">{lang.nativeName}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Column 3 */}
+            <div className="flex flex-col space-y-1 border-t sm:border-t-0 sm:border-l border-base-200 pt-2 sm:pt-0 sm:pl-3">
+              {COLUMN_3_LANGUAGES.map((lang) => {
+                const isSelected = currentLang === lang.code;
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => handleLanguageChange(lang.code)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left ${
+                      isSelected
+                        ? 'bg-primary/10 text-primary font-bold shadow-2xs'
+                        : 'text-base-content/80 hover:bg-base-200/70 hover:text-base-content font-medium'
+                    }`}
+                  >
+                    <span className="w-4 flex items-center justify-center shrink-0">
+                      {isSelected ? <Check className="w-3.5 h-3.5 text-primary stroke-[2.5]" /> : null}
+                    </span>
+                    <span className="truncate">{lang.nativeName}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

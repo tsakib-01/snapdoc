@@ -8,6 +8,7 @@ import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface ExtractedPage {
   pageNumber: number;
@@ -44,6 +45,7 @@ interface PdfToJpgToolProps {
 }
 
 export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps) {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const { isProcessing, progress, setProgress, startProgress, finishProgress, resetProgress } = useProgressAction();
   const [pages, setPages] = useState<ExtractedPage[]>([]);
@@ -186,8 +188,8 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
           accept=".pdf,application/pdf"
           files={files}
           onFilesSelected={setFiles}
-          title={`Drop PDF file to extract ${label} pages`}
-          subtitle={`Converts every page to high-definition ${isPng ? 'PNG' : 'JPEG'} images`}
+          title={t('dropPdfToExtract', `Drop PDF file to extract ${label} pages`)}
+          subtitle={t('pdfToImagesSubtitle', `Converts every page to high-definition ${isPng ? 'PNG' : 'JPEG'} images`)}
         />
       )}
 
@@ -199,11 +201,11 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                 {files[0].name}
               </p>
               <p className="text-xs text-base-content/60">
-                File Size: <strong>{formatBytes(files[0].size)}</strong>
+                {t('fileSize', 'File Size')}: <strong>{formatBytes(files[0].size)}</strong>
               </p>
             </div>
             <button onClick={handleReset} className="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
-              Change
+              {t('changeFile', 'Change')}
             </button>
           </div>
 
@@ -218,10 +220,10 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
             onClick={handleConvert}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel={`Extracting ${label} Pages`}
+            loadingLabel={`${t('converting', 'Converting')}...`}
           >
             <ImageIcon className="w-5 h-5" />
-            Convert PDF to {label}
+            {t('convertTo', 'Convert to')} {label}
           </ProcessingButton>
         </div>
       )}
@@ -233,10 +235,10 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-base-200/60 border border-base-300">
             <div>
               <h4 className="font-bold text-base text-base-content">
-                Successfully Extracted {pages.length} Page{pages.length === 1 ? '' : 's'}
+                {t('successfullyExtracted', 'Successfully Extracted')} {pages.length} {pages.length === 1 ? t('page', 'Page') : t('pages', 'Pages')}
               </h4>
               <p className="text-xs text-base-content/60">
-                Download individual {label} images or download all in a single ZIP archive.
+                {t('fileReadyDesc', `Download individual ${label} images or download all in a single ZIP archive.`)}
               </p>
             </div>
 
@@ -248,14 +250,14 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                 className="btn btn-primary btn-sm rounded-xl gap-1.5 flex-1 sm:flex-initial text-white font-semibold shadow-md shadow-primary/20"
               >
                 {zipProgress ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
-                Download All as ZIP
+                {t('downloadAllZip', 'Download All as ZIP')}
               </button>
               <button
                 type="button"
                 onClick={handleReset}
                 className="btn btn-ghost btn-sm rounded-xl border border-base-300"
               >
-                New PDF
+                {t('newPdf', 'New PDF')}
               </button>
             </div>
           </div>
@@ -268,11 +270,11 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                 className="flex flex-col rounded-2xl border border-base-300 bg-base-100 overflow-hidden shadow-sm group hover:shadow-md transition-shadow"
               >
                 <div className="p-2.5 bg-base-200/50 border-b border-base-300 flex items-center justify-between text-xs font-semibold">
-                  <span className="text-base-content/70">Page {p.pageNumber}</span>
+                  <span className="text-base-content/70">{t('page', 'Page')} {p.pageNumber}</span>
                   {p.size > 0 ? (
                     <span className="badge badge-sm badge-neutral">{formatBytes(p.size)}</span>
                   ) : (
-                    <span className="badge badge-sm badge-ghost animate-pulse">Loading...</span>
+                    <span className="badge badge-sm badge-ghost animate-pulse">{t('loading', 'Loading...')}</span>
                   )}
                 </div>
 
@@ -287,7 +289,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2.5 text-base-content/50 py-12">
                       <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                      <span className="text-xs font-semibold text-base-content/70">Loading...</span>
+                      <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
                     </div>
                   )}
                 </div>
@@ -300,7 +302,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                     className="btn btn-outline btn-primary btn-xs w-full rounded-xl gap-1.5 font-semibold"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    Download {label}
+                    {t('download', 'Download')} {label}
                   </button>
                 </div>
               </div>

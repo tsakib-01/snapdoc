@@ -12,11 +12,13 @@ import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
 import { compressImageGeneralInBrowser } from '@/lib/browser-converters/image-compress';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 // Optimal high-efficiency compression quality giving maximum file reduction with clear visuals
 const MAX_COMPRESSION_QUALITY = 65;
 
 export default function GeneralCompressorTool() {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [targetFormat, setTargetFormat] = useState<'original' | 'jpeg' | 'png' | 'webp'>('original');
   const { isProcessing, progress, startProgress, finishProgress, resetProgress } = useProgressAction();
@@ -148,8 +150,8 @@ export default function GeneralCompressorTool() {
           accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
-          title="Drop image to optimize"
-          subtitle="Supports JPG, PNG, WebP, and camera formats"
+          title={t('dropImageToOptimize', 'Drop image to optimize')}
+          subtitle={t('supportsJpgPngWebp', 'Supports JPG, PNG, WebP, and camera formats')}
         />
       )}
 
@@ -181,7 +183,7 @@ export default function GeneralCompressorTool() {
                   {files[0].name}
                 </p>
                 <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
-                  <span>Original: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  <span>{t('original', 'Original')}: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
                   {origDimensions && (
                     <span className="badge badge-sm badge-ghost text-[10px] font-mono">
                       {origDimensions.width} × {origDimensions.height} px
@@ -191,7 +193,7 @@ export default function GeneralCompressorTool() {
               </div>
             </div>
             <button onClick={handleReset} className="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
-              Change File
+              {t('changeFile', 'Change File')}
             </button>
           </div>
 
@@ -201,7 +203,7 @@ export default function GeneralCompressorTool() {
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-primary" />
-                  Uploaded Image Preview
+                  {t('uploadedImagePreview', 'Uploaded Image Preview')}
                 </span>
                 {origDimensions && (
                   <span className="badge badge-sm badge-ghost font-mono text-[11px]">
@@ -227,7 +229,7 @@ export default function GeneralCompressorTool() {
           ) : isPreviewLoading ? (
             <div className="rounded-2xl border border-base-300 bg-base-100 p-8 flex flex-col items-center justify-center gap-2 text-xs text-base-content/60">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <span>Preparing uploaded image preview...</span>
+              <span>{t('preparingPreview', 'Preparing uploaded image preview...')}</span>
             </div>
           ) : null}
 
@@ -239,22 +241,22 @@ export default function GeneralCompressorTool() {
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-base-content">Maximum Compression</h4>
+                  <h4 className="font-bold text-sm text-base-content">{t('maximumCompression', 'Maximum Compression')}</h4>
                   <p className="text-xs text-base-content/60">
-                    Automatically applies the highest possible file size reduction while maintaining clean visual clarity.
+                    {t('maxCompressionDesc', 'Automatically applies the highest possible file size reduction while maintaining clean visual clarity.')}
                   </p>
                 </div>
               </div>
               <span className="badge badge-success text-success-content font-bold text-xs px-2.5 py-1 shrink-0 gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Auto-Optimized</span>
+                <span>{t('autoOptimized', 'Auto-Optimized')}</span>
               </span>
             </div>
 
             {/* Output Format Picker */}
             <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-base-200/60">
               <span className="text-xs font-semibold text-base-content/70">
-                Output Format:
+                {t('outputFormat', 'Output Format')}:
               </span>
               <div className="join">
                 {(['original', 'jpeg', 'png', 'webp'] as const).map((fmt) => (
@@ -284,10 +286,10 @@ export default function GeneralCompressorTool() {
             onClick={handleProcess}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel="Compressing"
+            loadingLabel={t('compressing', 'Compressing')}
           >
             <Sparkles className="w-5 h-5" />
-            <span>Compress Image</span>
+            <span>{t('compressImageBtn', 'Compress Image')}</span>
           </ProcessingButton>
         </div>
       )}

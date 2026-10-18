@@ -7,10 +7,12 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 type FlattenMode = 'annotations' | 'uneditable';
 
 export default function FlattenPdfTool() {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [mode, setMode] = useState<FlattenMode>('annotations');
   const { isProcessing, progress, setProgress, startProgress, finishProgress, resetProgress } = useProgressAction();
@@ -166,8 +168,8 @@ export default function FlattenPdfTool() {
           accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
-          title="Upload PDF to Flatten"
-          subtitle="Lock form fields, signatures, and annotations or make entire PDF uneditable."
+          title={t('cropPdf', 'Upload PDF to Flatten')}
+          subtitle={t('flattenPdfSubtitle', 'Lock form fields, signatures, and annotations or make entire PDF uneditable.')}
           onFilesSelected={(files) => setFile(files[0])}
         />
       )}
@@ -190,7 +192,7 @@ export default function FlattenPdfTool() {
               onClick={handleReset}
               className="btn btn-ghost btn-xs text-base-content/60 hover:text-error shrink-0"
             >
-              Change
+              {t('changeFile', 'Change')}
             </button>
           </div>
 
@@ -202,7 +204,7 @@ export default function FlattenPdfTool() {
                 <Layers className="w-5 h-5" />
               </div>
               <h3 className="font-extrabold text-xl text-base-content tracking-tight">
-                Flatten
+                {t('cropPdf', 'Flatten')}
               </h3>
             </div>
 
@@ -235,10 +237,10 @@ export default function FlattenPdfTool() {
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-bold text-sm sm:text-base text-base-content">
-                    Lock annotations in the PDF
+                    {t('lockAnnotations', 'Lock annotations in the PDF')}
                   </h4>
                   <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed">
-                    Comments, signatures, and form fields are combined with the rest of the PDF. Text, including text fields, stays editable and can be copied.
+                    {t('lockAnnotationsDesc', 'Comments, signatures, and form fields are combined with the rest of the PDF. Text, including text fields, stays editable and can be copied.')}
                   </p>
                 </div>
               </div>
@@ -270,10 +272,10 @@ export default function FlattenPdfTool() {
                 </div>
                 <div className="space-y-1">
                   <h4 className="font-bold text-sm sm:text-base text-base-content">
-                    Make PDF uneditable
+                    {t('makeUneditable', 'Make PDF uneditable')}
                   </h4>
                   <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed">
-                    Every page becomes an image. The file stays a PDF, but text can&apos;t be edited or copied.
+                    {t('makeUneditableDesc', "Every page becomes an image. The file stays a PDF, but text can't be edited or copied.")}
                   </p>
                 </div>
               </div>
@@ -290,10 +292,10 @@ export default function FlattenPdfTool() {
               onClick={handleProcess}
               isProcessing={isProcessing}
               progress={progress}
-              loadingLabel="Flattening PDF"
+              loadingLabel={t('processing', 'Flattening PDF')}
             >
               <Layers className="w-5 h-5" />
-              Flatten PDF
+              {t('cropPdf', 'Flatten PDF')}
             </ProcessingButton>
           </div>
         </div>
@@ -306,14 +308,14 @@ export default function FlattenPdfTool() {
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your PDF has been flattened successfully!"
+          title={t('flattenSuccess', 'Your PDF has been flattened successfully!')}
           subtitle={
             resultData.mode === 'uneditable'
-              ? 'Every page was converted to a secure, non-editable image layer. Text cannot be copied or modified.'
-              : 'All form fields, signatures, and annotations have been merged into the document.'
+              ? t('uneditableSuccessDesc', 'Every page was converted to a secure, non-editable image layer. Text cannot be copied or modified.')
+              : t('annotationsSuccessDesc', 'All form fields, signatures, and annotations have been merged into the document.')
           }
-          extraInfo={resultData.mode === 'uneditable' ? 'Mode: Uneditable Image Pages' : 'Mode: Locked Annotations'}
-          resetLabel="Flatten Another PDF"
+          extraInfo={resultData.mode === 'uneditable' ? t('makeUneditable', 'Mode: Uneditable Image Pages') : t('lockAnnotations', 'Mode: Locked Annotations')}
+          resetLabel={t('processAnother', 'Flatten Another PDF')}
           onReset={handleReset}
         />
       )}

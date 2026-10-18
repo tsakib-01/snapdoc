@@ -10,8 +10,10 @@ import { addPageNumbersToPdf } from '@/lib/pdf/pageNumberer';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function PageNumbererTool() {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PdfPageThumbnail[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -188,11 +190,11 @@ export default function PageNumbererTool() {
           accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
-          title="Upload PDF to Add Page Numbers"
-          subtitle="Stamp page numbers at any position with customizable numbering formats."
+          title={t('pageNumbers', 'Add Page Numbers to PDF')}
+          subtitle={t('pageNumbersSubtitle', 'Stamp page numbers at any position with customizable numbering formats.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}
           loading={loadingThumbnails}
-          loadingMessage="Loading document pages & initializing numbering studio..."
+          loadingMessage={t('readingPreparingFile', 'Loading document pages & initializing numbering studio...')}
           files={file ? [file] : []}
         />
       )}
@@ -206,10 +208,10 @@ export default function PageNumbererTool() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-base-content truncate max-w-[200px] sm:max-w-md">{file.name}</h3>
-                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • {pages.length} Pages</p>
+                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • {pages.length} {pages.length === 1 ? t('page', 'Page') : t('pages', 'Pages')}</p>
               </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title="Reset">
+            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title={t('reset', 'Reset')}>
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -220,10 +222,10 @@ export default function PageNumbererTool() {
               <div className="w-full flex items-center justify-between pb-3 text-xs font-bold text-base-content/70">
                 <span className="flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-primary" />
-                  Live Placement Preview (Page {currentPage} of {pages.length || 1})
+                  {t('liveNumberPreview', 'Live Placement Preview')} ({t('page', 'Page')} {currentPage} {t('of', 'of')} {pages.length || 1})
                 </span>
                 <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  Real-time preview
+                  {t('realtimePreview', 'Real-time preview')}
                 </span>
               </div>
 
@@ -335,7 +337,7 @@ export default function PageNumbererTool() {
                 {/* Position Picker */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-base-content/70">
-                    Number Placement Position
+                    {t('placementPosition', 'Number Placement Position')}
                   </label>
                   <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-base-200/50 border border-base-300">
                     {positions.map((pos) => (
@@ -349,7 +351,7 @@ export default function PageNumbererTool() {
                             : 'bg-base-100 hover:bg-base-300 text-base-content/70 border border-base-300/50'
                         }`}
                       >
-                        {pos.label}
+                        {t(pos.label, pos.label)}
                       </button>
                     ))}
                   </div>
@@ -359,7 +361,7 @@ export default function PageNumbererTool() {
                 <div className="space-y-3.5 p-4 rounded-2xl bg-base-200/40 border border-base-300">
                   <div className="space-y-1">
                     <label className="text-xs font-bold uppercase tracking-wider text-base-content/70">
-                      Numbering Format
+                      {t('numberingFormat', 'Numbering Format')}
                     </label>
                     <select
                       value={format}
@@ -375,7 +377,7 @@ export default function PageNumbererTool() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-xs text-base-content/70 font-medium">Start From Page</label>
+                      <label className="text-xs text-base-content/70 font-medium">{t('startFromPage', 'Start From Page')}</label>
                       <input
                         type="number"
                         min="1"
@@ -386,7 +388,7 @@ export default function PageNumbererTool() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-xs text-base-content/70 font-medium">First Number Value</label>
+                      <label className="text-xs text-base-content/70 font-medium">{t('firstNumberValue', 'First Number Value')}</label>
                       <input
                         type="number"
                         min="1"
@@ -400,7 +402,7 @@ export default function PageNumbererTool() {
                   {/* Font Size with Plus / Minus buttons and Slider */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span className="font-medium">Font Size</span>
+                      <span className="font-medium">{t('fontSize', 'Font Size')}</span>
                       <span className="font-bold text-primary px-2 py-0.5 rounded-md bg-primary/10">
                         {fontSize}pt
                       </span>
@@ -438,7 +440,7 @@ export default function PageNumbererTool() {
                     {/* 1. Change Font Color */}
                     <div className="space-y-1.5">
                       <label className="text-xs text-base-content/70 font-medium flex items-center justify-between">
-                        <span>Font Color</span>
+                        <span>{t('fontColor', 'Font Color')}</span>
                         <span
                           className="w-3.5 h-3.5 rounded-full border border-base-300 shadow-2xs shrink-0"
                           style={{ backgroundColor: fontColor }}
@@ -470,7 +472,7 @@ export default function PageNumbererTool() {
                     {/* 2. Change Background Color */}
                     <div className="space-y-1.5">
                       <label className="text-xs text-base-content/70 font-medium flex items-center justify-between">
-                        <span>Background Color</span>
+                        <span>{t('backgroundColor', 'Background Color')}</span>
                         <span
                           className="w-3.5 h-3.5 rounded-full border border-base-300 shadow-2xs shrink-0"
                           style={{ backgroundColor: bgColor === 'transparent' ? '#ffffff' : bgColor }}
@@ -498,7 +500,7 @@ export default function PageNumbererTool() {
                           onChange={(e) => setBgColor(e.target.value)}
                           className="select select-bordered select-xs w-full rounded-xl text-xs font-medium"
                         >
-                          <option value="transparent">Transparent (None)</option>
+                          <option value="transparent">{t('transparent', 'Transparent (None)')}</option>
                           <option value="#ffffff">White Badge</option>
                           <option value="#000000">Black Badge</option>
                           <option value="#2563eb">Blue Badge</option>
@@ -522,10 +524,10 @@ export default function PageNumbererTool() {
                   onClick={handleProcess}
                   isProcessing={isProcessing}
                   progress={progress}
-                  loadingLabel="Numbering PDF"
+                  loadingLabel={t('processing', 'Numbering PDF')}
                 >
                   <Hash className="w-4 h-4" />
-                  <span>Add Page Numbers</span>
+                  <span>{t('pageNumbers', 'Add Page Numbers')}</span>
                 </ProcessingButton>
               </div>
             </div>
@@ -540,9 +542,9 @@ export default function PageNumbererTool() {
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your PDF has been numbered successfully!"
-          subtitle="Page numbers have been added to your document. You can now download your file below."
-          resetLabel="Number Another PDF"
+          title={t('pageNumberSuccess', 'Your PDF has been numbered successfully!')}
+          subtitle={t('fileReadyDesc', 'Page numbers have been added to your document. You can now download your file below.')}
+          resetLabel={t('processAnother', 'Number Another PDF')}
           extraInfo={pages.length > 0 ? `${pages.length} Pages` : undefined}
           pageCount={pages.length}
           onReset={handleReset}

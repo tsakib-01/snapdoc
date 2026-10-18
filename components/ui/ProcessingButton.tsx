@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface ProcessingButtonProps {
   onClick?: () => void | Promise<void>;
@@ -21,18 +22,21 @@ export default function ProcessingButton({
   progress = 0,
   disabled = false,
   children,
-  loadingLabel = 'Processing',
+  loadingLabel,
   className = '',
   type = 'button',
   showStageIndicator = true,
 }: ProcessingButtonProps) {
+  const { t } = useLanguage();
   const clampedProgress = Math.min(100, Math.max(0, Math.round(progress)));
 
+  const displayLoadingLabel = loadingLabel ? t(loadingLabel, loadingLabel) : t('processing', 'Processing');
+
   const getStageText = (p: number) => {
-    if (p >= 100) return 'Finalizing output...';
-    if (p >= 80) return 'Optimizing quality & output...';
-    if (p >= 40) return 'Processing data stream...';
-    return 'Analyzing file structure...';
+    if (p >= 100) return t('finalizingOutput', 'Finalizing output...');
+    if (p >= 80) return t('optimizingQuality', 'Optimizing quality & output...');
+    if (p >= 40) return t('processingStream', 'Processing data stream...');
+    return t('analyzingStructure', 'Analyzing file structure...');
   };
 
   if (!isProcessing) {
@@ -70,7 +74,7 @@ export default function ProcessingButton({
             <Loader2 className="w-5 h-5 animate-spin text-white shrink-0" />
           )}
           <span className="text-sm sm:text-base font-bold truncate">
-            {clampedProgress >= 100 ? 'Completed!' : `${loadingLabel}...`}
+            {clampedProgress >= 100 ? t('completed', 'Completed!') : `${displayLoadingLabel}...`}
           </span>
         </div>
 

@@ -11,12 +11,14 @@ import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
 import { transformImageInBrowser } from '@/lib/browser-converters/image-compress';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface TransformToolProps {
   mode: 'rotate' | 'flip';
 }
 
 export default function TransformTool({ mode }: TransformToolProps) {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [rotateAngle, setRotateAngle] = useState<number>(0);
   const [flipH, setFlipH] = useState<boolean>(false);
@@ -186,7 +188,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
                   {files[0].name}
                 </p>
                 <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
-                  <span>Size: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  <span>{t('fileSize', 'Size')}: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
                   {origDimensions && (
                     <span className="badge badge-sm badge-ghost text-[10px] font-mono">
                       {origDimensions.width} × {origDimensions.height} px
@@ -200,14 +202,14 @@ export default function TransformTool({ mode }: TransformToolProps) {
               onClick={handleReset}
               className="btn btn-ghost btn-xs text-base-content/60 hover:text-error"
             >
-              Change File
+              {t('changeFile', 'Change File')}
             </button>
           </div>
 
           {/* Action Buttons */}
           <div className="p-5 rounded-2xl bg-base-200/40 border border-base-300 space-y-4">
             <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 block">
-              {mode === 'rotate' ? 'Select Rotation' : 'Select Flip Direction'}:
+              {mode === 'rotate' ? t('selectRotation', 'Select Rotation') : t('selectFlip', 'Select Flip Direction')}:
             </span>
 
             {mode === 'rotate' ? (
@@ -220,7 +222,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
                   }`}
                 >
                   <RotateCw className="w-4 h-4 shrink-0" />
-                  <span>90° Right</span>
+                  <span>{t('rotate90Right', '90° Right')}</span>
                 </button>
                 <button
                   type="button"
@@ -230,7 +232,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
                   }`}
                 >
                   <RotateCcw className="w-4 h-4 shrink-0" />
-                  <span>90° Left</span>
+                  <span>{t('rotate90Left', '90° Left')}</span>
                 </button>
                 <button
                   type="button"
@@ -240,7 +242,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
                   }`}
                 >
                   <RotateCw className="w-4 h-4 shrink-0" />
-                  <span>180° Flip</span>
+                  <span>{t('rotate180', '180° Flip')}</span>
                 </button>
               </div>
             ) : (
@@ -255,7 +257,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
                   }`}
                 >
                   <FlipHorizontal className="w-4 h-4 shrink-0" />
-                  <span>Flip Horizontal {flipH ? '✓' : ''}</span>
+                  <span>{t('flipHorizontal', 'Flip Horizontal')} {flipH ? '✓' : ''}</span>
                 </button>
                 <button
                   type="button"
@@ -267,7 +269,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
                   }`}
                 >
                   <FlipVertical className="w-4 h-4 shrink-0" />
-                  <span>Flip Vertical {flipV ? '✓' : ''}</span>
+                  <span>{t('flipVertical', 'Flip Vertical')} {flipV ? '✓' : ''}</span>
                 </button>
               </div>
             )}
@@ -294,7 +296,7 @@ export default function TransformTool({ mode }: TransformToolProps) {
           ) : isPreviewLoading ? (
             <div className="p-12 rounded-2xl bg-base-100 border border-base-300 flex flex-col items-center justify-center gap-2 text-base-content/60">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <span className="text-xs">Preparing image preview...</span>
+              <span className="text-xs">{t('preparingPreview', 'Preparing image preview...')}</span>
             </div>
           ) : null}
 
@@ -309,10 +311,10 @@ export default function TransformTool({ mode }: TransformToolProps) {
             onClick={handleProcess}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel="Applying Transformation"
+            loadingLabel={t('applyingTransformation', 'Applying Transformation')}
           >
             <Sparkles className="w-5 h-5" />
-            Apply & Download Image
+            {t('applyAndDownload', 'Apply & Download Image')}
           </ProcessingButton>
         </div>
       )}

@@ -9,6 +9,7 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { compressPdf } from '@/lib/browser-converters/pdf-compress';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 type CompressionLevel = 'extreme' | 'recommended' | 'low';
 
@@ -69,6 +70,7 @@ const LEVELS: LevelOption[] = [
 ];
 
 export default function CompressPdfTool() {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>('recommended');
   const { isProcessing, progress, startProgress, finishProgress, resetProgress, setProgress } = useProgressAction();
@@ -137,8 +139,8 @@ export default function CompressPdfTool() {
           accept=".pdf,application/pdf"
           files={files}
           onFilesSelected={setFiles}
-          title="Drop PDF file to optimize and compress"
-          subtitle="Reduces PDF file size cleanly while preserving crisp text readability"
+          title={t('dropPdfToCompress', 'Drop PDF file to optimize and compress')}
+          subtitle={t('compressPdfSubtitle', 'Reduces PDF file size cleanly while preserving crisp text readability')}
         />
       )}
 
@@ -155,7 +157,7 @@ export default function CompressPdfTool() {
                   {files[0].name}
                 </p>
                 <p className="text-xs text-base-content/60">
-                  Original Size: <strong>{formatBytes(files[0].size)}</strong>
+                  {t('originalSize', 'Original Size')}: <strong>{formatBytes(files[0].size)}</strong>
                 </p>
               </div>
             </div>
@@ -163,7 +165,7 @@ export default function CompressPdfTool() {
               onClick={handleReset}
               className="btn btn-ghost btn-xs text-base-content/60 hover:text-error shrink-0"
             >
-              Change
+              {t('changeFile', 'Change')}
             </button>
           </div>
 
@@ -172,16 +174,19 @@ export default function CompressPdfTool() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                 <Sliders className="w-4 h-4 text-primary" />
-                Select Compression Level
-              </span>
-              <span className="text-[11px] text-base-content/50 hidden sm:inline">
-                Click to switch mode
+                {t('selectCompressionLevel', 'Select Compression Level')}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {LEVELS.map((level) => {
                 const isSelected = compressionLevel === level.id;
+                const levelTitle =
+                  level.id === 'extreme'
+                    ? t('extremeCompression', 'Extreme Compression')
+                    : level.id === 'recommended'
+                    ? t('recommendedCompression', 'Recommended Compression')
+                    : t('lessCompression', 'Less Compression');
                 return (
                   <div
                     key={level.id}
@@ -202,7 +207,7 @@ export default function CompressPdfTool() {
                         <div className="flex items-center gap-1.5 shrink-0">
                           {level.icon}
                           <span className="font-extrabold text-sm sm:text-base text-base-content">
-                            {level.title}
+                            {levelTitle}
                           </span>
                         </div>
                         <span
@@ -218,7 +223,7 @@ export default function CompressPdfTool() {
 
                     <div className="pt-3 mt-3 border-t border-base-200/60 flex items-center justify-between">
                       <span className="text-[11px] font-medium text-base-content/50">
-                        {isSelected ? 'Active choice' : 'Click to select'}
+                        {isSelected ? '✓' : ''}
                       </span>
                       <div
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
@@ -245,10 +250,10 @@ export default function CompressPdfTool() {
             onClick={handleProcess}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel="Compressing PDF"
+            loadingLabel={t('compressing', 'Compressing')}
           >
             <Minimize2 className="w-5 h-5" />
-            Compress PDF Document
+            {t('compressPdfBtn', 'Compress PDF')}
           </ProcessingButton>
         </div>
       )}

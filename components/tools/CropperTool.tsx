@@ -25,6 +25,7 @@ import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 type DragHandle =
   | 'draw'
@@ -46,6 +47,7 @@ interface CropMargins {
 }
 
 export default function CropperTool() {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [origDimensions, setOrigDimensions] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
@@ -488,8 +490,8 @@ export default function CropperTool() {
           accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
-          title="Upload image to crop"
-          subtitle="Interactive draggable crop box, aspect ratio presets, and pixel-precision trimming"
+          title={t('uploadImageToCrop', 'Upload image to crop')}
+          subtitle={t('cropSubtitle', 'Interactive draggable crop box, aspect ratio presets, and pixel-precision trimming')}
         />
       )}
 
@@ -520,7 +522,7 @@ export default function CropperTool() {
                   {files[0].name}
                 </p>
                 <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
-                  <span>Size: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  <span>{t('originalSize', 'Original')}: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
                   {origDimensions.width > 0 && (
                     <span className="badge badge-sm badge-ghost text-[10px] font-mono">
                       {origDimensions.width} × {origDimensions.height} px
@@ -534,7 +536,7 @@ export default function CropperTool() {
               onClick={handleReset}
               className="btn btn-ghost btn-xs sm:btn-sm text-base-content/60 hover:text-error"
             >
-              Change Image
+              {t('changeFile', 'Change Image')}
             </button>
           </div>
 
@@ -544,7 +546,7 @@ export default function CropperTool() {
               <div className="flex items-center justify-between w-full mb-3 text-xs text-base-content/70">
                 <span className="font-semibold flex items-center gap-1.5">
                   <Crop className="w-4 h-4 text-primary" />
-                  Live Crop Canvas
+                  {t('liveCropCanvas', 'Live Crop Canvas')}
                 </span>
                 <span className="text-[11px] text-base-content/60 font-mono">
                   {cropPixels.width} × {cropPixels.height} px ({getAspectRatioLabel()})
@@ -578,7 +580,7 @@ export default function CropperTool() {
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none bg-black/[0.03] p-4 text-center">
                       <div className="bg-base-100/95 backdrop-blur-sm px-3.5 py-2 rounded-xl shadow-md border border-base-300 flex items-center gap-2 text-xs font-semibold text-base-content/85">
                         <Crop className="w-4 h-4 text-primary animate-pulse" />
-                        <span>Click & drag to select crop area</span>
+                        <span>{t('clickDragToSelectCrop', 'Click & drag to select crop area')}</span>
                       </div>
                     </div>
                   )}
@@ -723,7 +725,7 @@ export default function CropperTool() {
               ) : (
                 <div className="w-full h-64 bg-base-100 rounded-xl border border-dashed border-base-300 flex flex-col items-center justify-center text-xs text-base-content/50 gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <span>Loading image preview...</span>
+                  <span>{t('preparingPreview', 'Loading image preview...')}</span>
                 </div>
               )}
 
@@ -731,11 +733,11 @@ export default function CropperTool() {
               <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/70 border border-base-300 text-[11px] font-medium text-base-content/70 mt-3 shadow-2xs">
                 <span className="hidden sm:inline-flex items-center gap-1.5">
                   <Mouse className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Click & drag anywhere to draw a crop box, or drag edges to adjust.</span>
+                  <span>{t('cropInteractionHintDesktop', 'Click & drag anywhere to draw a crop box, or drag edges to adjust.')}</span>
                 </span>
                 <span className="sm:hidden inline-flex items-center gap-1.5">
                   <Pointer className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Touch & drag to select or adjust your crop area.</span>
+                  <span>{t('cropInteractionHintMobile', 'Touch & drag to select or adjust your crop area.')}</span>
                 </span>
               </div>
             </div>
@@ -748,7 +750,7 @@ export default function CropperTool() {
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 flex items-center gap-1.5">
                       <Maximize2 className="w-3.5 h-3.5 text-primary" />
-                      Aspect Ratio Presets
+                      {t('aspectRatioPresets', 'Aspect Ratio Presets')}
                     </label>
                     <span className="text-[11px] font-bold text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-md">
                       {getAspectRatioLabel()}
@@ -757,12 +759,12 @@ export default function CropperTool() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5">
                     {[
-                      { id: 'none', label: 'Whole Image' },
-                      { id: 'square', label: '1:1 Square' },
-                      { id: '16:9', label: '16:9 Wide' },
-                      { id: '4:3', label: '4:3 Classic' },
-                      { id: '9:16', label: '9:16 Story' },
-                      { id: '3:2', label: '3:2 Photo' },
+                      { id: 'none', label: t('wholeImage', 'Whole Image') },
+                      { id: 'square', label: t('square', '1:1 Square') },
+                      { id: '16:9', label: t('wide', '16:9 Wide') },
+                      { id: '4:3', label: t('classic', '4:3 Classic') },
+                      { id: '9:16', label: t('story', '9:16 Story') },
+                      { id: '3:2', label: t('photo', '3:2 Photo') },
                     ].map((preset) => {
                       const isSelected = activePreset === preset.id;
                       return (
@@ -787,14 +789,14 @@ export default function CropperTool() {
                 <div className="space-y-2.5 pt-1">
                   <label className="text-xs font-bold uppercase tracking-wider text-base-content/75 flex items-center gap-1.5">
                     <Sliders className="w-3.5 h-3.5 text-primary" />
-                    Quick Margin Trimming
+                    {t('quickMarginTrimming', 'Quick Margin Trimming')}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
                     {[
-                      { id: 'light', label: 'Light (4%)' },
-                      { id: 'standard', label: 'Standard (8%)' },
-                      { id: 'header-footer', label: 'Top / Bottom' },
-                      { id: 'sides', label: 'Sides Only' },
+                      { id: 'light', label: t('marginLight', 'Light (4%)') },
+                      { id: 'standard', label: t('marginStandard', 'Standard (8%)') },
+                      { id: 'header-footer', label: t('marginHeaderFooter', 'Top / Bottom') },
+                      { id: 'sides', label: t('marginSides', 'Sides Only') },
                     ].map((preset) => {
                       const isSelected = activePreset === preset.id;
                       return (
@@ -820,7 +822,7 @@ export default function CropperTool() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                       <Sliders className="w-3.5 h-3.5 text-primary" />
-                      Precise Margin Trimming (%)
+                      {t('preciseMarginTrimming', 'Precise Margin Trimming (%)')}
                     </span>
                     <button
                       type="button"
@@ -828,14 +830,14 @@ export default function CropperTool() {
                       className="btn btn-ghost btn-xs text-base-content/60 hover:text-error gap-1"
                     >
                       <RotateCcw className="w-3 h-3" />
-                      <span>Reset</span>
+                      <span>{t('reset', 'Reset')}</span>
                     </button>
                   </div>
 
                   {/* Top Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Top Cutout</span>
+                      <span>{t('topCutout', 'Top Cutout')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -880,7 +882,7 @@ export default function CropperTool() {
                   {/* Bottom Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Bottom Cutout</span>
+                      <span>{t('bottomCutout', 'Bottom Cutout')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -925,7 +927,7 @@ export default function CropperTool() {
                   {/* Left Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Left Cutout</span>
+                      <span>{t('leftCutout', 'Left Cutout')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -970,7 +972,7 @@ export default function CropperTool() {
                   {/* Right Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Right Cutout</span>
+                      <span>{t('rightCutout', 'Right Cutout')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -1036,18 +1038,18 @@ export default function CropperTool() {
                 onClick={handleProcess}
                 isProcessing={isProcessing}
                 progress={progress}
-                loadingLabel="Cropping"
+                loadingLabel={t('cropping', 'Cropping')}
                 disabled={!hasActiveCrop}
               >
                 {!hasActiveCrop ? (
                   <>
                     <Crop className="w-5 h-5" />
-                    <span>Select Crop Area on Image First</span>
+                    <span>{t('selectCropAreaFirst', 'Select Crop Area on Image First')}</span>
                   </>
                 ) : (
                   <>
                     <Crop className="w-5 h-5" />
-                    <span>Crop Image ({cropPixels.width} × {cropPixels.height} px)</span>
+                    <span>{t('cropImageBtn', 'Crop Image')} ({cropPixels.width} × {cropPixels.height} px)</span>
                   </>
                 )}
               </ProcessingButton>

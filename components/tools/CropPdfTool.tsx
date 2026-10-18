@@ -29,6 +29,7 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument } from 'pdf-lib';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 type DragHandle =
   | 'draw'
@@ -50,6 +51,7 @@ interface CropMargins {
 }
 
 export default function CropPdfTool() {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PdfPageThumbnail[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -468,11 +470,11 @@ export default function CropPdfTool() {
           accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
-          title="Upload PDF to Crop & Trim Margins"
-          subtitle="Select with your mouse or finger, trim margins, remove headers/footers, and choose to apply to one or all pages."
+          title={t('cropPdf', 'Upload PDF to Crop & Trim Margins')}
+          subtitle={t('cropSubtitle', 'Select with your mouse or finger, trim margins, remove headers/footers, and choose to apply to one or all pages.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}
           loading={loadingThumbnails}
-          loadingMessage="Generating visual page previews & initializing crop studio..."
+          loadingMessage={t('readingPreparingFile', 'Generating visual page previews & initializing crop studio...')}
           files={file ? [file] : []}
         />
       )}
@@ -491,14 +493,14 @@ export default function CropPdfTool() {
                   {file.name}
                 </h3>
                 <p className="text-xs text-base-content/60">
-                  {formatBytes(file.size)} • {pages.length} Page{pages.length !== 1 ? 's' : ''}
+                  {formatBytes(file.size)} • {pages.length} {pages.length !== 1 ? t('pages', 'Pages') : t('page', 'Page')}
                 </p>
               </div>
             </div>
             <button
               onClick={handleReset}
               className="btn btn-ghost btn-sm btn-circle"
-              title="Upload another document"
+              title={t('uploadDifferentFile', 'Upload another document')}
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -512,16 +514,15 @@ export default function CropPdfTool() {
                 <div className="flex items-center gap-2">
                   <span className="flex items-center gap-1.5 text-primary">
                     <Eye className="w-3.5 h-3.5" />
-                    <span>Page {currentPage} of {pages.length || 1}</span>
+                    <span>{t('page', 'Page')} {currentPage} {t('of', 'of')} {pages.length || 1}</span>
                   </span>
                   {cropScope === 'current' && (
                     <span className="badge badge-xs badge-secondary text-[10px]">
-                      Single Page Mode
+                      {t('singlePageMode', 'Single Page Mode')}
                     </span>
                   )}
                 </div>
-
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2.5">
                   <span className="hidden sm:inline text-[11px] text-base-content/50">
                     Kept: {Math.round(cropBoxWidth)}% × {Math.round(cropBoxHeight)}%
                   </span>
@@ -529,10 +530,10 @@ export default function CropPdfTool() {
                     type="button"
                     onClick={() => handleApplyPreset('none')}
                     className="btn btn-ghost btn-xs text-[11px] gap-1 hover:bg-base-200"
-                    title="Reset to full page"
+                    title={t('presetWholePage', 'Full Page')}
                   >
                     <Maximize2 className="w-3 h-3" />
-                    <span>Full Page</span>
+                    <span>{t('presetWholePage', 'Full Page')}</span>
                   </button>
                 </div>
               </div>
@@ -710,11 +711,11 @@ export default function CropPdfTool() {
               <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-full bg-base-200/70 border border-base-300 text-[11px] font-medium text-base-content/70 shadow-2xs">
                 <span className="hidden sm:inline-flex items-center gap-1.5">
                   <Mouse className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Click & drag anywhere to draw a crop box, or drag edges to adjust.</span>
+                  <span>{t('cropInteractionHintDesktop', 'Click & drag anywhere to draw a crop box, or drag edges to adjust.')}</span>
                 </span>
                 <span className="sm:hidden inline-flex items-center gap-1.5">
                   <Pointer className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Touch & drag to select or adjust your crop area.</span>
+                  <span>{t('cropInteractionHintMobile', 'Touch & drag to select or adjust your crop area.')}</span>
                 </span>
               </div>
 
@@ -729,10 +730,10 @@ export default function CropPdfTool() {
                       className="btn btn-ghost btn-xs gap-1 disabled:opacity-30"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
-                      <span>Prev</span>
+                      <span>{t('previous', 'Prev')}</span>
                     </button>
                     <span className="text-[11px] font-bold text-base-content/70">
-                      Page {currentPage} of {pages.length}
+                      {t('page', 'Page')} {currentPage} {t('of', 'of')} {pages.length}
                     </span>
                     <button
                       type="button"
@@ -740,7 +741,7 @@ export default function CropPdfTool() {
                       onClick={() => handlePageChange(currentPage + 1)}
                       className="btn btn-ghost btn-xs gap-1 disabled:opacity-30"
                     >
-                      <span>Next</span>
+                      <span>{t('next', 'Next')}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -791,9 +792,9 @@ export default function CropPdfTool() {
                 {/* 1. REQUIRED FEATURE: Apply Crop Scope (All vs Current Page) */}
                 <div className="p-4 rounded-2xl bg-base-100 border border-base-300 shadow-sm space-y-2.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center justify-between">
-                    <span>Apply Crop To</span>
+                    <span>{t('applyCropTo', 'Apply Crop To')}</span>
                     <span className="badge badge-sm badge-primary text-[10px] font-bold">
-                      {cropScope === 'all' ? `All ${pages.length} Pages` : `Page ${currentPage} Only`}
+                      {cropScope === 'all' ? `${t('allPages', 'All Pages')} (${pages.length})` : `${t('currentPage', 'Current Page')} (${currentPage})`}
                     </span>
                   </label>
 
@@ -808,7 +809,7 @@ export default function CropPdfTool() {
                       }`}
                     >
                       <Files className="w-4 h-4 shrink-0" />
-                      <span>All Pages</span>
+                      <span>{t('allPages', 'All Pages')}</span>
                     </button>
                     <button
                       type="button"
@@ -820,21 +821,21 @@ export default function CropPdfTool() {
                       }`}
                     >
                       <File className="w-4 h-4 shrink-0" />
-                      <span>Current Page</span>
+                      <span>{t('currentPage', 'Current Page')}</span>
                     </button>
                   </div>
 
                   <p className="text-[11px] text-base-content/55">
                     {cropScope === 'all'
-                      ? 'The selected crop area will be applied uniformly across every page.'
-                      : `Only page ${currentPage} will be cropped; other pages remain full size.`}
+                      ? t('cropScopeAllDesc', 'The selected crop area will be applied uniformly across every page.')
+                      : t('cropScopeCurrentDesc', `Only page ${currentPage} will be cropped; other pages remain full size.`)}
                   </p>
                 </div>
 
                 {/* 2. Quick Presets */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-wider text-base-content/70">
-                    Quick Crop Presets
+                    {t('quickPresets', 'Quick Crop Presets')}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     <button
@@ -844,7 +845,7 @@ export default function CropPdfTool() {
                         activePreset === 'light' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
-                      Light (4%)
+                      {t('presetLight', 'Light (4%)')}
                     </button>
                     <button
                       type="button"
@@ -853,7 +854,7 @@ export default function CropPdfTool() {
                         activePreset === 'standard' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
-                      Standard (8%)
+                      {t('presetStandard', 'Standard (8%)')}
                     </button>
                     <button
                       type="button"
@@ -862,7 +863,7 @@ export default function CropPdfTool() {
                         activePreset === 'heavy' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
-                      Deep (15%)
+                      {t('presetDeep', 'Deep (15%)')}
                     </button>
                     <button
                       type="button"
@@ -871,7 +872,7 @@ export default function CropPdfTool() {
                         activePreset === 'header-footer' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
-                      Header/Footer
+                      {t('presetHeaderFooter', 'Header/Footer')}
                     </button>
                     <button
                       type="button"
@@ -880,7 +881,7 @@ export default function CropPdfTool() {
                         activePreset === 'sides' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
-                      Side Margins
+                      {t('presetSideMargins', 'Side Margins')}
                     </button>
                     <button
                       type="button"
@@ -889,7 +890,7 @@ export default function CropPdfTool() {
                         activePreset === 'none' ? 'bg-primary text-white border-primary shadow-xs' : 'bg-base-100 hover:bg-base-200/80 text-base-content border-base-300'
                       }`}
                     >
-                      Whole Page
+                      {t('presetWholePage', 'Whole Page')}
                     </button>
                   </div>
                 </div>
@@ -899,14 +900,14 @@ export default function CropPdfTool() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                       <Sliders className="w-3.5 h-3.5 text-primary" />
-                      Precise Margin Trimming (%)
+                      {t('preciseMarginTrimming', 'Precise Margin Trimming (%)')}
                     </span>
                   </div>
 
                   {/* Top Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Top Margin</span>
+                      <span>{t('topMargin', 'Top Margin')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -941,7 +942,7 @@ export default function CropPdfTool() {
                   {/* Bottom Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Bottom Margin</span>
+                      <span>{t('bottomMargin', 'Bottom Margin')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -976,7 +977,7 @@ export default function CropPdfTool() {
                   {/* Left Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Left Margin</span>
+                      <span>{t('leftMargin', 'Left Margin')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -1011,7 +1012,7 @@ export default function CropPdfTool() {
                   {/* Right Margin */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center text-xs text-base-content/70">
-                      <span>Right Margin</span>
+                      <span>{t('rightMargin', 'Right Margin')}</span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
@@ -1057,21 +1058,21 @@ export default function CropPdfTool() {
                   onClick={handleProcess}
                   isProcessing={processing}
                   progress={progress}
-                  loadingLabel="Cropping PDF"
+                  loadingLabel={t('cropping', 'Cropping PDF')}
                   disabled={!hasActiveCrop}
                 >
                   {!hasActiveCrop ? (
                     <>
                       <Crop className="w-4 h-4" />
-                      <span>Select Crop Area on Document First</span>
+                      <span>{t('selectCropAreaFirst', 'Select Crop Area on Document First')}</span>
                     </>
                   ) : (
                     <>
                       <Crop className="w-4 h-4" />
                       <span>
                         {cropScope === 'all'
-                          ? `Crop All ${pages.length} Pages`
-                          : `Crop Page ${currentPage} Only`}
+                          ? `${t('cropPdf', 'Crop')} (${pages.length} ${pages.length !== 1 ? t('pages', 'Pages') : t('page', 'Page')})`
+                          : `${t('cropPdf', 'Crop')} ${t('page', 'Page')} ${currentPage}`}
                       </span>
                       <ArrowRight className="w-4 h-4" />
                     </>
@@ -1091,13 +1092,13 @@ export default function CropPdfTool() {
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your PDF has been cropped successfully!"
+          title={t('fileReadyTitle', 'Your PDF has been cropped successfully!')}
           subtitle={
             cropScope === 'all'
-              ? `All ${pages.length} pages were cropped according to your selection.`
-              : `Page ${currentPage} was cropped according to your selection.`
+              ? `${pages.length} ${pages.length !== 1 ? t('pages', 'pages') : t('page', 'page')} - ${t('fileReadyDesc', 'Cropped according to your selection.')}`
+              : `${t('page', 'Page')} ${currentPage} - ${t('fileReadyDesc', 'Cropped according to your selection.')}`
           }
-          resetLabel="Crop Another Document"
+          resetLabel={t('processAnother', 'Crop Another Document')}
           extraInfo={pages.length > 0 ? `${pages.length} Pages` : undefined}
           pageCount={pages.length}
           onReset={handleReset}

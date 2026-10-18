@@ -36,6 +36,7 @@ import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export interface VisualPageItem {
   id: string;
@@ -61,6 +62,7 @@ export default function VisualPdfOrganizerTool({
   title = 'Organize & Split PDF',
   description = 'Visually reorder by dragging pages, rotate, delete, extract or split PDF pages with live thumbnail previews.',
 }: VisualPdfOrganizerToolProps) {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const file = files[0] || null;
   const [pages, setPages] = useState<VisualPageItem[]>([]);
@@ -626,9 +628,9 @@ export default function VisualPdfOrganizerTool({
             <RefreshCw className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-base text-base-content">Reading PDF Document...</h3>
+            <h3 className="font-bold text-base text-base-content">{t('readingPdfDocument', 'Reading PDF Document...')}</h3>
             <p className="text-xs text-base-content/60">
-              Extracting document structure and pages
+              {t('extractingStructure', 'Extracting document structure and pages')}
             </p>
           </div>
         </div>
@@ -643,8 +645,8 @@ export default function VisualPdfOrganizerTool({
               <div className="flex items-center gap-2.5">
                 <RefreshCw className="w-4 h-4 text-primary animate-spin shrink-0" />
                 <span className="font-semibold text-base-content">
-                  Generating page previews: <strong>{thumbnailProgress.loaded}</strong> of <strong>{thumbnailProgress.total}</strong>
-                  <span className="hidden sm:inline font-normal text-base-content/70 ml-1.5">— You can select, organize, or extract pages immediately.</span>
+                  {t('generatingPreviews', 'Generating page previews')}: <strong>{thumbnailProgress.loaded}</strong> {t('of', 'of')} <strong>{thumbnailProgress.total}</strong>
+                  <span className="hidden sm:inline font-normal text-base-content/70 ml-1.5">— {t('immediatePdfActions', 'You can select, organize, or extract pages immediately.')}</span>
                 </span>
               </div>
               <div className="w-full sm:w-48 shrink-0">
@@ -665,13 +667,13 @@ export default function VisualPdfOrganizerTool({
                   type="button"
                   onClick={handleReset}
                   className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content shrink-0"
-                  title="Upload different file"
+                  title={t('uploadDifferentFile', 'Upload different file')}
                 >
                   <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
 
                 <span className="font-extrabold text-xs sm:text-sm lg:text-base text-base-content truncate max-w-[120px] xs:max-w-[150px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-none">
-                  {title || (toolTab === 'split' ? 'Split' : 'Extract Pages')}
+                  {t(title, title) || (toolTab === 'split' ? t('split', 'Split') : t('extractPages', 'Extract Pages'))}
                 </span>
               </div>
 
@@ -689,7 +691,7 @@ export default function VisualPdfOrganizerTool({
                       }`}
                     >
                       <Scissors className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span className="hidden sm:inline">Split</span>
+                      <span className="hidden sm:inline">{t('split', 'Split')}</span>
                     </button>
 
                     <button
@@ -702,7 +704,7 @@ export default function VisualPdfOrganizerTool({
                       }`}
                     >
                       <LayoutGrid className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                      <span className="hidden sm:inline">Extract</span>
+                      <span className="hidden sm:inline">{t('extract', 'Extract')}</span>
                     </button>
 
                     <div className="w-px h-3.5 bg-base-300 mx-0.5"></div>
@@ -715,7 +717,7 @@ export default function VisualPdfOrganizerTool({
                     className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-base-content/70 hover:bg-base-200 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-primary" />
-                    <span className="text-[11px] sm:text-xs">Add</span>
+                    <span className="text-[11px] sm:text-xs">{t('add', 'Add')}</span>
                     <ChevronDown className="w-3 h-3 opacity-60 hidden sm:inline" />
                   </label>
                   <ul
@@ -725,13 +727,13 @@ export default function VisualPdfOrganizerTool({
                     <li>
                       <button type="button" onClick={() => insertBlankPage(pages.length)}>
                         <Plus className="w-4 h-4 text-primary" />
-                        <span>Insert Blank Page</span>
+                        <span>{t('insertBlankPage', 'Insert Blank Page')}</span>
                       </button>
                     </li>
                     <li>
                       <button type="button" onClick={() => addFileInputRef.current?.click()}>
                         <FileText className="w-4 h-4 text-success" />
-                        <span>Add Document Pages</span>
+                        <span>{t('addDocumentPages', 'Add Document Pages')}</span>
                       </button>
                     </li>
                   </ul>
@@ -744,7 +746,7 @@ export default function VisualPdfOrganizerTool({
                   onClick={() => rotateSelected(-90)}
                   disabled={selectedCount === 0}
                   className="p-1 sm:p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-30"
-                  title="Rotate Left"
+                  title={t('rotateLeft', 'Rotate Left')}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
@@ -754,7 +756,7 @@ export default function VisualPdfOrganizerTool({
                   onClick={() => rotateSelected(90)}
                   disabled={selectedCount === 0}
                   className="p-1 sm:p-1.5 rounded-lg text-base-content/70 hover:bg-base-200 disabled:opacity-30"
-                  title="Rotate Right"
+                  title={t('rotateRight', 'Rotate Right')}
                 >
                   <RotateCw className="w-3.5 h-3.5" />
                 </button>
@@ -764,7 +766,7 @@ export default function VisualPdfOrganizerTool({
                   onClick={deleteSelected}
                   disabled={selectedCount === 0}
                   className="p-1 sm:p-1.5 rounded-lg text-error hover:bg-error/10 disabled:opacity-30"
-                  title="Delete Selected"
+                  title={t('deleteSelected', 'Delete Selected')}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -784,7 +786,7 @@ export default function VisualPdfOrganizerTool({
                         onChange={(e) => setSplitAfterEveryEnabled(e.target.checked)}
                         className="checkbox checkbox-xs checkbox-primary rounded"
                       />
-                      <span className="text-[11px] sm:text-xs">Every</span>
+                      <span className="text-[11px] sm:text-xs">{t('every', 'Every')}</span>
                     </label>
 
                     <div className="flex items-center border border-base-300 rounded-lg bg-base-100 overflow-hidden">
@@ -807,7 +809,7 @@ export default function VisualPdfOrganizerTool({
                       </button>
                     </div>
 
-                    <span className="text-[11px] sm:text-xs">pages</span>
+                    <span className="text-[11px] sm:text-xs">{t('pages', 'pages')}</span>
                   </div>
                 ) : (
                   <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer text-xs font-medium text-base-content/80 select-none">
@@ -817,7 +819,7 @@ export default function VisualPdfOrganizerTool({
                       onChange={(e) => setSeparatePdfs(e.target.checked)}
                       className="toggle toggle-xs toggle-primary"
                     />
-                    <span className="text-[11px] sm:text-xs">Separate PDFs</span>
+                    <span className="text-[11px] sm:text-xs">{t('separatePdfs', 'Separate PDFs')}</span>
                   </label>
                 )}
               </div>
@@ -832,18 +834,18 @@ export default function VisualPdfOrganizerTool({
                 {processing ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                    <span>Processing...</span>
+                    <span>{t('processing', 'Processing...')}</span>
                   </>
                 ) : (
                   <>
                     <span>
                       {toolTab === 'split'
-                        ? `Split (${calculatedSplitCount} PDF${calculatedSplitCount > 1 ? 's' : ''})`
+                        ? `${t('split', 'Split')} (${calculatedSplitCount} ${calculatedSplitCount > 1 ? t('separatePdfs', 'PDFs') : 'PDF'})`
                         : initialMode === 'extract' && selectedCount === 0
-                        ? 'Select Pages to Extract'
+                        ? t('selectPagesToExtract', 'Select Pages to Extract')
                         : initialMode === 'delete'
-                        ? `Delete (${selectedCount} Page${selectedCount > 1 ? 's' : ''})`
-                        : `Finish (${selectedCount} Page${selectedCount > 1 ? 's' : ''})`}
+                        ? `${t('delete', 'Delete')} (${selectedCount} ${selectedCount > 1 ? t('pages', 'Pages') : t('page', 'Page')})`
+                        : `${t('finish', 'Finish')} (${selectedCount} ${selectedCount > 1 ? t('pages', 'Pages') : t('page', 'Page')})`}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </>
@@ -864,12 +866,12 @@ export default function VisualPdfOrganizerTool({
                 ) : (
                   <Square className="w-4 h-4 text-base-content/40" />
                 )}
-                <span>Select all</span>
+                <span>{t('selectAll', 'Select all')}</span>
               </label>
               <span className="text-[11px] text-base-content/40 hidden sm:inline">
                 {initialMode === 'extract'
-                  ? '• Click on pages you want to extract'
-                  : '• Drag & drop any page to rearrange order'}
+                  ? t('clickPagesToExtract', '• Click on pages you want to extract')
+                  : t('dragToRearrange', '• Drag & drop any page to rearrange order')}
               </span>
             </div>
 
@@ -877,7 +879,7 @@ export default function VisualPdfOrganizerTool({
               <button
                 onClick={toggleSort}
                 className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-base-200 text-base-content/70 font-medium"
-                title="Reverse Order"
+                title={t('reverseOrder', 'Reverse Order')}
               >
                 <ArrowUpDown className="w-3.5 h-3.5" />
                 <span className="text-[11px]">{sortOrder === 'asc' ? 'A-Z' : 'Z-A'}</span>
@@ -892,7 +894,7 @@ export default function VisualPdfOrganizerTool({
                       ? 'bg-base-100 text-primary shadow-xs'
                       : 'text-base-content/60 hover:text-base-content'
                   }`}
-                  title="List View"
+                  title={t('listView', 'List View')}
                 >
                   <List className="w-3.5 h-3.5" />
                 </button>
@@ -903,7 +905,7 @@ export default function VisualPdfOrganizerTool({
                       ? 'bg-base-100 text-primary shadow-xs'
                       : 'text-base-content/60 hover:text-base-content'
                   }`}
-                  title="Grid View"
+                  title={t('gridView', 'Grid View')}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
@@ -979,7 +981,7 @@ export default function VisualPdfOrganizerTool({
                                 setZoomPage(page);
                               }}
                               className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                              title="Zoom page"
+                              title={t('zoomIn', 'Zoom page')}
                             >
                               <ZoomIn className="w-3.5 h-3.5" />
                             </button>
@@ -989,7 +991,7 @@ export default function VisualPdfOrganizerTool({
                                 rotatePage(page.id, -90);
                               }}
                               className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                              title="Rotate Left"
+                              title={t('rotateLeft', 'Rotate Left')}
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                             </button>
@@ -999,7 +1001,7 @@ export default function VisualPdfOrganizerTool({
                                 rotatePage(page.id, 90);
                               }}
                               className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                              title="Rotate Right"
+                              title={t('rotateRight', 'Rotate Right')}
                             >
                               <RotateCw className="w-3.5 h-3.5" />
                             </button>
@@ -1009,7 +1011,7 @@ export default function VisualPdfOrganizerTool({
                                 deletePage(page.id);
                               }}
                               className="p-1 text-error hover:bg-error/10 rounded"
-                              title="Delete Page"
+                              title={t('delete', 'Delete')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1028,7 +1030,7 @@ export default function VisualPdfOrganizerTool({
                           ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 select-none bg-base-200/40">
                               <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                              <span className="text-xs font-semibold text-base-content/70">Loading...</span>
+                              <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
                             </div>
                           )}
                         </div>
@@ -1061,7 +1063,7 @@ export default function VisualPdfOrganizerTool({
                                     ? 'bg-primary text-primary-content scale-110 shadow-primary/30'
                                     : 'bg-base-200 text-primary opacity-60 hover:opacity-100 hover:scale-110'
                                 }`}
-                                title="Click to toggle split cut point"
+                                title={t('splitCutPoint', 'Click to toggle split cut point')}
                               >
                                 <Scissors className="w-3.5 h-3.5" />
                               </button>
@@ -1075,7 +1077,7 @@ export default function VisualPdfOrganizerTool({
                             <button
                               onClick={() => insertBlankPage(index + 1)}
                               className="w-7 h-7 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-primary-content flex items-center justify-center transition-all hover:scale-125 shadow-xs"
-                              title="Insert blank page here"
+                              title={t('insertBlankPage', 'Insert blank page here')}
                             >
                               <Plus className="w-4 h-4 stroke-[2.5]" />
                             </button>
@@ -1125,7 +1127,7 @@ export default function VisualPdfOrganizerTool({
                       </div>
                       <div>
                         <p className="font-bold text-sm text-base-content">
-                          Page {page.pageNumber}
+                          {t('page', 'Page')} {page.pageNumber}
                         </p>
                         <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-medium truncate max-w-[150px]">
                           {page.docName ? (page.docName.length > 18 ? page.docName.slice(0, 15) + '...' : page.docName) : shortDocName}
@@ -1137,14 +1139,14 @@ export default function VisualPdfOrganizerTool({
                       <button
                         onClick={() => rotatePage(page.id, 90)}
                         className="btn btn-ghost btn-xs btn-circle"
-                        title="Rotate"
+                        title={t('rotate', 'Rotate')}
                       >
                         <RotateCw className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => deletePage(page.id)}
                         className="btn btn-ghost btn-xs btn-circle text-error"
-                        title="Delete"
+                        title={t('delete', 'Delete')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1171,193 +1173,29 @@ export default function VisualPdfOrganizerTool({
         }}
       />
 
-      {/* Success Result View matching reference design */}
+      {/* Success Result View */}
       {resultData && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          {/* Header Area: Centered on mobile, left-aligned on desktop */}
-          <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-3 sm:gap-3.5">
-            <div className="w-11 h-11 sm:w-11 sm:h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-xs sm:mt-0.5">
-              <FileCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="font-extrabold text-lg sm:text-2xl text-base-content leading-snug sm:leading-tight">
-                {initialMode === 'delete'
-                  ? 'Your PDF pages have been deleted successfully!'
-                  : initialMode === 'extract'
-                  ? 'Your PDF pages have been extracted successfully!'
-                  : initialMode === 'rotate'
-                  ? 'Your PDF pages have been rotated successfully!'
-                  : initialMode === 'split'
-                  ? 'Your PDF has been split successfully!'
-                  : 'Your PDF has been organized successfully!'}
-              </h3>
-              <p className="text-xs sm:text-sm text-base-content/60 leading-relaxed max-w-sm sm:max-w-none">
-                Your files have been processed into a clean document. You can now download it or perform other actions below.
-              </p>
-            </div>
-          </div>
-
-          {/* White Card Container */}
-          <div className="w-full rounded-3xl bg-base-100 border border-base-300 p-5 sm:p-7 space-y-6 shadow-sm">
-            {/* Top file summary card */}
-            <div className="rounded-2xl bg-blue-50/60 dark:bg-base-200/50 border border-blue-100/80 dark:border-base-300 p-4 sm:p-5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-                {/* Red PDF Document Icon */}
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-red-500/15 border border-red-500/30 text-red-500 flex items-center justify-center shrink-0 shadow-xs">
-                  <FileText className="w-6 h-6 sm:w-7 sm:h-7" />
-                </div>
-
-                {/* File Meta */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="font-bold text-base sm:text-lg text-base-content truncate">
-                      {resultData.filename}
-                    </h4>
-                    <span className="badge badge-sm badge-ready border font-bold">
-                      Ready
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-base-content/60 mt-0.5">
-                    {resultData.pageCount} {resultData.pageCount === 1 ? 'page' : 'pages'}  •  {formatBytes(resultData.size)}  •  {resultData.filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Pill */}
-              <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-base-100 border border-base-200 shadow-xs shrink-0">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                <div className="text-left">
-                  <div className="text-[10px] text-base-content/50 uppercase font-bold tracking-wider leading-none">Status</div>
-                  <div className="font-extrabold text-xs sm:text-sm text-base-content mt-0.5 leading-none">Completed</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3">
-              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={handleDownloadResult}
-                  className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-3 sm:px-6 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
-                >
-                  <Download className="w-4 h-4 shrink-0" />
-                  <span className="inline sm:hidden">Download</span>
-                  <span className="hidden sm:inline">Download File</span>
-                </button>
-
-                {!resultData.filename.endsWith('.zip') && (
-                  <button
-                    type="button"
-                    onClick={() => setShowResultPreviewModal(true)}
-                    className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-3 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
-                  >
-                    <Eye className="w-4 h-4 shrink-0" />
-                    <span>Preview</span>
-                  </button>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap"
-              >
-                <RotateCcw className="w-4 h-4 shrink-0" />
-                <span className="truncate">Process Another</span>
-              </button>
-            </div>
-
-            {/* File Details */}
-            <div className="pt-4 border-t border-base-200 space-y-3.5">
-              <h5 className="font-bold text-sm sm:text-base text-base-content">File Details</h5>
-              <div className="space-y-2.5 text-xs sm:text-sm font-medium">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
-                    <FileText className="w-4 h-4 text-base-content/40" />
-                    <span>File name</span>
-                  </span>
-                  <span className="text-base-content/40">:</span>
-                  <span className="font-semibold text-base-content truncate">{resultData.filename}</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
-                    <HardDrive className="w-4 h-4 text-base-content/40" />
-                    <span>File size</span>
-                  </span>
-                  <span className="text-base-content/40">:</span>
-                  <span className="font-semibold text-base-content">{formatBytes(resultData.size)}</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
-                    <Layers className="w-4 h-4 text-base-content/40" />
-                    <span>Pages</span>
-                  </span>
-                  <span className="text-base-content/40">:</span>
-                  <span className="font-semibold text-base-content">{resultData.pageCount} pages</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
-                    <Calendar className="w-4 h-4 text-base-content/40" />
-                    <span>Created</span>
-                  </span>
-                  <span className="text-base-content/40">:</span>
-                  <span className="font-semibold text-base-content">{createdTimestamp}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Result Fullscreen PDF Preview Modal */}
-      {showResultPreviewModal && resultData?.dataUrl && (
-        <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4"
-          onClick={() => setShowResultPreviewModal(false)}
-        >
-          <div
-            className="relative bg-base-100 rounded-2xl sm:rounded-3xl p-2.5 sm:p-5 max-w-4xl w-full h-[92dvh] sm:h-[85vh] flex flex-col gap-2 sm:gap-3 shadow-2xl border border-base-300 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-base-200 shrink-0">
-              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1 mr-2">
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 shrink-0" />
-                <h5 className="font-bold text-xs sm:text-base text-base-content truncate">
-                  {resultData.filename}
-                </h5>
-                <span className="badge badge-xs sm:badge-sm font-semibold shrink-0 hidden sm:inline-flex">{resultData.pageCount} Pages</span>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleDownloadResult}
-                  className="btn btn-xs btn-primary font-bold gap-1 rounded-lg px-2 sm:px-3"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Download</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowResultPreviewModal(false)}
-                  className="btn btn-ghost btn-xs btn-circle"
-                  aria-label="Close modal"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-xl sm:rounded-2xl overflow-hidden p-1.5 sm:p-2 flex flex-col">
-              <PdfPreviewModalViewer
-                dataUrl={resultData.dataUrl}
-                filename={resultData.filename}
-              />
-            </div>
-          </div>
-        </div>
+        <ResultCard
+          filename={resultData.filename}
+          dataUrl={resultData.dataUrl}
+          newSize={resultData.size}
+          pageCount={resultData.pageCount}
+          format={resultData.filename.endsWith('.zip') ? 'ZIP' : 'PDF'}
+          title={
+            initialMode === 'delete'
+              ? t('pdfDeleteSuccess', 'Your updated PDF is ready for download!')
+              : initialMode === 'extract'
+              ? t('pdfExtractSuccess', 'Your extracted pages are ready for download!')
+              : initialMode === 'rotate'
+              ? t('pdfRotateSuccess', 'Your rotated PDF is ready for download!')
+              : initialMode === 'split'
+              ? t('pdfSplitSuccess', 'Your split PDF is ready for download!')
+              : t('pdfReadyTitle', 'Your PDF is ready for download!')
+          }
+          subtitle={t('fileReadyDesc', 'Your file has been processed successfully. You can now download it or perform other actions below.')}
+          resetLabel={t('processAnother', 'Process Another')}
+          onReset={handleReset}
+        />
       )}
 
       {/* Zoom Fullscreen Preview Modal */}
@@ -1378,7 +1216,7 @@ export default function VisualPdfOrganizerTool({
             </button>
 
             <h4 className="font-bold text-sm mb-3 text-base-content">
-              Page {zoomPage.pageNumber} Preview
+              {t('page', 'Page')} {zoomPage.pageNumber} {t('preview', 'Preview')}
             </h4>
 
             <div className="overflow-auto max-h-[75vh] rounded-xl flex items-center justify-center bg-base-200 p-3">

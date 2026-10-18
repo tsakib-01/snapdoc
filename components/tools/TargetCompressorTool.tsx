@@ -206,7 +206,7 @@ export default function TargetCompressorTool({
                   {files[0].name}
                 </p>
                 <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
-                  <span>Original: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  <span>{t('original', 'Original')}: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
                   {origDimensions && (
                     <span className="badge badge-sm badge-ghost text-[10px] font-mono">
                       {origDimensions.width} × {origDimensions.height} px
@@ -354,10 +354,16 @@ export default function TargetCompressorTool({
               onClick={handleProcess}
               isProcessing={isProcessing}
               progress={progress}
-              loadingLabel="Compressing"
+              loadingLabel={t('compressing', 'Compressing')}
             >
               <Sparkles className="w-5 h-5" />
-              Compress to {isCustom ? `${customKb || '50'} KB` : `${targetKb} KB`}
+              {targetKb === 10 && !isCustom
+                ? t('compressTo10kb', 'Compress to 10KB')
+                : targetKb === 20 && !isCustom
+                ? t('compressTo20kb', 'Compress to 20KB')
+                : targetKb === 50 && !isCustom
+                ? t('compressTo50kb', 'Compress to 50KB')
+                : `${t('compressImageBtn', 'Compress Image')} (${isCustom ? `${customKb || '50'} KB` : `${targetKb} KB`})`}
             </ProcessingButton>
           </div>
         </div>

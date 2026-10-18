@@ -122,10 +122,10 @@ export default function ResultCard({
           </div>
           <div className="space-y-1">
             <h3 className="font-extrabold text-lg sm:text-2xl text-base-content leading-snug sm:leading-tight">
-              {title || (isPdf ? 'Your PDF is ready for download!' : 'Your file is ready for download!')}
+              {title || (isPdf ? t('pdfReadyTitle', 'Your PDF is ready for download!') : t('fileReadyTitle', 'Your file is ready for download!'))}
             </h3>
             <p className="text-xs sm:text-sm text-base-content/60 leading-relaxed max-w-sm sm:max-w-none">
-              {subtitle || 'Your file has been processed successfully. You can now download it or perform other actions below.'}
+              {subtitle || t('fileReadyDesc', 'Your file has been processed successfully. You can now download it or perform other actions below.')}
             </p>
           </div>
         </div>
@@ -245,7 +245,7 @@ export default function ResultCard({
                 {formatBytes(newSize)}
                 {calculatedReduction > 0 && (
                   <span className="text-xs font-normal text-base-content/50 ml-2">
-                    (was {formatBytes(effectiveOriginalSize)}, saved {calculatedReduction}%)
+                    ({t('was', 'was')} {formatBytes(effectiveOriginalSize)}, {t('saved', 'saved')} {calculatedReduction}%)
                   </span>
                 )}
               </span>
@@ -255,16 +255,16 @@ export default function ResultCard({
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                   <Layers className="w-4 h-4 text-base-content/40" />
-                  <span>Pages</span>
+                  <span>{t('pages', 'Pages')}</span>
                 </span>
                 <span className="text-base-content/40">:</span>
-                <span className="font-semibold text-base-content">{pageCount} pages</span>
+                <span className="font-semibold text-base-content">{pageCount} {pageCount === 1 ? t('page', 'page') : t('pages', 'pages')}</span>
               </div>
             ) : dimensions ? (
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                   <Maximize2 className="w-4 h-4 text-base-content/40" />
-                  <span>Dimensions</span>
+                  <span>{t('dimensions', 'Dimensions')}</span>
                 </span>
                 <span className="text-base-content/40">:</span>
                 <span className="font-semibold text-base-content">
@@ -276,7 +276,7 @@ export default function ResultCard({
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                 <Calendar className="w-4 h-4 text-base-content/40" />
-                <span>Created</span>
+                <span>{t('created', 'Created')}</span>
               </span>
               <span className="text-base-content/40">:</span>
               <span className="font-semibold text-base-content">{createdTimestamp}</span>
@@ -316,7 +316,7 @@ export default function ResultCard({
                   className="btn btn-xs btn-primary font-bold gap-1 rounded-lg px-2 sm:px-3"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden sm:inline">{t('download', 'Download')}</span>
                 </button>
                 <button
                   type="button"

@@ -172,7 +172,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
               {t('aboutTool', 'About')} {toolName}
             </h2>
             <p className="text-xs sm:text-sm text-base-content/75 leading-relaxed">
-              {tool.longDescription}
+              {t(`${toolKey}LongDesc`, tool.longDescription)}
             </p>
 
             <div className="space-y-2 pt-2">
@@ -183,7 +183,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
                 {tool.features.map((feat, idx) => (
                   <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-base-content/80">
                     <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>{feat}</span>
+                    <span>{t(feat, feat)}</span>
                   </li>
                 ))}
               </ul>
@@ -203,7 +203,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
                     {item.step}
                   </span>
                   <p className="text-xs sm:text-sm text-base-content/80 leading-relaxed">
-                    {item.text}
+                    {t(item.text, item.text)}
                   </p>
                 </li>
               ))}

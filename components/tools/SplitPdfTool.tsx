@@ -9,8 +9,10 @@ import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { parsePageRanges } from '@/lib/pdf/splitPdf';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function SplitPdfTool() {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [splitMode, setSplitMode] = useState<'range' | 'all'>('range');
   const [rangeInput, setRangeInput] = useState<string>('1-3');
@@ -138,8 +140,8 @@ export default function SplitPdfTool() {
           accept=".pdf,application/pdf"
           files={files}
           onFilesSelected={setFiles}
-          title="Drop PDF file to split or extract pages"
-          subtitle="Extract custom page ranges or separate all pages"
+          title={t('dropPdfToSplit', 'Drop PDF file to split or extract pages')}
+          subtitle={t('splitSubtitle', 'Extract custom page ranges or separate all pages')}
         />
       )}
 
@@ -148,17 +150,17 @@ export default function SplitPdfTool() {
           <div className="flex items-center justify-between p-4 rounded-2xl bg-base-200/60 border border-base-300">
             <div>
               <p className="text-xs sm:text-sm font-bold text-base-content truncate max-w-xs sm:max-w-md">{files[0].name}</p>
-              <p className="text-xs text-base-content/60">Original Size: <strong>{formatBytes(files[0].size)}</strong></p>
+              <p className="text-xs text-base-content/60">{t('originalSize', 'Original Size')}: <strong>{formatBytes(files[0].size)}</strong></p>
             </div>
             <button onClick={handleReset} className="btn btn-ghost btn-xs text-base-content/60 hover:text-error">
-              Change
+              {t('changeFile', 'Change')}
             </button>
           </div>
 
           {/* Split Mode Selector */}
           <div className="p-5 rounded-2xl bg-base-200/40 border border-base-300 space-y-4">
             <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 block">
-              Choose Split Method
+              {t('chooseSplitMethod', 'Choose Split Method')}
             </span>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -172,11 +174,11 @@ export default function SplitPdfTool() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-base-content">Extract Page Range</span>
+                  <span className="font-bold text-sm text-base-content">{t('extractPageRange', 'Extract Page Range')}</span>
                   {splitMode === 'range' && <Check className="w-4 h-4 text-primary" />}
                 </div>
                 <p className="text-xs text-base-content/60 mt-1">
-                  Extract specific pages into one new PDF (e.g. 1-3, 5)
+                  {t('extractRangeDesc', 'Extract specific pages into one new PDF (e.g. 1-3, 5)')}
                 </p>
               </button>
 
@@ -190,11 +192,11 @@ export default function SplitPdfTool() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-base-content">Extract All Pages</span>
+                  <span className="font-bold text-sm text-base-content">{t('extractAllPages', 'Extract All Pages')}</span>
                   {splitMode === 'all' && <Check className="w-4 h-4 text-primary" />}
                 </div>
                 <p className="text-xs text-base-content/60 mt-1">
-                  Save every page as a separate PDF bundled in a ZIP
+                  {t('extractAllDesc', 'Save every page as a separate PDF bundled in a ZIP')}
                 </p>
               </button>
             </div>
@@ -202,7 +204,7 @@ export default function SplitPdfTool() {
             {splitMode === 'range' && (
               <div className="p-4 rounded-2xl bg-base-100 border border-base-300 space-y-2 animate-in fade-in duration-100">
                 <label className="text-xs font-semibold text-base-content/80 block">
-                  Enter Page Numbers or Ranges:
+                  {t('enterPageRanges', 'Enter Page Numbers or Ranges:')}
                 </label>
                 <input
                   type="text"
@@ -229,10 +231,10 @@ export default function SplitPdfTool() {
             onClick={handleProcess}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel="Splitting PDF"
+            loadingLabel={t('splitting', 'Splitting')}
           >
             <Scissors className="w-5 h-5" />
-            {splitMode === 'range' ? `Extract Pages (${rangeInput})` : 'Split All Pages to ZIP'}
+            {splitMode === 'range' ? `${t('splitPdfBtn', 'Split & Extract PDF')} (${rangeInput})` : `${t('splitPdfBtn', 'Split & Extract PDF')} (ZIP)`}
           </ProcessingButton>
         </div>
       )}

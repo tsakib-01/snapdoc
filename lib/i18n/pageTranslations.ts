@@ -5,6 +5,8 @@
  */
 
 import { ADDITIONAL_TRANSLATIONS } from './additionalTranslations';
+import { TOOL_UI_TRANSLATIONS } from './toolTranslations';
+import { MORE_TOOL_TRANSLATIONS } from './moreToolTranslations';
 
 export const TOOL_SLUG_MAP: Record<string, string> = {
   'compress-jpg': 'compressJpg',
@@ -1467,3 +1469,18 @@ for (const [code, dict] of Object.entries(ADDITIONAL_TRANSLATIONS)) {
     Object.assign(PAGE_TRANSLATIONS[code], dict);
   }
 }
+
+for (const [code, dict] of Object.entries(TOOL_UI_TRANSLATIONS)) {
+  if (!PAGE_TRANSLATIONS[code]) {
+    PAGE_TRANSLATIONS[code] = {};
+  }
+  Object.assign(PAGE_TRANSLATIONS[code], dict);
+}
+
+for (const [code, dict] of Object.entries(MORE_TOOL_TRANSLATIONS)) {
+  if (!PAGE_TRANSLATIONS[code]) {
+    PAGE_TRANSLATIONS[code] = {};
+  }
+  Object.assign(PAGE_TRANSLATIONS[code], dict);
+}
+

@@ -36,6 +36,7 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { PDFDocument } from 'pdf-lib';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export interface PdfMergeItem {
   id: string;
@@ -48,6 +49,7 @@ export interface PdfMergeItem {
 }
 
 export default function MergePdfTool() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<PdfMergeItem[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -399,8 +401,8 @@ export default function MergePdfTool() {
           maxFiles={20}
           files={[]}
           onFilesSelected={handleInitialFilesSelected}
-          title="Drop multiple PDF files to merge"
-          subtitle="Combine 2 to 20 documents into a single PDF with visual previews"
+          title={t('dropMultiplePdfs', 'Drop multiple PDF files to merge')}
+          subtitle={t('mergeSubtitle', 'Combine 2 to 20 documents into a single PDF with visual previews')}
         />
       )}
 
@@ -422,17 +424,17 @@ export default function MergePdfTool() {
                 </button>
 
                 <span className="font-extrabold text-xs sm:text-base text-base-content truncate">
-                  Merge PDFs
+                  {t('mergePdf', 'Merge PDFs')}
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <span className="badge badge-primary font-bold text-[10px] sm:text-xs py-0.5 sm:py-1">
-                  {items.length} {items.length === 1 ? 'Doc' : 'Docs'}
+                  {items.length} {items.length === 1 ? t('doc', 'Doc') : t('docs', 'Docs')}
                 </span>
                 {allThumbnailsLoaded && totalPagesCount > 0 && (
                   <span className="badge badge-ghost font-semibold text-[10px] sm:text-xs py-0.5 sm:py-1 text-base-content/70 hidden xs:inline-flex">
-                    {totalPagesCount} Pages
+                    {totalPagesCount} {t('pages', 'Pages')}
                   </span>
                 )}
               </div>
@@ -447,7 +449,7 @@ export default function MergePdfTool() {
                 title="Add more PDF documents"
               >
                 <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span>Add Document</span>
+                <span>{t('addDocument', 'Add Document')}</span>
               </button>
 
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -848,10 +850,10 @@ export default function MergePdfTool() {
               isProcessing={isProcessing}
               progress={progress}
               disabled={items.length < 2 || !allThumbnailsLoaded}
-              loadingLabel="Merging PDFs"
+              loadingLabel={t('merging', 'Merging')}
             >
               <Layers className="w-5 h-5" />
-              <span className="text-base sm:text-lg font-bold">Merge PDFs</span>
+              <span className="text-base sm:text-lg font-bold">{t('mergePdfBtn', 'Merge PDF Files')}</span>
             </ProcessingButton>
           </div>
         </div>

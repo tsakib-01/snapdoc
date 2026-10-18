@@ -9,6 +9,7 @@ import { convertPdfToExcel } from '@/lib/browser-converters/pdf-to-excel';
 import { convertTextToExcel } from '@/lib/browser-converters/text-to-excel';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 const LANGUAGES = [
   { code: 'eng', name: 'English' },
@@ -51,6 +52,7 @@ export default function PdfToOfficeTool({
   title = 'Convert PDF to Excel / Text',
   subtitle = 'Extract text and content from your PDF documents directly in the browser.',
 }: PdfToOfficeToolProps) {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<'excel' | 'txt' | 'ocr'>(targetFormat);
   const [language, setLanguage] = useState<string>('eng');
@@ -73,14 +75,14 @@ export default function PdfToOfficeTool({
       const combined = (pageTexts || []).join('\n\n--- Page Break ---\n\n').trim();
 
       if (!combined) {
-        setExtractedText('(No direct selectable text found in this PDF. It may contain scanned images or custom font subsets.)');
+        setExtractedText(t('noDirectTextFound', '(No direct selectable text found in this PDF. It may contain scanned images or custom font subsets.)'));
       } else {
         setExtractedText(combined);
       }
       scrollToTool();
     } catch (err: any) {
       console.error(err);
-      setError('Could not extract text from PDF. Ensure the file is not encrypted.');
+      setError(t('couldNotExtractText', 'Could not extract text from PDF. Ensure the file is not encrypted.'));
     } finally {
       setProcessing(false);
     }
@@ -144,8 +146,8 @@ export default function PdfToOfficeTool({
           accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
-          title={title}
-          subtitle={subtitle}
+          title={t('uploadPdf', title)}
+          subtitle={t('dropPdfToExtract', subtitle)}
           onFilesSelected={(files) => handleFileSelected(files[0])}
         />
       )}
@@ -153,8 +155,8 @@ export default function PdfToOfficeTool({
       {processing && (
         <div className="py-8 text-center space-y-4">
           <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-          <h3 className="font-bold text-base">Processing Document Pages & Layout...</h3>
-          <p className="text-xs text-base-content/60">Extracting high-resolution visual layout and structured streams</p>
+          <h3 className="font-bold text-base">{t('processingDocumentPages', 'Processing Document Pages & Layout...')}</h3>
+          <p className="text-xs text-base-content/60">{t('extractingHighRes', 'Extracting high-resolution visual layout and structured streams')}</p>
         </div>
       )}
 
@@ -167,10 +169,10 @@ export default function PdfToOfficeTool({
               </div>
               <div>
                 <h3 className="font-bold text-sm text-base-content">{file.name}</h3>
-                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • {pages.length} Pages</p>
+                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • {pages.length} {t('pages', 'Pages')}</p>
               </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle">
+            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title={t('reset', 'Reset')}>
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -179,14 +181,14 @@ export default function PdfToOfficeTool({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-base-content/70">
-                Extracted Document Content
+                {t('extractedDocContent', 'Extracted Document Content')}
               </span>
               <button
                 onClick={handleCopy}
                 className="btn btn-ghost btn-xs gap-1.5 text-xs text-primary"
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? 'Copied!' : 'Copy Text'}</span>
+                <span>{copied ? t('copied', 'Copied!') : t('copyText', 'Copy Text')}</span>
               </button>
             </div>
 
@@ -243,8 +245,8 @@ export default function PdfToOfficeTool({
               <Download className="w-4 h-4" />
               <span>
                 {format === 'excel'
-                  ? 'Download Extracted Excel (.xlsx)'
-                  : 'Download Extracted Text (.txt)'}
+                  ? t('downloadExcel', 'Download Extracted Excel (.xlsx)')
+                  : t('downloadText', 'Download Extracted Text (.txt)')}
               </span>
             </button>
           </div>

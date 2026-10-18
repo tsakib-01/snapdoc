@@ -4,8 +4,10 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, BookOpen, ArrowRight, Sparkles, Image, FileText, PenTool, FileSpreadsheet, Clock, ArrowUpRight } from 'lucide-react';
 import { GUIDES, GuideCategory, GUIDE_CATEGORIES } from '@/lib/config/guides';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function GuidesIndexPage() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<GuideCategory | 'all'>('all');
 
@@ -49,13 +51,13 @@ export default function GuidesIndexPage() {
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>SnapDoc Learning Center</span>
+          <span>{t('learningCenter', 'SnapDoc Learning Center')}</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-base-content">
-          Guides & How-To Articles
+          {t('guidesTitle', 'Guides & How-To Articles')}
         </h1>
         <p className="text-sm sm:text-base text-base-content/70 leading-relaxed max-w-2xl mx-auto">
-          Learn how to compress, convert, edit, and optimize your images, PDFs, and documents with step-by-step tutorials, technical insights, and pro tips.
+          {t('guidesSubtitle', 'Learn how to compress, convert, edit, and optimize your images, PDFs, and documents with step-by-step tutorials, technical insights, and pro tips.')}
         </p>
 
         {/* Live Search Input */}
@@ -66,7 +68,7 @@ export default function GuidesIndexPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search guides (e.g. compress jpg, merge pdf, eSign)..."
+              placeholder={t('searchGuidesPlaceholder', 'Search guides (e.g. compress jpg, merge pdf, eSign)...')}
               className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-base-100 border border-base-300 shadow-sm text-sm text-base-content placeholder:text-base-content/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
             {searchQuery && (
@@ -74,7 +76,7 @@ export default function GuidesIndexPage() {
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3 px-2 py-1 text-xs text-base-content/50 hover:text-base-content"
               >
-                Clear
+                {t('clear', 'Clear')}
               </button>
             )}
           </div>
@@ -91,7 +93,7 @@ export default function GuidesIndexPage() {
               : 'bg-base-200 hover:bg-base-300 text-base-content/80'
           }`}
         >
-          All Guides ({GUIDES.length})
+          {t('allGuides', 'All Guides')} ({GUIDES.length})
         </button>
 
         {GUIDE_CATEGORIES.map((cat) => {
@@ -108,7 +110,7 @@ export default function GuidesIndexPage() {
               }`}
             >
               {getCategoryIcon(cat.id)}
-              <span>{cat.label}</span>
+              <span>{t(cat.id, cat.label)}</span>
               <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-base-300 text-base-content/60'}`}>
                 {count}
               </span>
@@ -123,7 +125,7 @@ export default function GuidesIndexPage() {
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-amber-500" />
             <h2 className="text-xl sm:text-2xl font-bold text-base-content">
-              Featured How-To Guides
+              {t('featuredGuides', 'Featured How-To Guides')}
             </h2>
           </div>
 
@@ -156,7 +158,7 @@ export default function GuidesIndexPage() {
                 </p>
 
                 <div className="flex items-center text-xs font-semibold text-primary group-hover:translate-x-1 transition-transform">
-                  <span>Read full guide</span>
+                  <span>{t('readFullGuide', 'Read full guide')}</span>
                   <ArrowRight className="w-4 h-4 ml-1.5" />
                 </div>
               </Link>
@@ -169,19 +171,19 @@ export default function GuidesIndexPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-bold text-base-content">
-            {selectedCategory === 'all' ? 'All Articles & Tutorials' : `${GUIDE_CATEGORIES.find(c => c.id === selectedCategory)?.label}`}
+            {selectedCategory === 'all' ? t('allArticles', 'All Articles & Tutorials') : `${GUIDE_CATEGORIES.find(c => c.id === selectedCategory)?.label}`}
           </h2>
           <span className="text-xs text-base-content/50">
-            Showing {filteredGuides.length} {filteredGuides.length === 1 ? 'guide' : 'guides'}
+            {filteredGuides.length} {filteredGuides.length === 1 ? t('guide', 'guide') : t('guides', 'guides')}
           </span>
         </div>
 
         {filteredGuides.length === 0 ? (
           <div className="text-center py-16 px-4 bg-base-100 rounded-3xl border border-base-300">
             <BookOpen className="w-12 h-12 text-base-content/30 mx-auto mb-3" />
-            <h3 className="text-lg font-bold text-base-content mb-1">No guides found</h3>
+            <h3 className="text-lg font-bold text-base-content mb-1">{t('noGuidesFound', 'No guides found')}</h3>
             <p className="text-xs text-base-content/60 max-w-sm mx-auto">
-              We couldn't find any tutorials matching &ldquo;{searchQuery}&rdquo;. Try another search term or reset category filters.
+              {t('noGuidesDesc', "We couldn't find any tutorials matching this search. Try another search term or reset category filters.")}
             </p>
           </div>
         ) : (
@@ -215,10 +217,10 @@ export default function GuidesIndexPage() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-base-200/80 text-xs">
                   <span className="text-[11px] text-base-content/50">
-                    Updated {guide.updatedAt}
+                    {guide.updatedAt}
                   </span>
                   <span className="font-semibold text-primary group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                    Read <ArrowRight className="w-3.5 h-3.5" />
+                    {t('read', 'Read')} <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </Link>
@@ -231,10 +233,10 @@ export default function GuidesIndexPage() {
       <div className="p-8 sm:p-12 rounded-3xl bg-base-200/50 border border-base-300 space-y-6">
         <div className="max-w-2xl">
           <h2 className="text-xl sm:text-2xl font-bold text-base-content mb-2">
-            Try Our Free Privacy-First Tools
+            {t('tryFreeTools', 'Try Our Free Privacy-First Tools')}
           </h2>
           <p className="text-xs sm:text-sm text-base-content/70 leading-relaxed">
-            Every tutorial is backed by our instant in-browser utilities. 100% in-memory, free forever, no signup required.
+            {t('tryFreeToolsDesc', 'Every tutorial is backed by our instant in-browser utilities. 100% in-memory, free forever, no signup required.')}
           </p>
         </div>
 

@@ -27,6 +27,7 @@ import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
 import JSZip from 'jszip';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export interface ImageItem {
   id: string;
@@ -46,6 +47,7 @@ const SOCIAL_PRESETS = [
 ];
 
 export default function ResizerTool() {
+  const { t } = useLanguage();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [mode, setMode] = useState<'pixels' | 'percentage'>('pixels');
   const [width, setWidth] = useState<number | ''>('');
@@ -408,8 +410,8 @@ export default function ResizerTool() {
           multiple={true}
           maxFiles={30}
           onFilesSelected={loadFiles}
-          title="Drop images here to resize"
-          subtitle="Resize photos by exact pixels or percentage online"
+          title={t('dropImagesToResize', 'Drop images here to resize')}
+          subtitle={t('resizePhotosSubtitle', 'Resize photos by exact pixels or percentage online')}
         />
       )}
 
@@ -422,10 +424,10 @@ export default function ResizerTool() {
             <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-base-200/50 border border-base-300">
               <div>
                 <span className="text-xs sm:text-sm font-bold text-base-content block">
-                  Resize Images ({images.length} {images.length === 1 ? 'image' : 'images'})
+                  {t('resizeImages', 'Resize Images')} ({images.length} {images.length === 1 ? 'image' : 'images'})
                 </span>
                 <span className="text-xs text-base-content/60">
-                  Total size: {formatBytes(totalOriginalSize)}
+                  {t('totalSize', 'Total size')}: {formatBytes(totalOriginalSize)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
@@ -435,7 +437,7 @@ export default function ResizerTool() {
                   className="btn btn-ghost btn-xs sm:btn-sm text-primary hover:bg-primary/10 gap-1 font-semibold"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add More</span>
+                  <span>{t('addMore', 'Add More')}</span>
                 </button>
                 <div className="w-px h-4 bg-base-300"></div>
                 <button
@@ -444,7 +446,7 @@ export default function ResizerTool() {
                   className="btn btn-ghost btn-xs sm:btn-sm text-base-content/60 hover:text-error gap-1"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Clear All</span>
+                  <span>{t('clearAll', 'Clear All')}</span>
                 </button>
               </div>
             </div>
@@ -535,11 +537,8 @@ export default function ResizerTool() {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base font-extrabold text-base-content leading-tight">
-                    Resize Settings
+                    {t('resizeOptions', 'Resize Options')}
                   </h2>
-                  <p className="text-[11px] text-base-content/60">
-                    Adjust dimensions or scale
-                  </p>
                 </div>
               </div>
             </div>
@@ -556,7 +555,7 @@ export default function ResizerTool() {
                 }`}
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>By Pixels</span>
+                <span>{t('byPixels', 'By Pixels')}</span>
               </button>
 
               <button
@@ -569,7 +568,7 @@ export default function ResizerTool() {
                 }`}
               >
                 <Percent className="w-3.5 h-3.5" />
-                <span>By Percentage</span>
+                <span>{t('byPercentage', 'By Percentage')}</span>
               </button>
             </div>
 
@@ -577,7 +576,7 @@ export default function ResizerTool() {
             {mode === 'pixels' && (
               <div className="space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-base-content">Target Dimensions</span>
+                  <span className="text-xs font-bold text-base-content">{t('dimensions', 'Dimensions')}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -597,14 +596,14 @@ export default function ResizerTool() {
                     title={maintainRatio ? 'Aspect ratio locked' : 'Aspect ratio free'}
                   >
                     {maintainRatio ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-                    <span>{maintainRatio ? 'Ratio Locked' : 'Ratio Free'}</span>
+                    <span>{t('maintainRatio', 'Maintain aspect ratio')}</span>
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div>
                     <label className="text-[11px] font-semibold text-base-content/70 mb-1 block">
-                      Width (px)
+                      {t('widthPx', 'Width (px)')}
                     </label>
                     <input
                       type="number"
@@ -621,7 +620,7 @@ export default function ResizerTool() {
 
                   <div>
                     <label className="text-[11px] font-semibold text-base-content/70 mb-1 block">
-                      Height (px)
+                      {t('heightPx', 'Height (px)')}
                     </label>
                     <input
                       type="number"
@@ -645,7 +644,7 @@ export default function ResizerTool() {
                       onChange={(e) => setDoNotEnlarge(e.target.checked)}
                       className="checkbox checkbox-xs checkbox-primary rounded"
                     />
-                    <span>Do not enlarge if smaller</span>
+                    <span>{t('doNotEnlarge', 'Do not enlarge if smaller')}</span>
                   </label>
                 </div>
               </div>
@@ -783,10 +782,10 @@ export default function ResizerTool() {
               onClick={handleProcess}
               isProcessing={isProcessing}
               progress={progress}
-              loadingLabel={images.length > 1 ? `Resizing ${images.length} Images` : 'Resizing Image'}
+              loadingLabel={images.length > 1 ? `${t('resizing', 'Resizing')} ${images.length} Images` : t('resizing', 'Resizing')}
               disabled={images.length === 0}
             >
-              <span>Resize {images.length > 1 ? `${images.length} Images` : 'Image'}</span>
+              <span>{t('resizeImagesBtn', 'Resize Images')}</span>
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             </ProcessingButton>
           </div>

@@ -37,7 +37,7 @@ export default function FAQSection({ faqs }: { faqs: FAQ[] }) {
                 onClick={() => setOpenIndex(isOpen ? null : index)}
                 className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 font-semibold text-sm text-base-content hover:text-primary transition-colors cursor-pointer"
               >
-                <span>{faq.q}</span>
+                <span>{t(faq.q, faq.q)}</span>
                 <ChevronDown
                   className={`w-4 h-4 text-base-content/50 transition-transform duration-200 shrink-0 ${
                     isOpen ? 'rotate-180 text-primary' : ''
@@ -46,7 +46,7 @@ export default function FAQSection({ faqs }: { faqs: FAQ[] }) {
               </button>
               {isOpen && (
                 <div className="px-5 pb-4 text-xs sm:text-sm text-base-content/75 leading-relaxed border-t border-base-200/60 pt-3 bg-base-200/20 animate-in fade-in duration-150">
-                  {faq.a}
+                  {t(faq.a, faq.a)}
                 </div>
               )}
             </div>

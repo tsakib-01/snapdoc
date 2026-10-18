@@ -10,6 +10,7 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface ConverterToolProps {
   sourceFormat?: 'jpg' | 'png' | 'webp' | 'any';
@@ -22,6 +23,7 @@ export default function ConverterTool({
   targetFormat: initialTarget = 'png',
   fixedTarget = false,
 }: ConverterToolProps) {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [targetFormat, setTargetFormat] = useState<'jpeg' | 'png' | 'webp'>(initialTarget);
   const [quality, setQuality] = useState<number>(90);
@@ -317,7 +319,7 @@ export default function ConverterTool({
                   {files[0].name}
                 </p>
                 <div className="flex items-center gap-2 pt-0.5 text-xs text-base-content/60 flex-wrap">
-                  <span>Original: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
+                  <span>{t('originalSize', 'Original')}: <strong className="text-base-content font-mono">{formatBytes(files[0].size)}</strong></span>
                   {origDimensions && (
                     <span className="badge badge-sm badge-ghost text-[10px] font-mono">
                       {origDimensions.width} × {origDimensions.height} px
@@ -331,7 +333,7 @@ export default function ConverterTool({
               onClick={handleReset}
               className="btn btn-ghost btn-xs text-base-content/60 hover:text-error"
             >
-              Change File
+              {t('changeFile', 'Change File')}
             </button>
           </div>
 
@@ -341,7 +343,7 @@ export default function ConverterTool({
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-primary" />
-                  Uploaded Image Preview
+                  {t('uploadedImagePreview', 'Uploaded Image Preview')}
                 </span>
                 {origDimensions && (
                   <span className="badge badge-sm badge-ghost font-mono text-[11px]">
@@ -367,7 +369,7 @@ export default function ConverterTool({
           ) : isPreviewLoading ? (
             <div className="rounded-2xl border border-base-300 bg-base-100 p-8 flex flex-col items-center justify-center gap-2 text-xs text-base-content/60">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <span>Preparing uploaded image preview...</span>
+              <span>{t('preparingPreview', 'Preparing uploaded image preview...')}</span>
             </div>
           ) : null}
 
@@ -376,7 +378,7 @@ export default function ConverterTool({
             <div className="p-5 rounded-2xl bg-base-200/40 border border-base-300 space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-base-content/70 block">
-                  Select Output Format
+                  {t('outputFormat', 'Select Output Format')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['jpeg', 'png', 'webp'] as const).map((fmt) => (
@@ -407,10 +409,10 @@ export default function ConverterTool({
             onClick={handleProcess}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel={`Converting to ${displayTarget}`}
+            loadingLabel={t('converting', 'Converting')}
           >
             <ArrowRightLeft className="w-5 h-5" />
-            Convert to {displayTarget}
+            {t('convertTo', 'Convert to')} {displayTarget}
           </ProcessingButton>
         </div>
       )}

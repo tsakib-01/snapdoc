@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Eye, Layers, SplitSquareVertical } from 'lucide-react';
 import { formatBytes } from '@/lib/utils/formatters';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface ComparisonViewerProps {
   originalUrl: string;
@@ -21,6 +22,7 @@ export default function ComparisonViewer({
   originalDimensions,
   processedDimensions,
 }: ComparisonViewerProps) {
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<'side-by-side' | 'toggle'>('side-by-side');
   const [activeToggle, setActiveToggle] = useState<'original' | 'processed'>('processed');
 
@@ -30,7 +32,7 @@ export default function ComparisonViewer({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-base-200">
         <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
           <Eye className="w-3.5 h-3.5 text-primary" />
-          Visual Quality Preview
+          {t('visualQualityPreview', 'Visual Quality Preview')}
         </span>
         <div className="inline-flex items-center self-start sm:self-auto gap-1 bg-base-200/80 p-1 rounded-xl border border-base-300 max-w-full">
           <button
@@ -43,7 +45,7 @@ export default function ComparisonViewer({
             }`}
           >
             <SplitSquareVertical className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-            Side by Side
+            {t('sideBySide', 'Side by Side')}
           </button>
           <button
             type="button"
@@ -55,7 +57,7 @@ export default function ComparisonViewer({
             }`}
           >
             <Layers className="w-3.5 h-3.5 mr-1.5 shrink-0" />
-            Toggle View
+            {t('toggleView', 'Toggle View')}
           </button>
         </div>
       </div>
@@ -65,7 +67,7 @@ export default function ComparisonViewer({
           {/* Original Card */}
           <div className="flex flex-col rounded-2xl border border-base-300 bg-base-100 overflow-hidden shadow-sm">
             <div className="px-3 sm:px-4 py-2 bg-base-200/60 border-b border-base-300 flex items-center justify-between text-xs font-semibold">
-              <span className="text-base-content/70">Original Image</span>
+              <span className="text-base-content/70">{t('originalImage', 'Original Image')}</span>
               <span className="badge badge-sm badge-neutral">{formatBytes(originalSize)}</span>
             </div>
             <div className="relative p-2 sm:p-4 flex items-center justify-center min-h-[180px] sm:min-h-[260px] bg-transparency-grid">
@@ -78,7 +80,7 @@ export default function ComparisonViewer({
             </div>
             {originalDimensions && (
               <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-base-200/30 text-[10px] sm:text-[11px] text-base-content/60 text-center border-t border-base-200">
-                Dimensions: {originalDimensions.width} × {originalDimensions.height} px
+                {t('dimensions', 'Dimensions')}: {originalDimensions.width} × {originalDimensions.height} px
               </div>
             )}
           </div>
@@ -88,7 +90,7 @@ export default function ComparisonViewer({
             <div className="px-3 sm:px-4 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between text-xs font-semibold text-primary">
               <span className="flex items-center gap-1.5 font-bold">
                 <Eye className="w-3.5 h-3.5" />
-                Optimized Result
+                {t('optimizedResult', 'Optimized Result')}
               </span>
               <span className="badge badge-sm badge-primary text-white font-bold">
                 {formatBytes(processedSize)}
@@ -104,7 +106,7 @@ export default function ComparisonViewer({
             </div>
             {processedDimensions && (
               <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-base-200/30 text-[10px] sm:text-[11px] text-base-content/60 text-center border-t border-base-200 font-medium">
-                Dimensions: {processedDimensions.width} × {processedDimensions.height} px
+                {t('dimensions', 'Dimensions')}: {processedDimensions.width} × {processedDimensions.height} px
               </div>
             )}
           </div>
@@ -122,7 +124,7 @@ export default function ComparisonViewer({
                   : 'btn-ghost text-base-content/60'
               }`}
             >
-              Original ({formatBytes(originalSize)})
+              {t('original', 'Original')} ({formatBytes(originalSize)})
             </button>
             <button
               type="button"
@@ -133,7 +135,7 @@ export default function ComparisonViewer({
                   : 'btn-ghost text-base-content/60'
               }`}
             >
-              Optimized ({formatBytes(processedSize)})
+              {t('optimized', 'Optimized')} ({formatBytes(processedSize)})
             </button>
           </div>
           <div className="relative p-6 flex items-center justify-center min-h-[320px] bg-transparency-grid">

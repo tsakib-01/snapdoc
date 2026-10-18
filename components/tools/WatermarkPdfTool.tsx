@@ -10,6 +10,7 @@ import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 function parseHexColor(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace('#', '');
@@ -24,6 +25,7 @@ function parseHexColor(hex: string): { r: number; g: number; b: number } {
 }
 
 export default function WatermarkPdfTool() {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PdfPageThumbnail[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -268,11 +270,11 @@ export default function WatermarkPdfTool() {
           accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
-          title="Upload PDF to Add Watermark"
-          subtitle="Stamp high-visibility text or logo watermarks across every page of your PDF document."
+          title={t('watermarkPdf', 'Upload PDF to Add Watermark')}
+          subtitle={t('watermarkPdfDesc', 'Stamp high-visibility text or logo watermarks across every page of your PDF document.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}
           loading={loadingThumbnails}
-          loadingMessage="Rendering document pages & initializing watermark studio..."
+          loadingMessage={t('readingPreparingFile', 'Rendering document pages & initializing watermark studio...')}
           files={file ? [file] : []}
         />
       )}
@@ -286,10 +288,10 @@ export default function WatermarkPdfTool() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-base-content truncate max-w-[200px] sm:max-w-md">{file.name}</h3>
-                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • {pages.length} Pages</p>
+                <p className="text-xs text-base-content/60">{formatBytes(file.size)} • {pages.length} {pages.length === 1 ? t('page', 'Page') : t('pages', 'Pages')}</p>
               </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title="Reset">
+            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title={t('reset', 'Reset')}>
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -300,10 +302,10 @@ export default function WatermarkPdfTool() {
               <div className="w-full flex items-center justify-between pb-3 text-xs font-bold text-base-content/70">
                 <span className="flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-primary" />
-                  Live Watermark Preview (Page {currentPage} of {pages.length || 1})
+                  {t('liveWatermarkPreview', 'Live Watermark Preview')} ({t('page', 'Page')} {currentPage} {t('of', 'of')} {pages.length || 1})
                 </span>
                 <span className="text-[11px] text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  Real-time preview
+                  {t('realtimePreview', 'Real-time preview')}
                 </span>
               </div>
 
@@ -397,21 +399,21 @@ export default function WatermarkPdfTool() {
                     onClick={() => setWatermarkType('text')}
                     className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${watermarkType === 'text' ? 'btn-primary' : 'btn-ghost'}`}
                   >
-                    Text Watermark
+                    {t('textWatermark', 'Text Watermark')}
                   </button>
                   <button
                     type="button"
                     onClick={() => setWatermarkType('image')}
                     className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${watermarkType === 'image' ? 'btn-primary' : 'btn-ghost'}`}
                   >
-                    Image Logo
+                    {t('imageLogo', 'Image Logo')}
                   </button>
                 </div>
 
                 {watermarkType === 'text' ? (
                   <div className="space-y-3 p-4 rounded-2xl bg-base-200/40 border border-base-300">
                     <div className="space-y-1">
-                      <label className="text-xs text-base-content/70 font-semibold">Watermark Text</label>
+                      <label className="text-xs text-base-content/70 font-semibold">{t('watermarkText', 'Watermark Text')}</label>
                       <input
                         type="text"
                         value={text}
@@ -423,7 +425,7 @@ export default function WatermarkPdfTool() {
 
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs text-base-content/70">
-                        <span>Font Size</span>
+                        <span>{t('fontSize', 'Font Size')}</span>
                         <span className="font-bold text-primary">{fontSize} pt</span>
                       </div>
                       <input
@@ -438,7 +440,7 @@ export default function WatermarkPdfTool() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <label className="text-xs text-base-content/70 font-semibold">Text Color:</label>
+                      <label className="text-xs text-base-content/70 font-semibold">{t('textColor', 'Text Color:')}</label>
                       <input
                         type="color"
                         value={color}
@@ -449,7 +451,7 @@ export default function WatermarkPdfTool() {
                   </div>
                 ) : (
                   <div className="space-y-2 p-4 rounded-2xl bg-base-200/40 border border-base-300">
-                    <label className="text-xs text-base-content/70 font-semibold">Upload Logo / Stamp Image</label>
+                    <label className="text-xs text-base-content/70 font-semibold">{t('uploadLogo', 'Upload Logo / Stamp Image')}</label>
                     <input
                       type="file"
                       accept="image/png,image/jpeg"
@@ -462,7 +464,7 @@ export default function WatermarkPdfTool() {
                 <div className="space-y-3 p-4 rounded-2xl bg-base-200/40 border border-base-300">
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-base-content/70">
-                      <span>Transparency / Opacity</span>
+                      <span>{t('transparency', 'Transparency / Opacity')}</span>
                       <span className="font-bold text-primary">{Math.round(opacity * 100)}%</span>
                     </div>
                     <input
@@ -478,7 +480,7 @@ export default function WatermarkPdfTool() {
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-base-content/70">
-                      <span>Stamp Rotation Angle</span>
+                      <span>{t('rotationAngle', 'Stamp Rotation Angle')}</span>
                       <span className="font-bold text-primary">{rotation}°</span>
                     </div>
                     <input
@@ -505,10 +507,10 @@ export default function WatermarkPdfTool() {
                   onClick={handleProcess}
                   isProcessing={isProcessing}
                   progress={progress}
-                  loadingLabel="Stamping Watermark"
+                  loadingLabel={t('applyingTransformation', 'Stamping Watermark')}
                 >
                   <Stamp className="w-4 h-4" />
-                  <span>Apply Watermark</span>
+                  <span>{t('applyWatermark', 'Apply Watermark')}</span>
                 </ProcessingButton>
               </div>
             </div>
@@ -523,9 +525,9 @@ export default function WatermarkPdfTool() {
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your watermark has been applied successfully!"
-          subtitle="Your document has been protected with your watermark. You can now download your file below."
-          resetLabel="Watermark Another PDF"
+          title={t('watermarkSuccess', 'Your watermark has been applied successfully!')}
+          subtitle={t('fileReadyDesc', 'Your document has been protected with your watermark. You can now download your file below.')}
+          resetLabel={t('processAnother', 'Watermark Another PDF')}
           extraInfo={pages.length > 0 ? `${pages.length} Pages` : undefined}
           pageCount={pages.length}
           onReset={handleReset}

@@ -2,6 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { PAGE_TRANSLATIONS, getToolTranslationKey } from './pageTranslations';
+import { TOOL_UI_TRANSLATIONS } from './toolTranslations';
+import { MORE_TOOL_TRANSLATIONS } from './moreToolTranslations';
+import { EXTENDED_APP_TRANSLATIONS } from './extendedAppTranslations';
 
 export { getToolTranslationKey };
 
@@ -1359,40 +1362,61 @@ export const TRANSLATIONS: Record<string, TranslationDictionary> = {
   },
 };
 
-// Aliases ensuring both 2-letter ISO (Chrome standard) and 3-letter OCR codes work flawlessly
-if (TRANSLATIONS.hin) {
-  TRANSLATIONS.hi = TRANSLATIONS.hin;
-} else if (TRANSLATIONS.hi) {
-  TRANSLATIONS.hin = TRANSLATIONS.hi;
-}
-if (TRANSLATIONS.bul) {
-  TRANSLATIONS.bg = TRANSLATIONS.bul;
-}
-if (TRANSLATIONS.cat) {
-  TRANSLATIONS.ca = TRANSLATIONS.cat;
-}
-if (TRANSLATIONS.ukr) {
-  TRANSLATIONS.uk = TRANSLATIONS.ukr;
-}
-if (TRANSLATIONS.vie) {
-  TRANSLATIONS.vi = TRANSLATIONS.vie;
-}
-if (TRANSLATIONS.pol) {
-  TRANSLATIONS.pl = TRANSLATIONS.pol;
-}
-if (TRANSLATIONS.tur) {
-  TRANSLATIONS.tr = TRANSLATIONS.tur;
-}
-TRANSLATIONS.sw = TRANSLATIONS.swa = TRANSLATIONS.sw;
-TRANSLATIONS.bn = TRANSLATIONS.ben = TRANSLATIONS.bn;
-TRANSLATIONS.zh = TRANSLATIONS['zh-CN'];
-
-// Merge full page translations across all languages
+// 1. Merge full page translations across all languages
 for (const [langCode, pageDict] of Object.entries(PAGE_TRANSLATIONS)) {
   if (!TRANSLATIONS[langCode]) {
     TRANSLATIONS[langCode] = {};
   }
   Object.assign(TRANSLATIONS[langCode], pageDict);
+}
+
+// 1b. Merge interactive tool UI translations across all languages
+for (const [langCode, toolDict] of Object.entries(TOOL_UI_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], toolDict);
+}
+
+// 1c. Merge extended interactive tool translations across all languages
+for (const [langCode, moreDict] of Object.entries(MORE_TOOL_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], moreDict);
+}
+
+// 1d. Merge comprehensive application translations across all languages
+for (const [langCode, extDict] of Object.entries(EXTENDED_APP_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], extDict);
+}
+
+// 2. Bi-directional synchronization ensuring both 2-letter ISO and 3-letter OCR codes have all translations
+const CODE_ALIASES: [string, string][] = [
+  ['hi', 'hin'],
+  ['bg', 'bul'],
+  ['ca', 'cat'],
+  ['uk', 'ukr'],
+  ['vi', 'vie'],
+  ['pl', 'pol'],
+  ['tr', 'tur'],
+  ['sw', 'swa'],
+  ['bn', 'ben'],
+  ['zh', 'zh-CN'],
+];
+
+for (const [a, b] of CODE_ALIASES) {
+  if (TRANSLATIONS[a] && TRANSLATIONS[b]) {
+    Object.assign(TRANSLATIONS[a], TRANSLATIONS[b]);
+    Object.assign(TRANSLATIONS[b], TRANSLATIONS[a]);
+  } else if (TRANSLATIONS[a] && !TRANSLATIONS[b]) {
+    TRANSLATIONS[b] = { ...TRANSLATIONS[a] };
+  } else if (!TRANSLATIONS[a] && TRANSLATIONS[b]) {
+    TRANSLATIONS[a] = { ...TRANSLATIONS[b] };
+  }
 }
 
 interface LanguageContextType {

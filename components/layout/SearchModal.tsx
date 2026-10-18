@@ -147,14 +147,14 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
           ) : (
             <div className="py-12 text-center text-base-content/50">
               <p className="text-sm font-medium">{t('noToolsMatching', 'No tools found matching')} &quot;{query}&quot;</p>
-              <p className="text-xs mt-1">Try searching for &quot;compress&quot;, &quot;pdf&quot;, &quot;convert&quot;, or &quot;10kb&quot;.</p>
+              <p className="text-xs mt-1">{t('trySearchSuggestions', 'Try searching for "compress", "pdf", "convert", or "10kb".')}</p>
             </div>
           )}
         </div>
 
         {/* Footer info */}
         <div className="px-4 py-2 bg-base-200/50 border-t border-base-300 flex items-center justify-between text-xs text-base-content/50">
-          <span>{TOOLS.length} total free online tools</span>
+          <span>{TOOLS.length} {t('totalFreeTools', 'total free online tools')}</span>
           <span className="hidden sm:inline">{t('pressEsc', 'Press ESC to close')}</span>
         </div>
       </div>

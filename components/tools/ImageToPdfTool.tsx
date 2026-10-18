@@ -12,6 +12,7 @@ import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface ImageToPdfToolProps {
   title?: string;
@@ -32,6 +33,7 @@ export default function ImageToPdfTool({
   accept = 'image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif',
   fileTypeLabel = 'Image',
 }: ImageToPdfToolProps = {}) {
+  const { t } = useLanguage();
   const [items, setItems] = useState<ImageItem[]>([]);
   const [pageSize, setPageSize] = useState<'A4' | 'LETTER' | 'FIT'>('A4');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'auto'>('portrait');
@@ -307,10 +309,10 @@ export default function ImageToPdfTool({
           <div className="flex items-center justify-between p-4 rounded-2xl bg-base-200/50 border border-base-300">
             <div>
               <span className="text-xs sm:text-sm font-bold text-base-content block">
-                Arrange Image Sequence ({items.length} {fileTypeLabel}{items.length === 1 ? '' : 's'})
+                {t('arrangeImageSequence', 'Arrange Image Sequence')} ({items.length} {fileTypeLabel}{items.length === 1 ? '' : 's'})
               </span>
               <span className="text-xs text-base-content/60">
-                Total size: {formatBytes(totalOriginalSize)} • Drag or use arrows to reorder PDF pages
+                {t('totalSize', 'Total size')}: {formatBytes(totalOriginalSize)} • {t('dragToReorder', 'Drag or use arrows to reorder PDF pages')}
               </span>
             </div>
             <button
@@ -318,7 +320,7 @@ export default function ImageToPdfTool({
               className="btn btn-ghost btn-xs sm:btn-sm text-base-content/60 hover:text-error gap-1"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Clear All</span>
+              <span>{t('clearAll', 'Clear All')}</span>
             </button>
           </div>
 
@@ -339,7 +341,7 @@ export default function ImageToPdfTool({
                       className="h-full w-full object-contain drop-shadow-sm rounded-lg"
                       onError={() => {
                         try {
-                          const fallbackUrl = URL.createObjectURL(item.file);
+                           const fallbackUrl = URL.createObjectURL(item.file);
                           item.previewUrl = fallbackUrl;
                           setItems((prev) => [...prev]);
                         } catch {}
@@ -348,13 +350,13 @@ export default function ImageToPdfTool({
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-1.5 text-base-content/40">
                       <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                      <span className="text-[10px]">Loading...</span>
+                      <span className="text-[10px]">{t('loading', 'Loading...')}</span>
                     </div>
                   )}
 
                   {/* Page Sequence Badge */}
                   <span className="absolute top-2 left-2 badge badge-sm bg-neutral/80 text-white backdrop-blur-sm font-bold text-[10px] shadow">
-                    Page {idx + 1}
+                    {t('page', 'Page')} {idx + 1}
                   </span>
 
                   {/* Remove Button */}
@@ -362,7 +364,7 @@ export default function ImageToPdfTool({
                     type="button"
                     onClick={() => removeItem(idx)}
                     className="absolute top-1.5 right-1.5 btn btn-circle btn-xs btn-error text-white opacity-80 hover:opacity-100 shadow transition-opacity"
-                    title="Remove image"
+                    title={t('delete', 'Remove image')}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -406,12 +408,12 @@ export default function ImageToPdfTool({
             <div
               onClick={() => addMoreInputRef.current?.click()}
               className="rounded-2xl border-2 border-dashed border-base-300 hover:border-primary/60 hover:bg-primary/5 cursor-pointer flex flex-col items-center justify-center p-4 min-h-[160px] text-center transition-all group"
-              title="Add more photos"
+              title={t('addMoreImages', 'Add more photos')}
             >
               <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-1 group-hover:scale-110 transition-transform shadow-inner">
                 <Plus className="w-5 h-5" />
               </div>
-              <span className="text-xs font-bold text-base-content">Add More Images</span>
+              <span className="text-xs font-bold text-base-content">{t('addMoreImages', 'Add More Images')}</span>
               <span className="text-[10px] text-base-content/50 mt-0.5">JPG, PNG, WebP</span>
               <input
                 ref={addMoreInputRef}
@@ -432,13 +434,13 @@ export default function ImageToPdfTool({
           {/* PDF Page Settings */}
           <div className="p-5 rounded-2xl bg-base-200/40 border border-base-300 space-y-4">
             <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 block">
-              PDF Page Layout Options
+              {t('pdfPageLayout', 'PDF Page Layout Options')}
             </span>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Page Size */}
               <div>
-                <label className="text-xs font-semibold text-base-content/70 mb-1 block">Page Size</label>
+                <label className="text-xs font-semibold text-base-content/70 mb-1 block">{t('pageSize', 'Page Size')}</label>
                 <select
                   value={pageSize}
                   onChange={(e) => setPageSize(e.target.value as any)}
@@ -446,35 +448,35 @@ export default function ImageToPdfTool({
                 >
                   <option value="A4">A4 (Standard 210 × 297 mm)</option>
                   <option value="LETTER">US Letter (8.5 × 11 in)</option>
-                  <option value="FIT">Fit to Original Image Dimensions</option>
+                  <option value="FIT">{t('fitToImage', 'Fit to Original Image Dimensions')}</option>
                 </select>
               </div>
 
               {/* Orientation */}
               <div>
-                <label className="text-xs font-semibold text-base-content/70 mb-1 block">Orientation</label>
+                <label className="text-xs font-semibold text-base-content/70 mb-1 block">{t('orientation', 'Orientation')}</label>
                 <select
                   value={orientation}
                   onChange={(e) => setOrientation(e.target.value as any)}
                   className="select select-bordered select-sm w-full rounded-xl font-medium"
                 >
-                  <option value="portrait">Portrait</option>
-                  <option value="landscape">Landscape</option>
-                  <option value="auto">Auto (Match Image)</option>
+                  <option value="portrait">{t('portrait', 'Portrait')}</option>
+                  <option value="landscape">{t('landscape', 'Landscape')}</option>
+                  <option value="auto">{t('auto', 'Auto')}</option>
                 </select>
               </div>
 
               {/* Margin */}
               <div>
-                <label className="text-xs font-semibold text-base-content/70 mb-1 block">Margin</label>
+                <label className="text-xs font-semibold text-base-content/70 mb-1 block">{t('margin', 'Margin')}</label>
                 <select
                   value={margin}
                   onChange={(e) => setMargin(e.target.value as any)}
                   className="select select-bordered select-sm w-full rounded-xl font-medium"
                 >
-                  <option value="none">No Margin (Full Bleed)</option>
-                  <option value="small">Small Margin (Standard)</option>
-                  <option value="large">Large Margin</option>
+                  <option value="none">{t('noMargin', 'No Margin')}</option>
+                  <option value="small">{t('smallMargin', 'Small Margin')}</option>
+                  <option value="large">{t('largeMargin', 'Large Margin')}</option>
                 </select>
               </div>
             </div>
@@ -491,10 +493,10 @@ export default function ImageToPdfTool({
             onClick={handleProcess}
             isProcessing={isProcessing}
             progress={progress}
-            loadingLabel="Generating PDF"
+            loadingLabel={t('generatingPdf', 'Generating PDF')}
           >
             <FileText className="w-5 h-5" />
-            Convert {items.length} {fileTypeLabel}{items.length === 1 ? '' : 's'} to PDF
+            {t('convertImagesToPdf', 'Convert to PDF')}
           </ProcessingButton>
         </div>
       )}

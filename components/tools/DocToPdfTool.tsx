@@ -12,6 +12,7 @@ import { convertExcelToPdf } from '@/lib/browser-converters/excel-to-pdf';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface DocToPdfToolProps {
   initialFormat?: 'txt' | 'csv' | 'html' | 'word' | 'excel';
@@ -24,6 +25,7 @@ export default function DocToPdfTool({
   title = 'Convert Document to PDF',
   subtitle = 'Convert Word, Excel, TXT, CSV, or HTML documents into clean, professional PDF files.',
 }: DocToPdfToolProps) {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>('');
   const [format, setFormat] = useState<'txt' | 'csv' | 'html'>(
@@ -131,21 +133,21 @@ export default function DocToPdfTool({
             accept=".xlsx,.xls,.docx,.doc,.txt,.csv,.html,.rtf"
             maxFiles={1}
             maxSizeMb={50}
-            title={title}
-            subtitle={subtitle}
+            title={t(title, title)}
+            subtitle={t(subtitle, subtitle)}
             onFilesSelected={(files) => setFile(files[0])}
           />
 
           <div className="p-5 sm:p-6 rounded-2xl bg-base-200/40 border border-base-300 space-y-3">
             <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-base-content/70">
               <FileCode className="w-4 h-4 text-primary" />
-              <span>Or Paste Raw Text / CSV directly:</span>
+              <span>{t('orPasteDirectly', 'Or Paste Raw Text / CSV directly:')}</span>
             </div>
             <textarea
               rows={5}
               value={textContent}
               onChange={(e) => setTextContent(e.target.value)}
-              placeholder="Paste plain text or comma-separated CSV rows here to instantly generate a PDF..."
+              placeholder={t('pasteTextPlaceholder', 'Paste plain text or comma-separated CSV rows here to instantly generate a PDF...')}
               className="textarea textarea-bordered w-full rounded-2xl text-xs font-mono bg-base-100"
             />
             {error && (
@@ -163,11 +165,11 @@ export default function DocToPdfTool({
                 {isProcessing ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Converting...</span>
+                    <span>{t('converting', 'Converting...')}</span>
                   </>
                 ) : (
                   <>
-                    <span>Convert Pasted Text to PDF</span>
+                    <span>{t('convertImagesToPdf', 'Convert Pasted Text to PDF')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -189,7 +191,7 @@ export default function DocToPdfTool({
                 <p className="text-xs text-base-content/60">{formatBytes(file.size)}</p>
               </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle">
+            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title={t('reset', 'Reset')}>
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -214,9 +216,9 @@ export default function DocToPdfTool({
               onClick={handleProcess}
               isProcessing={isProcessing}
               progress={progress}
-              loadingLabel="Converting Document"
+              loadingLabel={t('converting', 'Converting Document')}
             >
-              <span>Convert to PDF</span>
+              <span>{t('convertImagesToPdf', 'Convert to PDF')}</span>
               <ArrowRight className="w-4 h-4" />
             </ProcessingButton>
           </div>
@@ -230,9 +232,9 @@ export default function DocToPdfTool({
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your document has been converted successfully!"
-          subtitle="Your document has been transformed into a clean, high-fidelity PDF. You can now download your file below."
-          resetLabel="Convert Another Document"
+          title={t('fileReadyTitle', 'Your document has been converted successfully!')}
+          subtitle={t('fileReadyDesc', 'Your document has been transformed into a clean, high-fidelity PDF. You can now download your file below.')}
+          resetLabel={t('processAnother', 'Convert Another Document')}
           onReset={handleReset}
         />
       )}

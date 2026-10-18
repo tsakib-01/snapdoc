@@ -6,8 +6,10 @@ import { formatBytes } from '@/lib/utils/formatters';
 import ResultCard from '@/components/ui/ResultCard';
 import { PDFDocument } from 'pdf-lib';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function PdfScannerTool() {
+  const { t } = useLanguage();
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
@@ -250,8 +252,8 @@ export default function PdfScannerTool() {
                 <Camera className="w-8 h-8" />
               </div>
               <div className="space-y-1.5 max-w-sm mx-auto">
-                <h4 className="font-bold text-base sm:text-lg text-base-content">Ready to Scan Documents</h4>
-                <p className="text-xs sm:text-sm text-base-content/60">Use your camera to capture pages, or select photos from your device library.</p>
+                <h4 className="font-bold text-base sm:text-lg text-base-content">{t('readyToScanDocs', 'Ready to Scan Documents')}</h4>
+                <p className="text-xs sm:text-sm text-base-content/60">{t('readyToScanDesc', 'Use your camera to capture pages, or select photos from your device library.')}</p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button
@@ -260,11 +262,11 @@ export default function PdfScannerTool() {
                   className="btn btn-primary rounded-xl gap-2 shadow-lg shadow-primary/25 px-5"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Open Camera</span>
+                  <span>{t('openCamera', 'Open Camera')}</span>
                 </button>
                 <label className="btn btn-outline rounded-xl gap-2 cursor-pointer px-4">
                   <Upload className="w-4 h-4" />
-                  <span>Upload Photos</span>
+                  <span>{t('uploadPhotos', 'Upload Photos')}</span>
                   <input
                     type="file"
                     multiple
@@ -289,7 +291,7 @@ export default function PdfScannerTool() {
                 {/* Document Alignment Frame */}
                 <div className="absolute inset-4 sm:inset-6 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
                   <span className="text-white text-xs font-bold bg-black/60 px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-md">
-                    Align document inside frame
+                    {t('alignDocFrame', 'Align document inside frame')}
                   </span>
                 </div>
 
@@ -299,7 +301,7 @@ export default function PdfScannerTool() {
                   <button
                     type="button"
                     onClick={() => setIsMirrored((prev) => !prev)}
-                    title={isMirrored ? 'Disable Mirror Reflection' : 'Enable Mirror Reflection'}
+                    title={isMirrored ? t('disableMirror', 'Disable Mirror Reflection') : t('enableMirror', 'Enable Mirror Reflection')}
                     className={`btn btn-circle btn-sm ${isMirrored ? 'bg-primary text-white shadow-md' : 'bg-black/60 hover:bg-black/80 text-white'} border-none backdrop-blur-md`}
                   >
                     <FlipHorizontal className="w-4 h-4" />
@@ -309,7 +311,7 @@ export default function PdfScannerTool() {
                   <button
                     type="button"
                     onClick={toggleFacingMode}
-                    title="Switch Front/Back Camera"
+                    title={t('switchCamera', 'Switch Front/Back Camera')}
                     className="btn btn-circle btn-sm bg-black/60 hover:bg-black/80 text-white border-none backdrop-blur-md"
                   >
                     <SwitchCamera className="w-4 h-4" />
@@ -329,11 +331,11 @@ export default function PdfScannerTool() {
                   className="btn btn-primary rounded-full px-6 sm:px-8 gap-2 shadow-xl shadow-primary/30 font-bold"
                 >
                   <Camera className="w-4 h-4" />
-                  <span>Capture Page ({capturedImages.length + 1})</span>
+                  <span>{t('capturePage', 'Capture Page')} ({capturedImages.length + 1})</span>
                 </button>
                 <label className="btn btn-ghost btn-sm gap-1.5 cursor-pointer">
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Add from gallery</span>
+                  <span>{t('addFromGallery', 'Add from gallery')}</span>
                   <input
                     type="file"
                     multiple
@@ -347,7 +349,7 @@ export default function PdfScannerTool() {
                   onClick={stopCamera}
                   className="btn btn-ghost btn-sm text-base-content/70"
                 >
-                  Stop Camera
+                  {t('stopCamera', 'Stop Camera')}
                 </button>
               </div>
             </div>
@@ -358,16 +360,16 @@ export default function PdfScannerTool() {
             <div className="space-y-3 pt-4 border-t border-base-200">
               <div className="flex items-center justify-between">
                 <h4 className="font-bold text-xs uppercase tracking-wider text-base-content/70">
-                  Scanned Pages ({capturedImages.length})
+                  {t('scannedPages', 'Scanned Pages')} ({capturedImages.length})
                 </h4>
                 <button
                   type="button"
                   onClick={handleReset}
                   className="btn btn-ghost btn-xs text-base-content/60 hover:text-error gap-1"
-                  title="Clear all pages"
+                  title={t('clearAll', 'Clear All')}
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Clear All</span>
+                  <span>{t('clearAll', 'Clear All')}</span>
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -389,13 +391,13 @@ export default function PdfScannerTool() {
                         e.stopPropagation();
                         removePhoto(idx);
                       }}
-                      title="Delete Page"
+                      title={t('delete', 'Delete')}
                       className="absolute top-2 right-2 btn btn-circle btn-xs btn-error opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-sm z-10"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
                     <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-bold pointer-events-none">
-                      Page {idx + 1}
+                      {t('page', 'Page')} {idx + 1}
                     </span>
                   </div>
                 ))}
@@ -415,9 +417,9 @@ export default function PdfScannerTool() {
                     <div className="flex items-center justify-between pb-2 border-b border-base-200">
                       <div className="flex items-center gap-2">
                         <span className="badge badge-sm badge-primary font-bold">
-                          Page {previewImageIndex + 1} of {capturedImages.length}
+                          {t('page', 'Page')} {previewImageIndex + 1} / {capturedImages.length}
                         </span>
-                        <span className="text-xs text-base-content/60 hidden sm:inline">Preview Scanned Page</span>
+                        <span className="text-xs text-base-content/60 hidden sm:inline">{t('previewScannedPage', 'Preview Scanned Page')}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         {capturedImages.length > 1 && (
@@ -426,7 +428,7 @@ export default function PdfScannerTool() {
                               type="button"
                               onClick={() => setPreviewImageIndex((prev) => (prev! > 0 ? prev! - 1 : capturedImages.length - 1))}
                               className="btn btn-ghost btn-xs btn-circle"
-                              title="Previous Page"
+                              title={t('previousPage', 'Previous Page')}
                             >
                               <ChevronLeft className="w-4 h-4" />
                             </button>
@@ -434,7 +436,7 @@ export default function PdfScannerTool() {
                               type="button"
                               onClick={() => setPreviewImageIndex((prev) => (prev! < capturedImages.length - 1 ? prev! + 1 : 0))}
                               className="btn btn-ghost btn-xs btn-circle"
-                              title="Next Page"
+                              title={t('nextPage', 'Next Page')}
                             >
                               <ChevronRight className="w-4 h-4" />
                             </button>
@@ -444,16 +446,16 @@ export default function PdfScannerTool() {
                           type="button"
                           onClick={() => removePhoto(previewImageIndex)}
                           className="btn btn-ghost btn-xs text-error hover:bg-error/10 gap-1 rounded-lg"
-                          title="Delete Page"
+                          title={t('delete', 'Delete')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline text-xs">Delete</span>
+                          <span className="hidden sm:inline text-xs">{t('delete', 'Delete')}</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setPreviewImageIndex(null)}
                           className="btn btn-ghost btn-xs btn-circle"
-                          title="Close"
+                          title={t('close', 'Close')}
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -472,14 +474,14 @@ export default function PdfScannerTool() {
                     {/* Modal Footer */}
                     <div className="flex items-center justify-between pt-1">
                       <span className="text-[11px] text-base-content/50">
-                        Check if text is sharp and clearly visible
+                        {t('checkTextSharp', 'Check if text is sharp and clearly visible')}
                       </span>
                       <button
                         type="button"
                         onClick={() => setPreviewImageIndex(null)}
                         className="btn btn-sm btn-ghost border border-base-300 rounded-xl px-4"
                       >
-                        Done
+                        {t('done', 'Done')}
                       </button>
                     </div>
                   </div>
@@ -495,11 +497,11 @@ export default function PdfScannerTool() {
                   {processing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Creating PDF...</span>
+                      <span>{t('creatingPdf', 'Creating PDF...')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Convert Scans to PDF</span>
+                      <span>{t('convertScansToPdf', 'Convert Scans to PDF')}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -523,10 +525,10 @@ export default function PdfScannerTool() {
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your scanned PDF is ready!"
-          subtitle="Your camera scans and photos have been compiled into a clean PDF document."
-          resetLabel="Scan Another Document"
-          extraInfo={capturedImages.length > 0 ? `${capturedImages.length} Pages` : undefined}
+          title={t('scannedPdfReady', 'Your scanned PDF is ready!')}
+          subtitle={t('scannedPdfDesc', 'Your camera scans and photos have been compiled into a clean PDF document.')}
+          resetLabel={t('scanAnotherDoc', 'Scan Another Document')}
+          extraInfo={capturedImages.length > 0 ? `${capturedImages.length} ${t('pages', 'Pages')}` : undefined}
           pageCount={capturedImages.length}
           onReset={handleReset}
         />

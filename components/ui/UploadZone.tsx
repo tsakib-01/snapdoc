@@ -91,8 +91,8 @@ export default function UploadZone({
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const displayTitle = title === 'Drag & drop your files here' ? t('dropTitle', title) : title;
-  const displaySubtitle = subtitle === 'or click to browse from your device' ? t('dropSubtitle', subtitle) : subtitle;
+  const displayTitle = title === 'Drag & drop your files here' ? t('dropTitle', title) : t(title, title);
+  const displaySubtitle = subtitle === 'or click to browse from your device' ? t('dropSubtitle', subtitle) : t(subtitle, subtitle);
   const [internalLoading, setInternalLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingFileName, setLoadingFileName] = useState<string>('');
@@ -260,7 +260,7 @@ export default function UploadZone({
           <div className="space-y-1.5 max-w-md z-10">
             <h3 className="text-base sm:text-lg font-bold text-base-content flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-primary shrink-0" />
-              <span>{loadingMessage || (isLargeFile ? 'Processing Large File...' : 'Reading & Preparing File...')}</span>
+              <span>{loadingMessage || (isLargeFile ? t('processingLargeFile', 'Processing Large File...') : t('readingPreparingFile', 'Reading & Preparing File...'))}</span>
             </h3>
 
             {activeFileName && (
@@ -275,7 +275,7 @@ export default function UploadZone({
                 )}
                 {isLargeFile && (
                   <span className="badge badge-warning text-[10px] font-bold">
-                    Large Document
+                    {t('largeDocument', 'Large Document')}
                   </span>
                 )}
               </div>
@@ -283,8 +283,8 @@ export default function UploadZone({
 
             <p className="text-xs text-base-content/60 pt-1">
               {isLargeFile
-                ? 'Large document detected. Optimizing and rendering high-resolution engine preview, please wait...'
-                : 'Validating file format and initializing processing pipeline...'}
+                ? t('largeDocDesc', 'Large document detected. Optimizing and rendering high-resolution engine preview, please wait...')
+                : t('validatingDocDesc', 'Validating file format and initializing processing pipeline...')}
             </p>
           </div>
 
@@ -299,7 +299,7 @@ export default function UploadZone({
               </div>
             </div>
             <div className="flex justify-between text-[10px] font-mono text-base-content/50 px-1">
-              <span>Status: Active</span>
+              <span>{t('status', 'Status')}: {t('active', 'Active')}</span>
               <span>{loading ? '92%' : `${Math.round(loadingProgress)}%`}</span>
             </div>
           </div>

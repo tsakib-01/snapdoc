@@ -41,6 +41,7 @@ import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHe
 import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument, degrees } from 'pdf-lib';
 import { generateOfficialSeal, removeWhiteBackground } from '@/lib/pdf/sealGenerator';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export interface PlacedElement {
   id: string;
@@ -156,6 +157,7 @@ function generateDigitalSealDataUrl(signerName: string, reason: string, certId: 
 }
 
 export default function SignPdfTool() {
+  const { t } = useLanguage();
   // File & Rendering States
   const [file, setFile] = useState<File | null>(null);
   const [loadingPdf, setLoadingPdf] = useState<boolean>(false);
@@ -932,11 +934,11 @@ export default function SignPdfTool() {
             accept=".pdf,application/pdf"
             maxFiles={1}
             maxSizeMb={50}
-            title="Upload PDF to eSign"
-            subtitle="Draw, type, or upload your signature and place it anywhere with drag-and-drop."
+            title={t('uploadPdfToSign', 'Upload PDF to eSign')}
+            subtitle={t('uploadPdfToSignSubtitle', 'Draw, type, or upload your signature and place it anywhere with drag-and-drop.')}
             onFilesSelected={handleFilesSelected}
             loading={loadingPdf}
-            loadingMessage="Rendering PDF pages & preparing high-resolution eSign studio..."
+            loadingMessage={t('renderingPdfPages', 'Rendering PDF pages & preparing high-resolution eSign studio...')}
             files={file ? [file] : []}
           />
         </div>
@@ -947,15 +949,15 @@ export default function SignPdfTool() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-base-100 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-base-300 space-y-6 animate-in fade-in zoom-in duration-200">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-base-content">Choose sealing type</h2>
-              <p className="text-xs text-base-content/60 mt-1">Select how you would like to sign your document to proceed</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-base-content">{t('chooseSealingType', 'Choose sealing type')}</h2>
+              <p className="text-xs text-base-content/60 mt-1">{t('chooseSealingDesc', 'Select how you would like to sign your document to proceed')}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Option 1: Sign without a seal */}
               <div className="rounded-2xl border-2 border-base-300 hover:border-primary bg-base-200/40 p-5 flex flex-col justify-between items-center text-center space-y-4 hover:shadow-lg transition-all">
                 <div className="w-full h-28 sm:h-32 bg-base-100 rounded-xl border border-base-300 p-3 flex flex-col items-center justify-center relative">
-                  <span className="font-serif italic text-2xl text-base-content/70">Signature</span>
+                  <span className="font-serif italic text-2xl text-base-content/70">{t('signature', 'Signature')}</span>
                 </div>
                 <div className="space-y-1 w-full">
                   <button
@@ -963,9 +965,9 @@ export default function SignPdfTool() {
                     className="btn btn-primary w-full gap-2 rounded-xl h-auto min-h-[2.75rem] py-2.5 px-3 text-xs sm:text-sm font-bold leading-tight text-center"
                   >
                     <FileSignature className="w-4 h-4 shrink-0" />
-                    <span>Sign without a seal</span>
+                    <span>{t('signWithoutSeal', 'Sign without a seal')}</span>
                   </button>
-                  <p className="text-xs text-base-content/60 pt-1">Sign without adding a digital seal.</p>
+                  <p className="text-xs text-base-content/60 pt-1">{t('signWithoutSealDesc', 'Sign without adding a digital seal.')}</p>
                 </div>
               </div>
 
@@ -974,9 +976,9 @@ export default function SignPdfTool() {
                 <div className="w-full h-28 sm:h-32 bg-base-100 rounded-xl border border-base-300 p-3 flex flex-col items-center justify-center relative">
                   <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-xs mb-1">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Verified Audit Trail</span>
+                    <span>{t('verifiedAuditTrail', 'Verified Audit Trail')}</span>
                   </div>
-                  <span className="font-serif italic text-2xl text-emerald-700">Digital Seal</span>
+                  <span className="font-serif italic text-2xl text-emerald-700">{t('digitalSeal', 'Digital Seal')}</span>
                 </div>
                 <div className="space-y-1 w-full">
                   <button
@@ -987,10 +989,10 @@ export default function SignPdfTool() {
                     className="btn btn-primary w-full gap-2 rounded-xl h-auto min-h-[2.75rem] py-2.5 px-3 text-xs sm:text-sm font-bold leading-tight text-center"
                   >
                     <ShieldCheck className="w-4 h-4 shrink-0" />
-                    <span>Sign with digital seal</span>
+                    <span>{t('signWithDigitalSeal', 'Sign with digital seal')}</span>
                   </button>
-                  <p className="text-xs text-base-content/60 pt-1">Add a digital seal with audit trail certificate.</p>
-                  <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ 100% Free with SnapDoc</div>
+                  <p className="text-xs text-base-content/60 pt-1">{t('signWithDigitalSealDesc', 'Add a digital seal with audit trail certificate.')}</p>
+                  <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ {t('freeWithSnapDoc', '100% Free with SnapDoc')}</div>
                 </div>
               </div>
             </div>
@@ -1009,8 +1011,8 @@ export default function SignPdfTool() {
                   <Stamp className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-base-content">Official Seal & Stamp Studio</h2>
-                  <p className="text-xs text-base-content/60">Generate authentic corporate seals or upload your official company stamp</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-base-content">{t('officialSealStudio', 'Official Seal & Stamp Studio')}</h2>
+                  <p className="text-xs text-base-content/60">{t('sealStudioDesc', 'Generate authentic corporate seals or upload your official company stamp')}</p>
                 </div>
               </div>
               <button
@@ -1033,7 +1035,7 @@ export default function SignPdfTool() {
                 }`}
               >
                 <PenTool className="w-4 h-4 shrink-0" />
-                <span>Create New Seal</span>
+                <span>{t('createNewSeal', 'Create New Seal')}</span>
               </button>
               <button
                 type="button"
@@ -1045,7 +1047,7 @@ export default function SignPdfTool() {
                 }`}
               >
                 <Upload className="w-4 h-4 shrink-0" />
-                <span>Upload Seal</span>
+                <span>{t('uploadSeal', 'Upload Seal')}</span>
               </button>
             </div>
 
@@ -1057,7 +1059,7 @@ export default function SignPdfTool() {
                   <div className="md:col-span-7 space-y-3.5">
                     {/* Seal Shape Selector */}
                     <div>
-                      <label className="text-[11px] font-bold text-base-content/70 block mb-1">Seal Shape</label>
+                      <label className="text-[11px] font-bold text-base-content/70 block mb-1">{t('sealShape', 'Seal Shape')}</label>
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
@@ -1069,8 +1071,8 @@ export default function SignPdfTool() {
                           }`}
                         >
                           <Circle className="w-3.5 h-3.5 shrink-0" />
-                          <span className="hidden sm:inline">Circular Official Seal</span>
-                          <span className="sm:hidden">Circular Seal</span>
+                          <span className="hidden sm:inline">{t('circularSeal', 'Circular Official Seal')}</span>
+                          <span className="sm:hidden">{t('circularSeal', 'Circular Seal')}</span>
                         </button>
                         <button
                           type="button"
@@ -1082,7 +1084,7 @@ export default function SignPdfTool() {
                           }`}
                         >
                           <div className="w-3.5 h-2.5 border-2 border-current rounded-sm shrink-0" />
-                          <span>Boxed Stamp</span>
+                          <span>{t('boxedStamp', 'Boxed Stamp')}</span>
                         </button>
                       </div>
                     </div>
@@ -1090,7 +1092,7 @@ export default function SignPdfTool() {
                     {/* Organization / Company Name */}
                     <div>
                       <label className="text-[11px] font-bold text-base-content/70 block">
-                        Organization / Company Name <span className="text-error">*</span>
+                        {t('companyName', 'Organization / Company Name')} <span className="text-error">*</span>
                       </label>
                       <input
                         type="text"
@@ -1105,7 +1107,7 @@ export default function SignPdfTool() {
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-[11px] font-bold text-base-content/70">
-                          Seal Title <span className="text-error">*</span>
+                          {t('sealSubtitle', 'Seal Title')} <span className="text-error">*</span>
                         </label>
                         <div className="flex items-center gap-1">
                           {['OFFICIAL SEAL', 'APPROVED', 'NOTARY PUBLIC'].map((preset) => (
@@ -1132,7 +1134,7 @@ export default function SignPdfTool() {
                     {/* Registration / License Number */}
                     <div>
                       <label className="text-[11px] font-bold text-base-content/70 block">
-                        Registration / License Number <span className="text-base-content/40 font-normal">(Optional)</span>
+                        {t('regNumber', 'Registration / License Number')} <span className="text-base-content/40 font-normal">({t('optional', 'Optional')})</span>
                       </label>
                       <input
                         type="text"
@@ -1146,7 +1148,7 @@ export default function SignPdfTool() {
                     {/* Authorized Person's Name */}
                     <div>
                       <label className="text-[11px] font-bold text-base-content/70 block">
-                        Authorized Person&apos;s Name / Signatory
+                        {t('signatoryName', "Authorized Person's Name / Signatory")}
                       </label>
                       <input
                         type="text"
@@ -1167,7 +1169,7 @@ export default function SignPdfTool() {
                             onChange={(e) => setSealIncludeDate(e.target.checked)}
                             className="checkbox checkbox-primary checkbox-xs rounded"
                           />
-                          <span className="text-xs font-bold text-base-content">Include Date on Seal</span>
+                          <span className="text-xs font-bold text-base-content">{t('includeDateOnSeal', 'Include Date on Seal')}</span>
                         </label>
                         {sealIncludeDate && (
                           <button
@@ -1175,7 +1177,7 @@ export default function SignPdfTool() {
                             onClick={() => setSealDateStr(new Date().toISOString().slice(0, 10))}
                             className="text-[10px] text-primary hover:underline font-semibold"
                           >
-                            Set Today
+                            {t('setToday', 'Set Today')}
                           </button>
                         )}
                       </div>
@@ -1192,7 +1194,7 @@ export default function SignPdfTool() {
                     {/* Center Logo Upload */}
                     <div>
                       <label className="text-[11px] font-bold text-base-content/70 block mb-1">
-                        Emblem / Logo <span className="text-base-content/40 font-normal">(Optional Center Icon)</span>
+                        {t('emblemLogo', 'Emblem / Logo')} <span className="text-base-content/40 font-normal">({t('optionalCenterIcon', 'Optional Center Icon')})</span>
                       </label>
                       {sealLogoDataUrl ? (
                         <div className="flex items-center gap-3 p-2 rounded-xl bg-base-200/60 border border-base-300">
@@ -1202,21 +1204,21 @@ export default function SignPdfTool() {
                             className="w-10 h-10 object-contain rounded-lg bg-white p-1 border border-base-300"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-base-content truncate">Custom Logo Active</p>
-                            <p className="text-[10px] text-base-content/60">Centered inside seal inner ring</p>
+                            <p className="text-xs font-semibold text-base-content truncate">{t('customLogoActive', 'Custom Logo Active')}</p>
+                            <p className="text-[10px] text-base-content/60">{t('centeredSealRing', 'Centered inside seal inner ring')}</p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setSealLogoDataUrl(null)}
                             className="btn btn-xs btn-ghost text-error rounded-lg"
                           >
-                            Remove
+                            {t('remove', 'Remove')}
                           </button>
                         </div>
                       ) : (
                         <label className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-dashed border-base-300 hover:border-primary/60 cursor-pointer bg-base-100 hover:bg-base-200/40 transition-colors">
                           <Upload className="w-3.5 h-3.5 text-base-content/60" />
-                          <span className="text-xs text-base-content/70 font-medium">Upload Logo (PNG, SVG, JPG)</span>
+                          <span className="text-xs text-base-content/70 font-medium">{t('uploadLogo', 'Upload Logo (PNG, SVG, JPG)')}</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -1230,7 +1232,7 @@ export default function SignPdfTool() {
                     {/* Seal Appearance / Color */}
                     <div>
                       <label className="text-[11px] font-bold text-base-content/70 block mb-1.5">
-                        Seal Appearance & Color
+                        {t('sealAppearanceColor', 'Seal Appearance & Color')}
                       </label>
                       <div className="flex items-center gap-2 flex-wrap">
                         {[
@@ -1399,7 +1401,7 @@ export default function SignPdfTool() {
                 onClick={() => setShowDigitalSealModal(false)}
                 className="btn btn-ghost rounded-xl px-4 text-xs font-semibold h-auto min-h-[2.25rem] py-1.5"
               >
-                Cancel
+                {t('cancel', 'Cancel')}
               </button>
               <button
                 type="button"
@@ -1408,7 +1410,7 @@ export default function SignPdfTool() {
                 className="btn btn-primary rounded-xl px-4 sm:px-6 gap-2 text-xs font-bold shadow-md hover:shadow-lg transition-all h-auto min-h-[2.25rem] py-1.5 text-center leading-snug flex items-center justify-center"
               >
                 <Stamp className="w-4 h-4 shrink-0" />
-                <span>Apply Seal to PDF</span>
+                <span>{t('applySealToPdf', 'Apply Seal to PDF')}</span>
               </button>
             </div>
           </div>
@@ -1423,7 +1425,7 @@ export default function SignPdfTool() {
               <div>
                 <h2 className="text-lg font-bold text-base-content flex items-center gap-2">
                   <PenTool className="w-4 h-4 text-primary" />
-                  Select Signature or Initials
+                  {t('selectSigOrInitials', 'Select Signature or Initials')}
                 </h2>
               </div>
               <button
@@ -1446,7 +1448,7 @@ export default function SignPdfTool() {
                     <span className="badge badge-sm badge-ghost capitalize text-[10px]">{sig.type}</span>
                     <img src={sig.dataUrl} alt="Signature" className="h-8 object-contain" />
                   </div>
-                  <span className="text-xs font-bold text-primary">Place on Page</span>
+                  <span className="text-xs font-bold text-primary">{t('placeOnPage', 'Place on Page')}</span>
                 </div>
               ))}
             </div>
@@ -1462,7 +1464,7 @@ export default function SignPdfTool() {
                 className="btn btn-sm btn-outline rounded-xl gap-1 text-xs h-auto min-h-[2.25rem] py-1.5 px-2 leading-snug text-center flex items-center justify-center"
               >
                 <Plus className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate sm:overflow-visible">New Signature</span>
+                <span className="truncate sm:overflow-visible">{t('newSignature', 'New Signature')}</span>
               </button>
               <button
                 onClick={() => {
@@ -1473,7 +1475,7 @@ export default function SignPdfTool() {
                 className="btn btn-sm btn-outline rounded-xl gap-1 text-xs h-auto min-h-[2.25rem] py-1.5 px-2 leading-snug text-center flex items-center justify-center"
               >
                 <Plus className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate sm:overflow-visible">New Initials</span>
+                <span className="truncate sm:overflow-visible">{t('newInitials', 'New Initials')}</span>
               </button>
             </div>
           </div>
@@ -1486,7 +1488,7 @@ export default function SignPdfTool() {
           <div className="bg-base-100 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl border border-base-300 space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between border-b border-base-200 pb-3">
               <h2 className="text-lg sm:text-xl font-bold text-base-content capitalize flex items-center gap-2">
-                <span>Create {creatorMode}</span>
+                <span>{creatorMode === 'signature' ? t('createSignature', 'Create Signature') : t('createInitials', 'Create Initials')}</span>
               </h2>
               <button
                 onClick={() => setShowSignatureCreator(false)}
@@ -1503,21 +1505,21 @@ export default function SignPdfTool() {
                 className={`flex-1 btn btn-sm rounded-xl gap-1.5 border-0 h-auto min-h-[2rem] py-1.5 px-2 text-xs sm:text-sm font-semibold leading-snug flex items-center justify-center ${creatorTab === 'draw' ? 'btn-primary shadow-sm' : 'btn-ghost'}`}
               >
                 <PenTool className="w-3.5 h-3.5 shrink-0" />
-                <span>Draw</span>
+                <span>{t('draw', 'Draw')}</span>
               </button>
               <button
                 onClick={() => setCreatorTab('type')}
                 className={`flex-1 btn btn-sm rounded-xl gap-1.5 border-0 h-auto min-h-[2rem] py-1.5 px-2 text-xs sm:text-sm font-semibold leading-snug flex items-center justify-center ${creatorTab === 'type' ? 'btn-primary shadow-sm' : 'btn-ghost'}`}
               >
                 <Type className="w-3.5 h-3.5 shrink-0" />
-                <span>Type</span>
+                <span>{t('type', 'Type')}</span>
               </button>
               <button
                 onClick={() => setCreatorTab('upload')}
                 className={`flex-1 btn btn-sm rounded-xl gap-1.5 border-0 h-auto min-h-[2rem] py-1.5 px-2 text-xs sm:text-sm font-semibold leading-snug flex items-center justify-center ${creatorTab === 'upload' ? 'btn-primary shadow-sm' : 'btn-ghost'}`}
               >
                 <Upload className="w-3.5 h-3.5 shrink-0" />
-                <span>Upload</span>
+                <span>{t('upload', 'Upload')}</span>
               </button>
             </div>
 
@@ -1560,7 +1562,7 @@ export default function SignPdfTool() {
                     className="w-full h-40 sm:h-44 bg-base-100 cursor-crosshair touch-none"
                   />
                   <div className="absolute inset-x-8 bottom-10 border-b border-primary/20 pointer-events-none flex justify-center">
-                    <span className="text-[11px] text-primary/40 -mt-5">Draw here</span>
+                    <span className="text-[11px] text-primary/40 -mt-5">{t('drawHere', 'Draw here')}</span>
                   </div>
                   {/* Canvas Bottom Action Controls */}
                   <div className="absolute bottom-2 left-2 flex items-center gap-1">
@@ -1588,7 +1590,7 @@ export default function SignPdfTool() {
                       className="btn btn-xs btn-ghost text-error gap-1 font-normal"
                     >
                       <Eraser className="w-3 h-3" />
-                      <span>Clear</span>
+                      <span>{t('clear', 'Clear')}</span>
                     </button>
                   </div>
                 </div>
@@ -1602,7 +1604,7 @@ export default function SignPdfTool() {
                   type="text"
                   value={typedText}
                   onChange={(e) => setTypedText(e.target.value)}
-                  placeholder={`Type your ${creatorMode}...`}
+                  placeholder={creatorMode === 'signature' ? t('typeYourSig', 'Type your signature...') : t('typeYourInitials', 'Type your initials...')}
                   className="input input-bordered w-full rounded-2xl text-base"
                 />
 
@@ -1617,7 +1619,7 @@ export default function SignPdfTool() {
                         style={{ fontFamily: font, color: creatorColor }}
                         className="text-2xl sm:text-3xl italic"
                       >
-                        {typedText || 'Your Signature'}
+                        {typedText || (creatorMode === 'signature' ? t('yourSignature', 'Your Signature') : t('yourInitials', 'Your Initials'))}
                       </span>
                       {selectedFont === font && <Check className="w-4 h-4 text-primary" />}
                     </div>
@@ -1661,14 +1663,14 @@ export default function SignPdfTool() {
                 onClick={() => setShowSignatureCreator(false)}
                 className="btn btn-ghost rounded-xl px-4 sm:px-5 h-auto min-h-[2.25rem] py-1.5 text-xs sm:text-sm font-semibold leading-snug"
               >
-                Cancel
+                {t('cancel', 'Cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleSaveCreatedSignature}
                 className="btn btn-primary rounded-xl px-5 sm:px-6 h-auto min-h-[2.25rem] py-1.5 text-xs sm:text-sm font-bold leading-snug"
               >
-                Create
+                {t('create', 'Create')}
               </button>
             </div>
           </div>
@@ -1686,7 +1688,7 @@ export default function SignPdfTool() {
               <div className="flex items-center gap-1 sm:gap-2 min-w-0">
                 <button
                   onClick={handleReset}
-                  title="Sign another file"
+                  title={t('signAnotherFile', 'Sign another file')}
                   className="btn btn-ghost btn-xs sm:btn-sm btn-circle shrink-0"
                 >
                   <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -1700,7 +1702,7 @@ export default function SignPdfTool() {
                 <button
                   onClick={() => setShowMobileThumbnails(!showMobileThumbnails)}
                   className={`btn btn-xs btn-circle sm:hidden shrink-0 ${showMobileThumbnails ? 'btn-primary' : 'btn-ghost'}`}
-                  title="Toggle Pages"
+                  title={t('togglePages', 'Toggle Pages')}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                 </button>
@@ -1712,7 +1714,7 @@ export default function SignPdfTool() {
                   onClick={handleUndo}
                   disabled={undoStack.length === 0}
                   className="btn btn-xs btn-circle btn-ghost disabled:opacity-25"
-                  title="Undo"
+                  title={t('undo', 'Undo')}
                 >
                   <Undo className="w-3.5 h-3.5" />
                 </button>
@@ -1720,7 +1722,7 @@ export default function SignPdfTool() {
                   onClick={handleRedo}
                   disabled={redoStack.length === 0}
                   className="btn btn-xs btn-circle btn-ghost disabled:opacity-25"
-                  title="Redo"
+                  title={t('redo', 'Redo')}
                 >
                   <Redo className="w-3.5 h-3.5" />
                 </button>
@@ -1734,7 +1736,7 @@ export default function SignPdfTool() {
                   ) : (
                     <>
                       <Download className="w-3 h-3 shrink-0" />
-                      <span className="text-[11px] whitespace-nowrap">Download</span>
+                      <span className="text-[11px] whitespace-nowrap">{t('download', 'Download')}</span>
                     </>
                   )}
                 </button>
@@ -1750,7 +1752,7 @@ export default function SignPdfTool() {
                   setSelectedElementId(null);
                 }}
                 className={`btn btn-xs sm:btn-sm btn-circle ${activeTool === 'hand' ? 'btn-primary' : 'btn-ghost'}`}
-                title="Pan Mode"
+                title={t('panMode', 'Pan Mode')}
               >
                 <Hand className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -1759,7 +1761,7 @@ export default function SignPdfTool() {
               <button
                 onClick={() => setActiveTool('pointer')}
                 className={`btn btn-xs sm:btn-sm btn-circle ${activeTool === 'pointer' ? 'btn-primary' : 'btn-ghost'}`}
-                title="Select & Move Tool"
+                title={t('selectMoveTool', 'Select & Move Tool')}
               >
                 <MousePointer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -1772,14 +1774,14 @@ export default function SignPdfTool() {
                 className="btn btn-xs sm:btn-sm rounded-xl gap-1 btn-primary text-white font-bold shadow-md shadow-primary/20 px-2 sm:px-3 h-auto min-h-[1.75rem] sm:min-h-[2rem] py-1 shrink-0 flex items-center leading-none"
               >
                 <PenTool className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
-                <span className="text-xs">Sign</span>
+                <span className="text-xs">{t('sign', 'Sign')}</span>
               </button>
 
               {/* Date Stamp */}
               <button
                 onClick={handlePlaceDate}
                 className="btn btn-xs sm:btn-sm btn-circle btn-ghost"
-                title="Add Date Stamp"
+                title={t('addDateStamp', 'Add Date Stamp')}
               >
                 <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -1788,7 +1790,7 @@ export default function SignPdfTool() {
               <button
                 onClick={handlePlaceText}
                 className="btn btn-xs sm:btn-sm btn-circle btn-ghost"
-                title="Add Text"
+                title={t('addText', 'Add Text')}
               >
                 <Type className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
@@ -1798,7 +1800,7 @@ export default function SignPdfTool() {
                 <button
                   onClick={() => setShowSymbolsDropdown(!showSymbolsDropdown)}
                   className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-0.5 px-1 sm:px-1.5"
-                  title="Add Symbols"
+                  title={t('addSymbols', 'Add Symbols')}
                 >
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
                   <ChevronDown className="w-2.5 h-2.5" />
@@ -1810,28 +1812,28 @@ export default function SignPdfTool() {
                       className="btn btn-xs btn-ghost gap-2 justify-start"
                     >
                       <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Checkmark</span>
+                      <span>{t('checkmark', 'Checkmark')}</span>
                     </button>
                     <button
                       onClick={() => handlePlaceSymbol('cross')}
                       className="btn btn-xs btn-ghost gap-2 justify-start"
                     >
                       <X className="w-3.5 h-3.5 text-red-600" />
-                      <span>Cross</span>
+                      <span>{t('cross', 'Cross')}</span>
                     </button>
                     <button
                       onClick={() => handlePlaceSymbol('dot')}
                       className="btn btn-xs btn-ghost gap-2 justify-start"
                     >
                       <Circle className="w-3.5 h-3.5 fill-current text-slate-800" />
-                      <span>Dot</span>
+                      <span>{t('dot', 'Dot')}</span>
                     </button>
                     <button
                       onClick={() => handlePlaceSymbol('line')}
                       className="btn btn-xs btn-ghost gap-2 justify-start"
                     >
                       <Minus className="w-3.5 h-3.5 text-slate-800" />
-                      <span>Line</span>
+                      <span>{t('line', 'Line')}</span>
                     </button>
                   </div>
                 )}
@@ -1843,10 +1845,10 @@ export default function SignPdfTool() {
               <button
                 onClick={() => setShowDigitalSealModal(true)}
                 className="btn btn-xs sm:btn-sm btn-ghost rounded-xl gap-1 text-emerald-700 hover:bg-emerald-500/10 px-1.5 sm:px-2.5 h-auto min-h-[1.75rem] sm:min-h-[2rem] py-1 shrink-0 flex items-center leading-none"
-                title="Stamp Official Digital Seal"
+                title={t('stampOfficialSeal', 'Stamp Official Digital Seal')}
               >
                 <Stamp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="text-xs hidden md:inline font-semibold">Seal</span>
+                <span className="text-xs hidden md:inline font-semibold">{t('seal', 'Seal')}</span>
               </button>
 
               {/* Undo / Redo for Desktop */}
@@ -1854,7 +1856,7 @@ export default function SignPdfTool() {
                 onClick={handleUndo}
                 disabled={undoStack.length === 0}
                 className="btn btn-xs sm:btn-sm btn-circle btn-ghost hidden sm:flex"
-                title="Undo"
+                title={t('undo', 'Undo')}
               >
                 <Undo className="w-3.5 h-3.5" />
               </button>
@@ -1862,7 +1864,7 @@ export default function SignPdfTool() {
                 onClick={handleRedo}
                 disabled={redoStack.length === 0}
                 className="btn btn-xs sm:btn-sm btn-circle btn-ghost hidden sm:flex"
-                title="Redo"
+                title={t('redo', 'Redo')}
               >
                 <Redo className="w-3.5 h-3.5" />
               </button>
@@ -1878,12 +1880,12 @@ export default function SignPdfTool() {
                 {processing ? (
                   <>
                     <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin shrink-0" />
-                    <span className="text-xs whitespace-nowrap">Signing...</span>
+                    <span className="text-xs whitespace-nowrap">{t('signing', 'Signing...')}</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
-                    <span className="text-xs whitespace-nowrap">Download</span>
+                    <span className="text-xs whitespace-nowrap">{t('download', 'Download')}</span>
                   </>
                 )}
               </button>
@@ -2329,7 +2331,7 @@ export default function SignPdfTool() {
               <button
                 onClick={() => setZoomLevel((z) => Math.min(200, z + 15))}
                 className="btn btn-xs btn-ghost btn-circle"
-                title="Zoom In"
+                title={t('zoomIn', 'Zoom In')}
               >
                 <ZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>
@@ -2346,10 +2348,10 @@ export default function SignPdfTool() {
           filename={resultData.filename}
           dataUrl={resultData.dataUrl}
           format="PDF"
-          title="Your PDF has been signed successfully!"
-          subtitle="Your digital signatures and annotations have been securely flattened into your document."
-          resetLabel="Sign Another Document"
-          extraInfo={pages.length > 0 ? `${pages.length} Pages` : undefined}
+          title={t('signedPdfSuccess', 'Your PDF has been signed successfully!')}
+          subtitle={t('signedPdfDesc', 'Your digital signatures and annotations have been securely flattened into your document.')}
+          resetLabel={t('signAnotherDoc', 'Sign Another Document')}
+          extraInfo={pages.length > 0 ? `${pages.length} ${t('pages', 'Pages')}` : undefined}
           pageCount={pages.length}
           onReset={handleReset}
         />

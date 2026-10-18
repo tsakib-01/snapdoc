@@ -173,4 +173,18 @@ body {
   display: none !important;
 }
 
+/* Prevent header buttons and navigation items from breaking or wrapping on language change */
+header,
+header nav,
+header .dropdown label,
+header .btn {
+  white-space: nowrap !important;
+  flex-wrap: nowrap !important;
+}
+
+header .btn span,
+header label span {
+  white-space: nowrap !important;
+}
+
 

@@ -26,19 +26,19 @@ export const COLUMN_2_LANGUAGES: SiteLanguage[] = [
   { code: 'zh-TW', name: 'Chinese Traditional', nativeName: '中文 (繁體)' },
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
   { code: 'bg', name: 'Bulgarian', nativeName: 'Български' },
-  { code: 'cat', name: 'Catalan', nativeName: 'Català' },
+  { code: 'ca', name: 'Catalan', nativeName: 'Català' },
   { code: 'nl', name: 'Dutch', nativeName: 'Nederlands' },
   { code: 'el', name: 'Greek', nativeName: 'Ελληνικά' },
-  { code: 'hin', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
   { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia' },
 ];
 
 export const COLUMN_3_LANGUAGES: SiteLanguage[] = [
   { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu' },
-  { code: 'pol', name: 'Polish', nativeName: 'Polski' },
+  { code: 'pl', name: 'Polish', nativeName: 'Polski' },
   { code: 'sv', name: 'Swedish', nativeName: 'Svenska' },
   { code: 'th', name: 'Thai', nativeName: 'ภาษาไทย' },
-  { code: 'tur', name: 'Turkish', nativeName: 'Türkçe' },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe' },
   { code: 'uk', name: 'Ukrainian', nativeName: 'Українська' },
   { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt' },
   { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' },
@@ -537,15 +537,16 @@ export const TRANSLATIONS: Record<string, TranslationDictionary> = {
     terms: 'ব্যবহারের শর্তাবলী',
   },
   ru: {
-    brandSubtitle: 'Онлайн-инструменты для изображений и PDF',
-    imageTools: 'Инструменты изображений',
+    brandSubtitle: 'Инструменты фото и PDF',
+    imageTools: 'Изображения',
     pdfTools: 'Инструменты PDF',
-    editPdf: 'Редактировать PDF',
+    editPdf: 'Редактор PDF',
     organizeEdit: 'Организовать и Редактировать',
     convertPdf: 'Конвертировать PDF',
-    toolsResources: 'Инструменты и Ресурсы',
-    guides: 'Руководства и Уроки',
+    toolsResources: 'Все инструменты',
+    guides: 'Инструкции',
     searchPlaceholder: 'Поиск инструментов...',
+    privacyBadge: '100% В памяти',
     privacyTitle: '100% Конфиденциальность',
     privacyDesc: 'Файлы обрабатываются в памяти и никогда не сохраняются на сервере.',
     fastTitle: 'Молниеносная скорость',
@@ -1160,16 +1161,17 @@ export const TRANSLATIONS: Record<string, TranslationDictionary> = {
     privacy: 'Dasar Privasi',
     terms: 'Syarat Perkhidmatan',
   },
-  hin: {
-    brandSubtitle: 'ऑनलाइन इमेज और पीडीएफ टूल्स',
+  hi: {
+    brandSubtitle: 'इमेज और पीडीएफ टूल्स',
     imageTools: 'इमेज टूल्स',
     pdfTools: 'पीडीएफ टूल्स',
-    editPdf: 'पीडीएफ एडिट करें',
+    editPdf: 'पीडीएफ एडिट',
     organizeEdit: 'व्यवस्थित और संपादित करें',
     convertPdf: 'पीडीएफ कनवर्ट करें',
-    toolsResources: 'टूल्स और संसाधन',
-    guides: 'गाइड और ट्यूटोरियल',
+    toolsResources: 'सभी टूल्स',
+    guides: 'गाइड्स',
     searchPlaceholder: 'टूल खोजें...',
+    privacyBadge: '100% मेमोरी में',
     privacyTitle: '100% गोपनीयता पर केंद्रित',
     privacyDesc: 'फ़ाइलें मेमोरी में प्रोसेस होती हैं और डिस्क या डेटाबेस में कभी सेव नहीं होती हैं।',
     fastTitle: 'बिजली जैसी गति',
@@ -1354,6 +1356,34 @@ export const TRANSLATIONS: Record<string, TranslationDictionary> = {
   },
 };
 
+// Aliases ensuring both 2-letter ISO (Chrome standard) and 3-letter OCR codes work flawlessly
+if (TRANSLATIONS.hin) {
+  TRANSLATIONS.hi = TRANSLATIONS.hin;
+} else if (TRANSLATIONS.hi) {
+  TRANSLATIONS.hin = TRANSLATIONS.hi;
+}
+if (TRANSLATIONS.bul) {
+  TRANSLATIONS.bg = TRANSLATIONS.bul;
+}
+if (TRANSLATIONS.cat) {
+  TRANSLATIONS.ca = TRANSLATIONS.cat;
+}
+if (TRANSLATIONS.ukr) {
+  TRANSLATIONS.uk = TRANSLATIONS.ukr;
+}
+if (TRANSLATIONS.vie) {
+  TRANSLATIONS.vi = TRANSLATIONS.vie;
+}
+if (TRANSLATIONS.pol) {
+  TRANSLATIONS.pl = TRANSLATIONS.pol;
+}
+if (TRANSLATIONS.tur) {
+  TRANSLATIONS.tr = TRANSLATIONS.tur;
+}
+TRANSLATIONS.sw = TRANSLATIONS.swa = TRANSLATIONS.sw;
+TRANSLATIONS.bn = TRANSLATIONS.ben = TRANSLATIONS.bn;
+TRANSLATIONS.zh = TRANSLATIONS['zh-CN'];
+
 interface LanguageContextType {
   language: string;
   setLanguage: (code: string) => void;
@@ -1372,15 +1402,26 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<string>('en');
 
   useEffect(() => {
-    const saved = localStorage.getItem('snapdoc_lang') || 'en';
+    let saved = localStorage.getItem('snapdoc_lang') || 'en';
+    // Migrate legacy 3-letter codes to standard 2-letter codes if stored
+    if (saved === 'hin') saved = 'hi';
+    if (saved === 'pol') saved = 'pl';
+    if (saved === 'tur') saved = 'tr';
+    if (saved === 'cat') saved = 'ca';
+    if (saved === 'ukr') saved = 'uk';
+    if (saved === 'vie') saved = 'vi';
+    if (saved === 'bul') saved = 'bg';
+
     setLanguageState(saved);
     applyHtmlLang(saved);
   }, []);
 
   const applyHtmlLang = (code: string) => {
-    const langObj = ALL_LANGUAGES.find((l) => l.code === code) || ALL_LANGUAGES[0];
+    const langObj =
+      ALL_LANGUAGES.find((l) => l.code === code || l.code.startsWith(code)) ||
+      ALL_LANGUAGES[0];
     if (typeof document !== 'undefined') {
-      document.documentElement.lang = code;
+      document.documentElement.lang = langObj.code;
       document.documentElement.dir = langObj.dir || 'ltr';
     }
   };
@@ -1392,7 +1433,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const t = (key: string, fallback?: string): string => {
-    const dict = TRANSLATIONS[language] || TRANSLATIONS.en;
+    const normalized = (language || 'en').toLowerCase().split('-')[0];
+    const dict = TRANSLATIONS[language] || TRANSLATIONS[normalized] || TRANSLATIONS.en;
     if (dict && dict[key]) {
       return dict[key];
     }
@@ -1404,7 +1446,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   const currentLanguageObj =
-    ALL_LANGUAGES.find((l) => l.code === language) || ALL_LANGUAGES[0];
+    ALL_LANGUAGES.find(
+      (l) => l.code === language || (language === 'hi' && l.code === 'hi')
+    ) || ALL_LANGUAGES[0];
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, currentLanguageObj }}>
@@ -1416,3 +1460,4 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   return useContext(LanguageContext);
 }
+

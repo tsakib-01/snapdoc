@@ -121,7 +121,10 @@ export default function LanguageSelector() {
             {/* Column 1 */}
             <div className="flex flex-col space-y-1">
               {COLUMN_1_LANGUAGES.map((lang) => {
-                const isSelected = language === lang.code;
+                const isSelected =
+                  language === lang.code ||
+                  (language === 'hi' && lang.code === 'hin') ||
+                  (language === 'hin' && lang.code === 'hi');
                 return (
                   <button
                     key={lang.code}
@@ -145,7 +148,12 @@ export default function LanguageSelector() {
             {/* Column 2 */}
             <div className="flex flex-col space-y-1 border-t sm:border-t-0 sm:border-l border-base-200 pt-2 sm:pt-0 sm:pl-3">
               {COLUMN_2_LANGUAGES.map((lang) => {
-                const isSelected = language === lang.code;
+                const isSelected =
+                  language === lang.code ||
+                  (language === 'hi' && lang.code === 'hin') ||
+                  (language === 'hin' && lang.code === 'hi') ||
+                  (language === 'bg' && lang.code === 'bul') ||
+                  (language === 'ca' && lang.code === 'cat');
                 return (
                   <button
                     key={lang.code}
@@ -169,7 +177,14 @@ export default function LanguageSelector() {
             {/* Column 3 */}
             <div className="flex flex-col space-y-1 border-t sm:border-t-0 sm:border-l border-base-200 pt-2 sm:pt-0 sm:pl-3">
               {COLUMN_3_LANGUAGES.map((lang) => {
-                const isSelected = language === lang.code;
+                const isSelected =
+                  language === lang.code ||
+                  (language === 'pl' && lang.code === 'pol') ||
+                  (language === 'tr' && lang.code === 'tur') ||
+                  (language === 'uk' && lang.code === 'ukr') ||
+                  (language === 'vi' && lang.code === 'vie') ||
+                  (language === 'sw' && lang.code === 'swa') ||
+                  (language === 'bn' && lang.code === 'ben');
                 return (
                   <button
                     key={lang.code}

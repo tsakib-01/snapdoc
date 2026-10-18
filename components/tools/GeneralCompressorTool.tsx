@@ -10,6 +10,7 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 // Optimal high-efficiency compression quality giving maximum file reduction with clear visuals
 const MAX_COMPRESSION_QUALITY = 65;
@@ -92,10 +93,7 @@ export default function GeneralCompressorTool() {
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Compression failed');
-      }
+      const data = await safeFetchJson(res);
 
       await finishProgress(() => {
         setResult(data);

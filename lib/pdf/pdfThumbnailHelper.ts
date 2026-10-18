@@ -190,7 +190,12 @@ export async function extractPdfThumbnails(
   const arrayBuffer = file instanceof File ? await file.arrayBuffer() : file;
   let pdfDoc: any;
   try {
-    const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) });
+    const loadingTask = pdfjs.getDocument({
+      data: new Uint8Array(arrayBuffer),
+      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+      cMapPacked: true,
+      standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+    });
     pdfDoc = await loadingTask.promise;
   } catch (workerErr) {
     console.warn('Standard PDF.js worker failed, falling back to inline worker mode:', workerErr);
@@ -201,6 +206,9 @@ export async function extractPdfThumbnails(
       const fallbackTask = pdfjs.getDocument({
         data: new Uint8Array(arrayBuffer),
         disableWorker: true,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true,
+        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
       });
       pdfDoc = await fallbackTask.promise;
     } catch (fallbackErr) {

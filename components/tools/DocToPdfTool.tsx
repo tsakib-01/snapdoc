@@ -11,6 +11,7 @@ import { convertDocumentDirect } from '@/lib/conversionEngine';
 import { convertExcelToPdf } from '@/lib/browser-converters/excel-to-pdf';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 interface DocToPdfToolProps {
   initialFormat?: 'txt' | 'csv' | 'html' | 'word' | 'excel';
@@ -98,10 +99,7 @@ export default function DocToPdfTool({
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to convert document to PDF.');
-      }
+      const data = await safeFetchJson(res);
 
       await finishProgress(() => {
         setResultData({

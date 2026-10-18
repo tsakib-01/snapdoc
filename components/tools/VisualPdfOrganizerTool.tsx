@@ -35,6 +35,7 @@ import ResultCard from '@/components/ui/ResultCard';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 export interface VisualPageItem {
   id: string;
@@ -392,47 +393,145 @@ export default function VisualPdfOrganizerTool({
         throw new Error('Please select at least 1 page to include.');
       }
 
-      const formData = new FormData();
-      files.forEach((f) => formData.append('files', f));
-      if (files[0]) {
-        formData.append('file', files[0]);
+      // 1. Client-Side High Performance Extraction & Organization via pdf-lib
+      // Runs directly in browser, bypassing HTTP 413 "Request Entity Too Large",
+      // and natively preserves all international character sets & fonts.
+      try {
+        const { PDFDocument, degrees } = await import('pdf-lib');
+        const JSZip = (await import('jszip')).default;
+
+        const srcDocs = await Promise.all(
+          files.map(async (f) => {
+            const ab = await f.arrayBuffer();
+            return PDFDocument.load(ab, { ignoreEncryption: true });
+          })
+        );
+
+        const baseName = (files[0]?.name || 'document').replace(/\.[^/.]+$/, '');
+        const isSeparate = toolTab === 'split' || separatePdfs;
+
+        let resultUrl = '';
+        let resultSize = 0;
+        let resultMime = 'application/pdf';
+        let resultFilename = `${baseName}_extracted.pdf`;
+
+        if (isSeparate) {
+          const zip = new JSZip();
+          for (let i = 0; i < pagesToInclude.length; i++) {
+            const item = pagesToInclude[i];
+            const singleDoc = await PDFDocument.create();
+
+            if (item.isBlank || item.fileIndex < 0 || item.pageIndex < 0) {
+              singleDoc.addPage([595, 842]);
+            } else {
+              const srcDoc = srcDocs[item.fileIndex] || srcDocs[0];
+              const [copiedPage] = await singleDoc.copyPages(srcDoc, [item.pageIndex]);
+              if (item.rotation && item.rotation !== 0) {
+                const currentRot = copiedPage.getRotation().angle;
+                copiedPage.setRotation(degrees((currentRot + item.rotation) % 360));
+              }
+              singleDoc.addPage(copiedPage);
+            }
+
+            const pageBytes = await singleDoc.save({ useObjectStreams: true });
+            zip.file(`${baseName}_page_${i + 1}.pdf`, pageBytes);
+          }
+
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          resultUrl = URL.createObjectURL(zipBlob);
+          resultSize = zipBlob.size;
+          resultMime = 'application/zip';
+          resultFilename = `${baseName}_pages.zip`;
+        } else {
+          const outDoc = await PDFDocument.create();
+
+          for (let i = 0; i < pagesToInclude.length; i++) {
+            const item = pagesToInclude[i];
+            if (item.isBlank || item.fileIndex < 0 || item.pageIndex < 0) {
+              outDoc.addPage([595, 842]);
+            } else {
+              const srcDoc = srcDocs[item.fileIndex] || srcDocs[0];
+              const [copiedPage] = await outDoc.copyPages(srcDoc, [item.pageIndex]);
+              if (item.rotation && item.rotation !== 0) {
+                const currentRot = copiedPage.getRotation().angle;
+                copiedPage.setRotation(degrees((currentRot + item.rotation) % 360));
+              }
+              outDoc.addPage(copiedPage);
+            }
+          }
+
+          const outBytes = await outDoc.save({ useObjectStreams: true });
+          const pdfBlob = new Blob([outBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+          resultUrl = URL.createObjectURL(pdfBlob);
+          resultSize = pdfBlob.size;
+          resultMime = 'application/pdf';
+          const modeSuffix = initialMode === 'extract' ? 'extracted' : initialMode === 'delete' ? 'trimmed' : 'organized';
+          resultFilename = `${baseName}_${modeSuffix}.pdf`;
+        }
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const timeStr = now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        setCreatedTimestamp(`${dateStr} • ${timeStr}`);
+
+        setResultData({
+          dataUrl: resultUrl,
+          filename: resultFilename,
+          size: resultSize,
+          mimeType: resultMime,
+          pageCount: pagesToInclude.length,
+        });
+        return;
+      } catch (clientErr: any) {
+        console.warn('Client-side organize failed, falling back to API:', clientErr);
+
+        // 2. Server API Fallback with safe JSON parsing
+        const formData = new FormData();
+        files.forEach((f) => formData.append('files', f));
+        if (files[0]) {
+          formData.append('file', files[0]);
+        }
+        formData.append('pages', JSON.stringify(pagesToInclude));
+
+        const isSeparate = toolTab === 'split' || separatePdfs;
+        formData.append('separateFiles', isSeparate ? 'true' : 'false');
+
+        const res = await fetch('/api/organize-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await safeFetchJson(res);
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        const timeStr = now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        setCreatedTimestamp(`${dateStr} • ${timeStr}`);
+
+        setResultData({
+          dataUrl: data.dataUrl,
+          filename: data.filename,
+          size: data.size,
+          mimeType: data.mimeType,
+          pageCount: data.pageCount,
+        });
       }
-      formData.append('pages', JSON.stringify(pagesToInclude));
-
-      const isSeparate = toolTab === 'split' || separatePdfs;
-      formData.append('separateFiles', isSeparate ? 'true' : 'false');
-
-      const res = await fetch('/api/organize-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to process PDF.');
-      }
-
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-      const timeStr = now.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      });
-      setCreatedTimestamp(`${dateStr} • ${timeStr}`);
-
-      setResultData({
-        dataUrl: data.dataUrl,
-        filename: data.filename,
-        size: data.size,
-        mimeType: data.mimeType,
-        pageCount: data.pageCount,
-      });
     } catch (err: any) {
       console.error('Process error:', err);
       setError(err.message || 'An error occurred while processing the PDF.');

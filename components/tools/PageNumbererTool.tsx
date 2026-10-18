@@ -9,6 +9,7 @@ import { formatBytes } from '@/lib/utils/formatters';
 import { addPageNumbersToPdf } from '@/lib/pdf/pageNumberer';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 export default function PageNumbererTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -100,10 +101,7 @@ export default function PageNumbererTool() {
           body: formData,
         });
 
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || 'Failed to number PDF.');
-        }
+        const data = await safeFetchJson(res);
 
         await finishProgress(() => {
           setResultData({

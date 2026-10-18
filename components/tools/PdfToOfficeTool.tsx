@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Copy, Check, Eye } from 'lucide-react';
+import { FileSpreadsheet, FileText, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Copy, Check, Eye, Globe } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
 import { convertDocumentDirect } from '@/lib/conversionEngine';
@@ -9,6 +9,15 @@ import { convertPdfToExcel } from '@/lib/browser-converters/pdf-to-excel';
 import { convertTextToExcel } from '@/lib/browser-converters/text-to-excel';
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
+
+const LANGUAGES = [
+  { code: 'eng', name: 'English' },
+  { code: 'spa', name: 'Spanish (Español)' },
+  { code: 'fra', name: 'French (Français)' },
+  { code: 'deu', name: 'German (Deutsch)' },
+  { code: 'ita', name: 'Italian (Italiano)' },
+  { code: 'por', name: 'Portuguese (Português)' },
+];
 
 interface PdfToOfficeToolProps {
   targetFormat?: 'excel' | 'txt' | 'ocr';
@@ -23,6 +32,7 @@ export default function PdfToOfficeTool({
 }: PdfToOfficeToolProps) {
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<'excel' | 'txt' | 'ocr'>(targetFormat);
+  const [language, setLanguage] = useState<string>('eng');
   const [pages, setPages] = useState<PdfPageThumbnail[]>([]);
   const [extractedText, setExtractedText] = useState<string>('');
   const [processing, setProcessing] = useState<boolean>(false);
@@ -67,7 +77,7 @@ export default function PdfToOfficeTool({
       if (format === 'excel') {
         const result = targetFormat === 'ocr' && cleanTxt
           ? await convertTextToExcel(cleanTxt)
-          : await convertPdfToExcel(file, { ocrFallback: true });
+          : await convertPdfToExcel(file, { ocrFallback: true, language });
         const a = document.createElement('a');
         a.href = result.dataUrl;
         a.download = result.filename;
@@ -174,7 +184,7 @@ export default function PdfToOfficeTool({
           )}
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-base-200">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setFormat('excel')}
                 className={`btn btn-sm h-auto min-h-[2rem] py-1.5 px-3 rounded-xl text-xs font-semibold leading-normal ${format === 'excel' ? 'btn-primary' : 'btn-ghost'}`}
@@ -187,6 +197,22 @@ export default function PdfToOfficeTool({
               >
                 Text (.txt)
               </button>
+
+              <div className="flex items-center gap-1.5 bg-base-200/60 rounded-xl px-2.5 py-1 text-xs">
+                <Globe className="w-3.5 h-3.5 text-base-content/60" />
+                <select
+                  aria-label="Document Language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="select select-ghost select-xs text-xs font-medium focus:bg-transparent"
+                >
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <button

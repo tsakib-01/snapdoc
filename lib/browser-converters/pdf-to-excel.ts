@@ -27,6 +27,7 @@ export interface BrowserConversionResult {
 
 export interface PdfToExcelOptions {
   ocrFallback?: boolean; // OCR pages that have no text layer (default: false)
+  language?: string; // Recognition language: eng, fra, spa, deu, ita, por (default: eng)
   onProgress?: (pct: number) => void;
 }
 
@@ -469,7 +470,7 @@ export async function convertPdfToExcel(
   options: PdfToExcelOptions = {}
 ): Promise<BrowserConversionResult> {
   assertBrowser();
-  const { ocrFallback = false, onProgress } = options;
+  const { ocrFallback = false, language = 'eng', onProgress } = options;
   const report = (p: number) => onProgress?.(Math.max(0, Math.min(100, Math.round(p))));
   report(2);
 
@@ -482,14 +483,19 @@ export async function convertPdfToExcel(
   const OPS = pdfjs.OPS;
 
   const data = new Uint8Array(await file.arrayBuffer());
-  const pdf = await pdfjs.getDocument({ data: data.slice() }).promise;
+  const pdf = await pdfjs.getDocument({
+    data: data.slice(),
+    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+    cMapPacked: true,
+    standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+  }).promise;
   const numPages: number = pdf.numPages;
 
   let ocrWorker: any = null;
   const getWorker = async () => {
     if (!ocrWorker) {
       const { createWorker } = await import('tesseract.js');
-      ocrWorker = await createWorker('eng');
+      ocrWorker = await createWorker(language);
     }
     return ocrWorker;
   };

@@ -64,7 +64,12 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
     try {
       const pdfjs = await loadPdfJsScript();
       const arrayBuffer = await files[0].arrayBuffer();
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await pdfjs.getDocument({
+        data: arrayBuffer,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true,
+        standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+      }).promise;
       const totalPages = pdf.numPages;
 
       const renderedPages: ExtractedPage[] = [];

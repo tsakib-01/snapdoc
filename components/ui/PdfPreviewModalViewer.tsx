@@ -108,7 +108,12 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
 
         let doc: any;
         try {
-          const loadingTask = pdfjs.getDocument({ data: originalBytes.slice() });
+          const loadingTask = pdfjs.getDocument({
+            data: originalBytes.slice(),
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+          });
           doc = await loadingTask.promise;
         } catch (workerErr) {
           console.warn('PDF.js worker initialization failed, retrying with fallback:', workerErr);
@@ -116,6 +121,9 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             const fallbackTask = pdfjs.getDocument({
               data: originalBytes.slice(),
               disableWorker: true,
+              cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+              cMapPacked: true,
+              standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
             });
             doc = await fallbackTask.promise;
           } catch (fallbackErr) {

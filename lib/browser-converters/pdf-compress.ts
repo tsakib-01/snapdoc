@@ -127,7 +127,12 @@ async function rasterizeCompress(
     ]);
 
     // Pass a fresh slice so PDF.js worker doesn't detach originalBytes buffer
-    const pdf = await pdfjs.getDocument({ data: originalBytes.slice() }).promise;
+    const pdf = await pdfjs.getDocument({
+      data: originalBytes.slice(),
+      cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+      cMapPacked: true,
+      standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+    }).promise;
     const numPages = pdf.numPages;
     if (numPages === 0 || numPages !== expectedPages) {
       await pdf.destroy?.();

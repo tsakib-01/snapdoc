@@ -11,6 +11,7 @@ import { PDFDocument, PageSizes } from 'pdf-lib';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 interface ImageToPdfToolProps {
   title?: string;
@@ -263,10 +264,7 @@ export default function ImageToPdfTool({
           body: formData,
         });
 
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Failed to generate PDF.');
-        }
+        const data = await safeFetchJson(res);
 
         await finishProgress(() => {
           setResult(data);

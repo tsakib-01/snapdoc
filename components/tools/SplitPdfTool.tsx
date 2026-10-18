@@ -7,6 +7,8 @@ import ResultCard from '@/components/ui/ResultCard';
 import { formatBytes } from '@/lib/utils/formatters';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { parsePageRanges } from '@/lib/pdf/splitPdf';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 export default function SplitPdfTool() {
   const [files, setFiles] = useState<File[]>([]);
@@ -22,28 +24,101 @@ export default function SplitPdfTool() {
     startProgress();
     setResult(null);
 
+    const file = files[0];
+    const baseName = file.name.replace(/\.[^/.]+$/, '');
+
     try {
-      const formData = new FormData();
-      formData.append('file', files[0]);
-      if (splitMode === 'all') {
-        formData.append('extractAllSeparate', 'true');
-      } else {
-        formData.append('range', rangeInput);
+      // 1. High Performance Client-Side Split via pdf-lib
+      // Bypasses HTTP 413 "Request Entity Too Large" on large books and losslessly preserves fonts
+      try {
+        const { PDFDocument } = await import('pdf-lib');
+        const JSZip = (await import('jszip')).default;
+
+        const arrayBuffer = await file.arrayBuffer();
+        const srcDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+        const totalPages = srcDoc.getPageCount();
+
+        if (splitMode === 'all') {
+          const zip = new JSZip();
+
+          for (let i = 0; i < totalPages; i++) {
+            const singleDoc = await PDFDocument.create();
+            const [copiedPage] = await singleDoc.copyPages(srcDoc, [i]);
+            singleDoc.addPage(copiedPage);
+            const pageBytes = await singleDoc.save({ useObjectStreams: true });
+            zip.file(`${baseName}_page_${i + 1}.pdf`, pageBytes);
+          }
+
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          const blobUrl = URL.createObjectURL(zipBlob);
+
+          await finishProgress(() => {
+            setResult({
+              success: true,
+              filename: `${baseName}_pages.zip`,
+              mode: 'zip-individual',
+              pageCount: totalPages,
+              fileSize: zipBlob.size,
+              originalSize: file.size,
+              mimeType: 'application/zip',
+              dataUrl: blobUrl,
+            });
+          });
+          return;
+        } else {
+          const selectedIndices = rangeInput
+            ? parsePageRanges(rangeInput, totalPages)
+            : srcDoc.getPageIndices();
+
+          if (selectedIndices.length === 0) {
+            throw new Error('No valid pages found in the entered range. Please verify page numbers.');
+          }
+
+          const outputDoc = await PDFDocument.create();
+          const copiedPages = await outputDoc.copyPages(srcDoc, selectedIndices);
+          copiedPages.forEach((page) => outputDoc.addPage(page));
+
+          const pdfBytes = await outputDoc.save({ useObjectStreams: true });
+          const pdfBlob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+          const blobUrl = URL.createObjectURL(pdfBlob);
+
+          await finishProgress(() => {
+            setResult({
+              success: true,
+              filename: `${baseName}_split.pdf`,
+              mode: 'merged-range',
+              pageCount: selectedIndices.length,
+              fileSize: pdfBlob.size,
+              originalSize: file.size,
+              mimeType: 'application/pdf',
+              dataUrl: blobUrl,
+            });
+          });
+          return;
+        }
+      } catch (clientErr: any) {
+        console.warn('Client-side split error, checking server fallback:', clientErr);
+
+        // 2. Server API Fallback with safe JSON parsing
+        const formData = new FormData();
+        formData.append('file', file);
+        if (splitMode === 'all') {
+          formData.append('extractAllSeparate', 'true');
+        } else {
+          formData.append('range', rangeInput);
+        }
+
+        const res = await fetch('/api/split-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await safeFetchJson(res);
+
+        await finishProgress(() => {
+          setResult(data);
+        });
       }
-
-      const res = await fetch('/api/split-pdf', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Failed to split PDF.');
-      }
-
-      await finishProgress(() => {
-        setResult(data);
-      });
     } catch (err: any) {
       resetProgress();
       setError(err.message || 'Error occurred while splitting PDF.');

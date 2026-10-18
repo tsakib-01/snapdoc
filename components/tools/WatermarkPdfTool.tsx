@@ -9,6 +9,7 @@ import { formatBytes } from '@/lib/utils/formatters';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 function parseHexColor(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace('#', '');
@@ -216,10 +217,7 @@ export default function WatermarkPdfTool() {
           body: formData,
         });
 
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || 'Failed to watermark PDF.');
-        }
+        const data = await safeFetchJson(res);
 
         await finishProgress(() => {
           setResultData({

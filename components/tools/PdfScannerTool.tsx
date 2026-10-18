@@ -5,6 +5,7 @@ import { Camera, Download, Loader2, CheckCircle2, RotateCcw, ArrowRight, Image, 
 import { formatBytes } from '@/lib/utils/formatters';
 import ResultCard from '@/components/ui/ResultCard';
 import { PDFDocument } from 'pdf-lib';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 
 export default function PdfScannerTool() {
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -214,10 +215,7 @@ export default function PdfScannerTool() {
           body: formData,
         });
 
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || 'Failed to generate scanned PDF.');
-        }
+        const data = await safeFetchJson(res);
 
         setResultData({
           dataUrl: data.dataUrl,

@@ -25,6 +25,7 @@ import { scrollToTool } from '@/lib/utils/scrollHelper';
 import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
+import { safeFetchJson } from '@/lib/utils/apiHelper';
 import JSZip from 'jszip';
 
 export interface ImageItem {
@@ -333,10 +334,7 @@ export default function ResizerTool() {
             body: formData,
           });
 
-          const data = await res.json();
-          if (!res.ok || !data.success) {
-            throw new Error(data.error || `Failed to resize ${item.file.name}`);
-          }
+          const data = await safeFetchJson(res);
 
           processedResults.push({
             ...data,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Sparkles,
@@ -14,6 +14,11 @@ import {
   FileImage,
   FileText,
   SlidersHorizontal,
+  ChevronDown,
+  Check,
+  Crop,
+  Maximize2,
+  RefreshCw,
 } from 'lucide-react';
 import { TOOLS, CATEGORIES, ToolMeta } from '@/lib/config/tools';
 import ToolCard from '@/components/ui/ToolCard';
@@ -24,6 +29,66 @@ export default function HomePage() {
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState<boolean>(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+
+    if (isCategoryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isCategoryDropdownOpen]);
+
+  const getCategoryIcon = (catId: string) => {
+    switch (catId) {
+      case 'compress':
+        return <Minimize2 className="w-4 h-4" />;
+      case 'convert':
+        return <RefreshCw className="w-4 h-4" />;
+      case 'resize':
+        return <Maximize2 className="w-4 h-4" />;
+      case 'edit':
+        return <Crop className="w-4 h-4" />;
+      case 'pdf':
+        return <FileText className="w-4 h-4" />;
+      case 'all':
+      default:
+        return <SlidersHorizontal className="w-4 h-4" />;
+    }
+  };
+
+  const getCategoryName = (cat: { id: string; name: string }) => {
+    switch (cat.id) {
+      case 'all':
+        return t('catAll', cat.name);
+      case 'image':
+        return t('catImage', cat.name);
+      case 'pdf':
+        return t('catPdf', cat.name);
+      case 'convert':
+        return t('catConvert', cat.name);
+      case 'organize':
+        return t('catOrganize', cat.name);
+      default:
+        return cat.name;
+    }
+  };
+
+  const activeCategory = CATEGORIES.find((c) => c.id === selectedCategory) || CATEGORIES[0];
+  const activeCategoryName = getCategoryName(activeCategory);
 
   const filteredTools = TOOLS.filter((tool) => {
     const matchesCategory =
@@ -109,22 +174,82 @@ export default function HomePage() {
 
       {/* Main Tools Showcase Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Category Tabs */}
-        <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-2 no-scrollbar">
-          {CATEGORIES.map((cat) => {
-            const catName =
-              cat.id === 'all'
-                ? t('catAll', cat.name)
-                : cat.id === 'image'
-                ? t('catImage', cat.name)
-                : cat.id === 'pdf'
-                ? t('catPdf', cat.name)
-                : cat.id === 'convert'
-                ? t('catConvert', cat.name)
-                : cat.id === 'organize'
-                ? t('catOrganize', cat.name)
-                : cat.name;
+        {/* Mobile: Category Dropdown (replaces horizontal scroll on mobile) */}
+        <div className="sm:hidden relative w-full max-w-sm mx-auto z-20" ref={categoryDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-base-100 hover:bg-base-200/60 border border-base-300 rounded-2xl shadow-sm text-sm font-bold text-base-content transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.99]"
+            aria-expanded={isCategoryDropdownOpen}
+            aria-label="Filter tools by category"
+          >
+            <div className="flex items-center gap-2.5 truncate">
+              <span className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                {getCategoryIcon(activeCategory.id)}
+              </span>
+              <span className="truncate font-bold text-sm">
+                {activeCategoryName}
+              </span>
+              <span className="badge badge-sm badge-ghost font-medium">
+                {activeCategory.count}
+              </span>
+            </div>
+            <ChevronDown
+              className={`w-4 h-4 text-base-content/60 transition-transform duration-200 shrink-0 ml-2 ${
+                isCategoryDropdownOpen ? 'rotate-180 text-primary' : ''
+              }`}
+            />
+          </button>
 
+          {/* Dropdown Menu */}
+          {isCategoryDropdownOpen && (
+            <div className="absolute left-0 right-0 top-full mt-2 p-1.5 bg-base-100 border border-base-300 rounded-2xl shadow-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150 z-30">
+              {CATEGORIES.map((cat) => {
+                const catName = getCategoryName(cat);
+                const isSelected = selectedCategory === cat.id;
+
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setSearchQuery('');
+                      setIsCategoryDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-base-content/80 hover:bg-base-200/80 active:bg-base-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`p-1 rounded-md ${isSelected ? 'text-white' : 'text-base-content/60'}`}>
+                        {getCategoryIcon(cat.id)}
+                      </span>
+                      <span>{catName}</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          isSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-base-200 text-base-content/60'
+                        }`}
+                      >
+                        {cat.count}
+                      </span>
+                    </div>
+                    {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop: Horizontal Category Tabs (hidden on mobile) */}
+        <div className="hidden sm:flex items-center justify-center overflow-x-auto pb-2 gap-2 no-scrollbar">
+          {CATEGORIES.map((cat) => {
+            const catName = getCategoryName(cat);
             return (
               <button
                 key={cat.id}

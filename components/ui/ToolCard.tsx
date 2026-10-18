@@ -73,7 +73,7 @@ export default function ToolCard({ tool }: { tool: ToolMeta }) {
           </div>
           {tool.badge && (
             <span className="badge badge-sm badge-primary font-medium text-[11px] px-2">
-              {tool.badge}
+              {tool.badge === 'Popular' ? t('badgePopular', 'Popular') : tool.badge}
             </span>
           )}
         </div>

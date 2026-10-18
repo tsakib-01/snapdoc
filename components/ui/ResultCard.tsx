@@ -18,6 +18,7 @@ import {
 import { formatBytes } from '@/lib/utils/formatters';
 import { scrollToTool } from '@/lib/utils/scrollHelper';
 import PdfPreviewModalViewer from '@/components/ui/PdfPreviewModalViewer';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export interface ResultCardProps {
   originalSize?: number;
@@ -54,6 +55,7 @@ export default function ResultCard({
   onPreview,
   hideHeader = false,
 }: ResultCardProps) {
+  const { t } = useLanguage();
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
   useEffect(() => {
@@ -156,7 +158,7 @@ export default function ResultCard({
                   {filename}
                 </h4>
                 <span className="badge badge-sm badge-ready border font-bold">
-                  Ready
+                  {t('ready', 'Ready')}
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-base-content/60 mt-0.5">
@@ -171,8 +173,8 @@ export default function ResultCard({
             <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shrink-0">
               <ArrowDownRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
               <div className="flex flex-col text-left">
-                <span className="text-[10px] uppercase font-bold tracking-wider leading-none">Reduction</span>
-                <span className="text-xs sm:text-sm font-extrabold leading-none mt-1">{calculatedReduction}% Smaller</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider leading-none">{t('reduction', 'Reduction')}</span>
+                <span className="text-xs sm:text-sm font-extrabold leading-none mt-1">{calculatedReduction}% {t('smaller', 'Smaller')}</span>
               </div>
             </div>
           ) : extraInfo ? (
@@ -191,8 +193,8 @@ export default function ResultCard({
               className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-3 sm:px-6 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap h-auto min-h-[2.75rem] py-2 leading-snug"
             >
               <Download className="w-4 h-4 shrink-0" />
-              <span className="inline sm:hidden">Download</span>
-              <span className="hidden sm:inline">Download File</span>
+              <span className="inline sm:hidden">{t('download', 'Download')}</span>
+              <span className="hidden sm:inline">{t('downloadFile', 'Download File')}</span>
             </button>
 
             {dataUrl && (isPdf || isImage) && (
@@ -202,7 +204,7 @@ export default function ResultCard({
                 className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-3 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap h-auto min-h-[2.75rem] py-2 leading-snug"
               >
                 <Eye className="w-4 h-4 shrink-0" />
-                <span>Preview</span>
+                <span>{t('preview', 'Preview')}</span>
               </button>
             )}
           </div>
@@ -216,18 +218,18 @@ export default function ResultCard({
             className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap h-auto min-h-[2.75rem] py-2 leading-snug"
           >
             <RotateCcw className="w-4 h-4 shrink-0" />
-            <span className="truncate">{resetLabel || 'Process Another'}</span>
+            <span className="truncate">{resetLabel || t('processAnother', 'Process Another')}</span>
           </button>
         </div>
 
         {/* File Details Section */}
         <div className="pt-4 border-t border-base-200 space-y-3.5">
-          <h5 className="font-bold text-sm sm:text-base text-base-content">File Details</h5>
+          <h5 className="font-bold text-sm sm:text-base text-base-content">{t('fileDetails', 'File Details')}</h5>
           <div className="space-y-2.5 text-xs sm:text-sm font-medium">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                 <FileText className="w-4 h-4 text-base-content/40" />
-                <span>File name</span>
+                <span>{t('fileName', 'File name')}</span>
               </span>
               <span className="text-base-content/40">:</span>
               <span className="font-semibold text-base-content truncate">{filename}</span>
@@ -236,7 +238,7 @@ export default function ResultCard({
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                 <HardDrive className="w-4 h-4 text-base-content/40" />
-                <span>File size</span>
+                <span>{t('fileSize', 'File size')}</span>
               </span>
               <span className="text-base-content/40">:</span>
               <span className="font-semibold text-base-content">

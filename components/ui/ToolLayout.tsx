@@ -139,7 +139,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
         <div className={`text-center ${isWide ? 'space-y-1 max-w-3xl' : 'space-y-2.5 max-w-3xl'} mx-auto px-1`}>
           {tool.badge && (
             <span className="badge badge-primary badge-sm font-semibold mb-1">
-              {tool.badge}
+              {tool.badge === 'Popular' ? t('badgePopular', 'Popular') : tool.badge}
             </span>
           )}
           <h1 className={`${isWide ? 'text-lg sm:text-2xl md:text-3xl lg:text-4xl' : 'text-2xl sm:text-4xl lg:text-5xl'} font-extrabold tracking-tight text-base-content`}>

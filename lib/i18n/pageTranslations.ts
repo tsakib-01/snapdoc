@@ -4,6 +4,8 @@
  * UploadZone, SearchModal, and interactive tool interfaces across 27 languages.
  */
 
+import { ADDITIONAL_TRANSLATIONS } from './additionalTranslations';
+
 export const TOOL_SLUG_MAP: Record<string, string> = {
   'compress-jpg': 'compressJpg',
   'compress-jpg-to-10kb': 'compressJpg10kb',
@@ -1459,3 +1461,9 @@ export const PAGE_TRANSLATIONS: Record<string, Record<string, string>> = {
     privacyBadge: '100% Kwenye kumbukumbu',
   },
 };
+
+for (const [code, dict] of Object.entries(ADDITIONAL_TRANSLATIONS)) {
+  if (PAGE_TRANSLATIONS[code]) {
+    Object.assign(PAGE_TRANSLATIONS[code], dict);
+  }
+}

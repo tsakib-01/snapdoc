@@ -23,14 +23,9 @@ export default function Header() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="SnapDoc Logo" className="w-full h-full object-contain" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className="font-bold text-lg leading-tight tracking-tight text-base-content group-hover:text-primary transition-colors whitespace-nowrap">
-                  Snap<span className="text-primary">Doc</span>
-                </span>
-                <span className="text-[10px] uppercase font-semibold tracking-wider text-base-content/50 whitespace-nowrap truncate max-w-[130px] sm:max-w-[190px]">
-                  {t('brandSubtitle', 'Online Image & PDF Tools')}
-                </span>
-              </div>
+              <span className="font-bold text-lg leading-tight tracking-tight text-base-content group-hover:text-primary transition-colors whitespace-nowrap">
+                Snap<span className="text-primary">Doc</span>
+              </span>
             </Link>
 
             {/* Desktop Navigation Links */}

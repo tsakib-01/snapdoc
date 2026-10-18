@@ -12,6 +12,7 @@ import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
 import { compressToTargetSizeInBrowser } from '@/lib/browser-converters/image-compress';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface TargetCompressorToolProps {
   defaultTargetKb?: number;
@@ -34,6 +35,7 @@ export default function TargetCompressorTool({
   fixedTarget = false,
   targetFormat = 'jpeg',
 }: TargetCompressorToolProps) {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [targetKb, setTargetKb] = useState<number>(defaultTargetKb);
   const [customKb, setCustomKb] = useState<string>('');
@@ -218,7 +220,7 @@ export default function TargetCompressorTool({
               onClick={handleReset}
               className="btn btn-ghost btn-xs text-base-content/60 hover:text-error"
             >
-              Change File
+              {t('changeFile', 'Change File')}
             </button>
           </div>
 
@@ -228,7 +230,7 @@ export default function TargetCompressorTool({
               <div className="flex items-center justify-between w-full px-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-primary" />
-                  Uploaded Image Preview
+                  {t('uploadedImagePreview', 'Uploaded Image Preview')}
                 </span>
                 {origDimensions && (
                   <span className="badge badge-sm badge-ghost font-mono text-[11px]">
@@ -263,7 +265,7 @@ export default function TargetCompressorTool({
             <div className="space-y-3">
               <label className="text-xs font-bold uppercase tracking-wider text-base-content/70 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
-                Select Desired Target File Size
+                {t('targetSizeSelector', 'Select Desired Target File Size')}
               </label>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -307,11 +309,11 @@ export default function TargetCompressorTool({
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-base-content">Custom Size</span>
+                    <span className="font-bold text-sm text-base-content">{t('customSize', 'Custom Size')}</span>
                     {isCustom && <Check className="w-4 h-4 text-primary" />}
                   </div>
                   <span className="text-[10px] text-base-content/50 block mt-0.5">
-                    Enter custom KB
+                    {t('enterCustomKb', 'Enter custom KB')}
                   </span>
                 </button>
               </div>

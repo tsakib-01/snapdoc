@@ -86,22 +86,22 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-base-content/60 pt-1">
             <span className="font-semibold text-base-content/70">{t('popularLabel', 'Popular:')}</span>
             <Link href="/compress-jpg-to-10kb" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
-              JPG to 10KB
+              {t('compressJpg10kb', 'JPG to 10KB')}
             </Link>
             <Link href="/compress-jpg" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
-              Compress JPG
+              {t('compressJpg', 'Compress JPG')}
             </Link>
             <Link href="/image-to-pdf" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
-              Image to PDF
+              {t('imageToPdf', 'Image to PDF')}
             </Link>
             <Link href="/jpg-to-png" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
-              JPG to PNG
+              {t('jpgToPng', 'JPG to PNG')}
             </Link>
             <Link href="/pdf-to-jpg" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
-              PDF to JPG
+              {t('pdfToJpg', 'PDF to JPG')}
             </Link>
             <Link href="/merge-pdf" className="badge badge-ghost hover:badge-primary text-xs py-2.5 transition-colors">
-              Merge PDF
+              {t('mergePdf', 'Merge PDF')}
             </Link>
           </div>
         </div>
@@ -151,10 +151,10 @@ export default function HomePage() {
           ) : (
             <div className="col-span-full py-16 text-center space-y-3 bg-base-100 rounded-3xl border border-base-300">
               <p className="text-base font-bold text-base-content">
-                No tools found matching &quot;{searchQuery}&quot;
+                {t('noToolsMatching', 'No tools found matching')} &quot;{searchQuery}&quot;
               </p>
               <p className="text-xs text-base-content/60">
-                Try a different keyword or reset filters to browse all tools.
+                {t('tryDifferentKeyword', 'Try a different keyword or reset filters to browse all tools.')}
               </p>
               <button
                 onClick={() => {
@@ -163,7 +163,7 @@ export default function HomePage() {
                 }}
                 className="btn btn-primary btn-sm rounded-xl font-semibold mt-2"
               >
-                Reset Search
+                {t('resetSearch', 'Reset Search')}
               </button>
             </div>
           )}
@@ -179,26 +179,26 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="p-8 sm:p-12 rounded-3xl bg-base-100 border border-base-300 shadow-card grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="space-y-4">
-            <span className="badge badge-primary badge-sm font-semibold">Specialized Engine</span>
+            <span className="badge badge-primary badge-sm font-semibold">{t('specializedEngine', 'Specialized Engine')}</span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-base-content tracking-tight">
-              Intelligent Target-Size Image Compression
+              {t('engineTitle', 'Intelligent Target-Size Image Compression')}
             </h2>
             <p className="text-sm text-base-content/75 leading-relaxed">
-              Need to compress a JPG to strictly under 10KB, 20KB, or 50KB for government job portals, university admissions, UPSC/SSC forms, or visa applications?
+              {t('engineDesc1', 'Need to compress a JPG to strictly under 10KB, 20KB, or 50KB for government job portals, university admissions, UPSC/SSC forms, or visa applications?')}
             </p>
             <p className="text-sm text-base-content/75 leading-relaxed">
-              Our smart optimization engine dynamically analyzes and optimizes your photos to guarantee your file meets strict portal size thresholds with crystal-clear visual quality.
+              {t('engineDesc2', 'Our smart optimization engine dynamically analyzes and optimizes your photos to guarantee your file meets strict portal size thresholds with crystal-clear visual quality.')}
             </p>
 
             <div className="pt-2 flex flex-wrap gap-2">
               <Link href="/compress-jpg-to-10kb" className="btn btn-primary btn-sm rounded-xl text-white font-bold gap-1.5 shadow-sm">
-                Compress to 10KB <ArrowRight className="w-3.5 h-3.5" />
+                {t('compressTo10kb', 'Compress to 10KB')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link href="/compress-jpg-to-20kb" className="btn btn-ghost btn-sm rounded-xl border border-base-300 font-semibold">
-                Compress to 20KB
+                {t('compressTo20kb', 'Compress to 20KB')}
               </Link>
               <Link href="/compress-jpg-to-50kb" className="btn btn-ghost btn-sm rounded-xl border border-base-300 font-semibold">
-                Compress to 50KB
+                {t('compressTo50kb', 'Compress to 50KB')}
               </Link>
             </div>
           </div>
@@ -232,9 +232,9 @@ export default function HomePage() {
             <div className="p-4 rounded-2xl bg-base-200/50 border border-base-200 space-y-1">
               <div className="flex items-center gap-2 text-violet-500 font-bold text-sm">
                 <Lock className="w-4 h-4" />
-                No Signup or Watermark
+                {t('feature4Title', 'No Signup or Watermark')}
               </div>
-              <p className="text-xs text-base-content/60">100% free with unlimited usage.</p>
+              <p className="text-xs text-base-content/60">{t('feature4Desc', '100% free with unlimited usage.')}</p>
             </div>
           </div>
         </div>
@@ -246,15 +246,15 @@ export default function HomePage() {
           <div className="space-y-2 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-base">
               <ShieldCheck className="w-5 h-5" />
-              Your Privacy is Our Core Priority
+              {t('privacySectionTitle', 'Your Privacy is Our Core Priority')}
             </div>
             <p className="text-xs sm:text-sm text-base-content/75 max-w-2xl leading-relaxed">
-              We do not store, log, or share your uploaded images or PDF documents. All processing runs in ephemeral volatile memory and files are discarded immediately after your download.
+              {t('privacySectionDesc', 'We do not store, log, or share your uploaded images or PDF documents. All processing runs in ephemeral volatile memory and files are discarded immediately after your download.')}
             </p>
           </div>
 
           <Link href="/privacy" className="btn btn-outline btn-sm rounded-xl font-semibold shrink-0">
-            Read Privacy Policy
+            {t('readPrivacyPolicy', 'Read Privacy Policy')}
           </Link>
         </div>
       </section>

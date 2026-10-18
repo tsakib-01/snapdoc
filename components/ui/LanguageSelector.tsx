@@ -72,8 +72,10 @@ export default function LanguageSelector() {
     setIsOpen(false);
   };
 
+  const isRtl = currentLanguageObj?.dir === 'rtl' || language === 'ar';
+
   return (
-    <div ref={containerRef} className="relative inline-block text-left">
+    <div ref={containerRef} className={`relative inline-block ${isRtl ? 'text-right' : 'text-left'}`}>
       {/* Trigger Button replacing "Developed by Tasnim Sakib" */}
       <button
         type="button"
@@ -91,10 +93,13 @@ export default function LanguageSelector() {
         />
       </button>
 
-      {/* 3-Column Mega Menu Popover (Opens Upward from Footer) */}
+      {/* 3-Column Mega Menu Popover (Opens Upward from Footer, shifts left in RTL) */}
       {isOpen && (
         <div
-          className="absolute bottom-full left-0 mb-3 z-50 w-[92vw] sm:w-[580px] md:w-[660px] max-w-[96vw] bg-base-100 rounded-3xl border border-base-300 shadow-2xl p-5 sm:p-6 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl"
+          dir={isRtl ? 'rtl' : 'ltr'}
+          className={`absolute bottom-full mb-3 z-50 w-[92vw] sm:w-[580px] md:w-[660px] max-w-[96vw] bg-base-100 rounded-3xl border border-base-300 shadow-2xl p-5 sm:p-6 animate-in fade-in zoom-in-95 duration-150 backdrop-blur-xl ${
+            isRtl ? 'right-0 left-auto' : 'left-0 right-auto'
+          }`}
           role="dialog"
           aria-label="Language Selector Mega Menu"
         >
@@ -130,7 +135,9 @@ export default function LanguageSelector() {
                     key={lang.code}
                     type="button"
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left ${
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors ${
+                      isRtl ? 'text-right flex-row-reverse' : 'text-left'
+                    } ${
                       isSelected
                         ? 'bg-primary/10 text-primary font-bold shadow-2xs'
                         : 'text-base-content/80 hover:bg-base-200/70 hover:text-base-content font-medium'
@@ -146,7 +153,9 @@ export default function LanguageSelector() {
             </div>
 
             {/* Column 2 */}
-            <div className="flex flex-col space-y-1 border-t sm:border-t-0 sm:border-l border-base-200 pt-2 sm:pt-0 sm:pl-3">
+            <div className={`flex flex-col space-y-1 border-t sm:border-t-0 ${
+              isRtl ? 'sm:border-r sm:border-l-0 sm:pr-3 sm:pl-0' : 'sm:border-l sm:border-r-0 sm:pl-3 sm:pr-0'
+            } border-base-200 pt-2 sm:pt-0`}>
               {COLUMN_2_LANGUAGES.map((lang) => {
                 const isSelected =
                   language === lang.code ||
@@ -159,7 +168,9 @@ export default function LanguageSelector() {
                     key={lang.code}
                     type="button"
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left ${
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors ${
+                      isRtl ? 'text-right flex-row-reverse' : 'text-left'
+                    } ${
                       isSelected
                         ? 'bg-primary/10 text-primary font-bold shadow-2xs'
                         : 'text-base-content/80 hover:bg-base-200/70 hover:text-base-content font-medium'
@@ -175,7 +186,9 @@ export default function LanguageSelector() {
             </div>
 
             {/* Column 3 */}
-            <div className="flex flex-col space-y-1 border-t sm:border-t-0 sm:border-l border-base-200 pt-2 sm:pt-0 sm:pl-3">
+            <div className={`flex flex-col space-y-1 border-t sm:border-t-0 ${
+              isRtl ? 'sm:border-r sm:border-l-0 sm:pr-3 sm:pl-0' : 'sm:border-l sm:border-r-0 sm:pl-3 sm:pr-0'
+            } border-base-200 pt-2 sm:pt-0`}>
               {COLUMN_3_LANGUAGES.map((lang) => {
                 const isSelected =
                   language === lang.code ||
@@ -190,7 +203,9 @@ export default function LanguageSelector() {
                     key={lang.code}
                     type="button"
                     onClick={() => handleLanguageChange(lang.code)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left ${
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors ${
+                      isRtl ? 'text-right flex-row-reverse' : 'text-left'
+                    } ${
                       isSelected
                         ? 'bg-primary/10 text-primary font-bold shadow-2xs'
                         : 'text-base-content/80 hover:bg-base-200/70 hover:text-base-content font-medium'

@@ -47,7 +47,7 @@ export default function PdfToOfficeTool({
     setPages([]);
 
     try {
-      const { thumbnails, extractedText: pageTexts } = await extractPdfThumbnails(selectedFile, { scale: 1.5 });
+      const { thumbnails, extractedText: pageTexts } = await extractPdfThumbnails(selectedFile, { scale: 1.5, extractText: true });
       setPages(thumbnails);
       const combined = (pageTexts || []).join('\n\n--- Page Break ---\n\n').trim();
 

@@ -172,20 +172,29 @@ export function extractStructuredPageText(items: any[]): string {
 /**
  * Extracts thumbnails for all pages in a PDF file with progress callback
  */
+export interface ExtractPdfThumbnailsOptions {
+  maxPages?: number;
+  scale?: number;
+  extractText?: boolean;
+  onProgress?: (loaded: number, total: number) => void;
+  onDocLoaded?: (pageCount: number) => void;
+  onPageReady?: (thumbnail: PdfPageThumbnail) => void;
+}
+
+/**
+ * Extracts thumbnails for all pages in a PDF file with progressive callbacks.
+ * Uses OffscreenCanvas where supported so rendering continues seamlessly even in background tabs.
+ */
 export async function extractPdfThumbnails(
   file: File | ArrayBuffer,
-  options: {
-    maxPages?: number;
-    scale?: number;
-    onProgress?: (loaded: number, total: number) => void;
-  } = {}
+  options: ExtractPdfThumbnailsOptions = {}
 ): Promise<{
   thumbnails: PdfPageThumbnail[];
   pageCount: number;
   extractedText?: string[];
 }> {
   const pdfjs = await loadPdfJs();
-  const scale = options.scale || 0.6; // Crisp thumbnail scale
+  const scale = options.scale || 0.5; // Optimized crisp thumbnail scale
 
   const arrayBuffer = file instanceof File ? await file.arrayBuffer() : file;
   let pdfDoc: any;
@@ -218,48 +227,101 @@ export async function extractPdfThumbnails(
   }
 
   const totalPages = pdfDoc.numPages;
+  if (options.onDocLoaded) {
+    options.onDocLoaded(totalPages);
+  }
+
   const maxPagesToRender = options.maxPages ? Math.min(totalPages, options.maxPages) : totalPages;
 
   const thumbnails: PdfPageThumbnail[] = [];
   const extractedText: string[] = [];
+  const shouldExtractText = options.extractText ?? false;
 
   for (let i = 1; i <= maxPagesToRender; i++) {
     const page = await pdfDoc.getPage(i);
     const viewport = page.getViewport({ scale });
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    // Use OffscreenCanvas if supported to prevent background tab pauses
+    let canvas: any;
+    let ctx: any;
+    const width = Math.round(viewport.width);
+    const height = Math.round(viewport.height);
+
+    if (typeof OffscreenCanvas !== 'undefined') {
+      try {
+        canvas = new OffscreenCanvas(width, height);
+        ctx = canvas.getContext('2d');
+      } catch {
+        canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        ctx = canvas.getContext('2d');
+      }
+    } else {
+      canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      ctx = canvas.getContext('2d');
+    }
 
     if (ctx) {
-      // Draw white background
+      // Draw clean white background
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, width, height);
 
       await page.render({
         canvasContext: ctx,
         viewport,
       }).promise;
 
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      let dataUrl = '';
+      if (typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+        try {
+          const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+          dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve((reader.result as string) || '');
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          // Fallback if convertToBlob fails
+          const fallbackCanvas = document.createElement('canvas');
+          fallbackCanvas.width = width;
+          fallbackCanvas.height = height;
+          const fallbackCtx = fallbackCanvas.getContext('2d');
+          if (fallbackCtx) {
+            fallbackCtx.drawImage(canvas, 0, 0);
+            dataUrl = fallbackCanvas.toDataURL('image/jpeg', 0.8);
+          }
+        }
+      } else {
+        dataUrl = (canvas as HTMLCanvasElement).toDataURL('image/jpeg', 0.8);
+      }
 
-      thumbnails.push({
+      const item: PdfPageThumbnail = {
         pageNumber: i,
         dataUrl,
-        width: viewport.width,
-        height: viewport.height,
-        aspectRatio: viewport.width / viewport.height,
-      });
+        width,
+        height,
+        aspectRatio: width / height,
+      };
+
+      thumbnails.push(item);
+
+      if (options.onPageReady) {
+        options.onPageReady(item);
+      }
     }
 
-    // Extract structured text preserving positions and layout
-    try {
-      const textContent = await page.getTextContent({ normalizeWhitespace: false });
-      const structuredText = extractStructuredPageText(textContent.items);
-      extractedText.push(structuredText);
-    } catch {
-      extractedText.push('');
+    // Only extract structured text if requested (e.g. for PDF to Office)
+    if (shouldExtractText) {
+      try {
+        const textContent = await page.getTextContent({ normalizeWhitespace: false });
+        const structuredText = extractStructuredPageText(textContent.items);
+        extractedText.push(structuredText);
+      } catch {
+        extractedText.push('');
+      }
     }
 
     if (options.onProgress) {
@@ -270,7 +332,7 @@ export async function extractPdfThumbnails(
   return {
     thumbnails,
     pageCount: totalPages,
-    extractedText,
+    extractedText: shouldExtractText ? extractedText : undefined,
   };
 }
 

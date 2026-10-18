@@ -88,12 +88,16 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
       try {
         let pdfjs: any = null;
         try {
-          pdfjs = await import('pdfjs-dist');
-          if (!pdfjs.GlobalWorkerOptions?.workerSrc) {
-            pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-          }
-        } catch {
           pdfjs = await loadPdfJs();
+        } catch {}
+
+        if (!pdfjs) {
+          try {
+            pdfjs = await import('pdfjs-dist');
+            if (!pdfjs.GlobalWorkerOptions?.workerSrc) {
+              pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+            }
+          } catch {}
         }
 
         if (!pdfjs) {
@@ -187,26 +191,23 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
 
       const effectiveScale = Math.max(0.3, Math.min(baseScale * scale, 3.5));
 
-      const viewport = page.getViewport({ scale: effectiveScale });
       const outputScale = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+      const renderViewport = page.getViewport({ scale: effectiveScale * outputScale });
 
-      canvas.width = Math.floor(viewport.width * outputScale);
-      canvas.height = Math.floor(viewport.height * outputScale);
-      canvas.style.width = `${Math.floor(viewport.width)}px`;
-      canvas.style.height = `${Math.floor(viewport.height)}px`;
+      canvas.width = Math.floor(renderViewport.width);
+      canvas.height = Math.floor(renderViewport.height);
+      canvas.style.width = `${Math.floor(renderViewport.width / outputScale)}px`;
+      canvas.style.height = `${Math.floor(renderViewport.height / outputScale)}px`;
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.save();
-        ctx.scale(outputScale, outputScale);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, viewport.width, viewport.height);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         await page.render({
           canvasContext: ctx,
-          viewport,
+          viewport: renderViewport,
         }).promise;
-        ctx.restore();
       }
     } catch (err: any) {
       console.warn('Canvas rendering error:', err);

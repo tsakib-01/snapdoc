@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   RotateCcw,
   RotateCw,
@@ -98,9 +98,25 @@ export default function VisualPdfOrganizerTool({
   const [showResultPreviewModal, setShowResultPreviewModal] = useState<boolean>(false);
   const [createdTimestamp, setCreatedTimestamp] = useState<string>('');
   const addFileInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Clean up any pending background extraction on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Handle initial file selection with instant workspace unlock and progressive thumbnail streaming
   const handleFileSelected = async (selectedFile: File) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setFiles([selectedFile]);
     setError(null);
     setResultData(null);
@@ -109,7 +125,9 @@ export default function VisualPdfOrganizerTool({
 
     try {
       await extractPdfThumbnails(selectedFile, {
+        signal: controller.signal,
         onDocLoaded: (total) => {
+          if (controller.signal.aborted) return;
           // Instantly unlock workspace with page items in 0.05 seconds!
           const skeletonPages: VisualPageItem[] = Array.from({ length: total }, (_, idx) => ({
             id: `page-0-${idx}-${Date.now()}`,
@@ -119,7 +137,7 @@ export default function VisualPdfOrganizerTool({
             dataUrl: '',
             rotation: 0,
             selected: initialMode === 'delete' || initialMode === 'extract' ? false : true,
-            aspectRatio: 1.414,
+            aspectRatio: 1 / 1.414,
             docName: selectedFile.name,
           }));
 
@@ -128,6 +146,7 @@ export default function VisualPdfOrganizerTool({
           setThumbnailProgress({ loaded: 0, total });
         },
         onPageReady: (thumb) => {
+          if (controller.signal.aborted) return;
           setPages((prev) =>
             prev.map((p) =>
               p.fileIndex === 0 && p.originalIndex === thumb.pageNumber - 1
@@ -137,14 +156,18 @@ export default function VisualPdfOrganizerTool({
           );
         },
         onProgress: (loaded, total) => {
+          if (controller.signal.aborted) return;
           setThumbnailProgress({ loaded, total });
         },
       });
     } catch (err: any) {
+      if (controller.signal.aborted) return;
       console.error('Thumbnail error:', err);
       setError('Could not render PDF pages. Please ensure the file is a valid, unencrypted PDF.');
     } finally {
-      setLoadingThumbnails(false);
+      if (!controller.signal.aborted) {
+        setLoadingThumbnails(false);
+      }
     }
   };
 
@@ -154,10 +177,13 @@ export default function VisualPdfOrganizerTool({
 
     const nextFileIndex = files.length;
     setFiles((prev) => [...prev, newFile]);
+    const currentSignal = abortControllerRef.current?.signal;
 
     try {
       await extractPdfThumbnails(newFile, {
+        signal: currentSignal,
         onDocLoaded: (total) => {
+          if (currentSignal?.aborted) return;
           const additionalPages: VisualPageItem[] = Array.from({ length: total }, (_, idx) => ({
             id: `page-${nextFileIndex}-${idx}-${Date.now()}`,
             fileIndex: nextFileIndex,
@@ -166,7 +192,7 @@ export default function VisualPdfOrganizerTool({
             dataUrl: '',
             rotation: 0,
             selected: initialMode === 'delete' || initialMode === 'extract' ? false : true,
-            aspectRatio: 1.414,
+            aspectRatio: 1 / 1.414,
             docName: newFile.name,
           }));
 
@@ -180,6 +206,7 @@ export default function VisualPdfOrganizerTool({
           setThumbnailProgress({ loaded: 0, total });
         },
         onPageReady: (thumb) => {
+          if (currentSignal?.aborted) return;
           setPages((prev) =>
             prev.map((p) =>
               p.fileIndex === nextFileIndex && p.originalIndex === thumb.pageNumber - 1
@@ -189,23 +216,33 @@ export default function VisualPdfOrganizerTool({
           );
         },
         onProgress: (loaded, total) => {
+          if (currentSignal?.aborted) return;
           setThumbnailProgress({ loaded, total });
         },
       });
     } catch (err: any) {
+      if (currentSignal?.aborted) return;
       console.error('Thumbnail error adding document:', err);
       setError('Could not render pages from the added PDF. Please ensure the file is a valid, unencrypted PDF.');
     }
   };
 
   const handleReset = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
     setFiles([]);
     setPages([]);
+    setLoadingThumbnails(false);
+    setThumbnailProgress({ loaded: 0, total: 0 });
+    setProcessing(false);
     setResultData(null);
     setError(null);
     setSplitCustomCuts(new Set());
     setShowResultPreviewModal(false);
     setCreatedTimestamp('');
+    setZoomPage(null);
     if (addFileInputRef.current) {
       addFileInputRef.current.value = '';
     }
@@ -481,7 +518,7 @@ export default function VisualPdfOrganizerTool({
           }
 
           const outBytes = await outDoc.save({ useObjectStreams: true });
-          const pdfBlob = new Blob([outBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+          const pdfBlob = new Blob([outBytes as unknown as BlobPart], { type: 'application/pdf' });
           resultUrl = URL.createObjectURL(pdfBlob);
           resultSize = pdfBlob.size;
           resultMime = 'application/pdf';
@@ -923,10 +960,13 @@ export default function VisualPdfOrganizerTool({
                         {/* Page Preview Thumbnail Container */}
                         <div
                           onClick={() => toggleSelectPage(page.id)}
-                          className={`relative w-40 sm:w-48 aspect-[1/1.414] bg-white rounded-xl p-2 transition-all duration-200 cursor-pointer select-none flex items-center justify-center ${
+                          style={{
+                            aspectRatio: page.aspectRatio ? `${page.aspectRatio}` : '1 / 1.414',
+                          }}
+                          className={`relative w-40 sm:w-48 bg-white rounded-none p-0 transition-all duration-200 cursor-pointer select-none flex items-center justify-center overflow-hidden ${
                             page.selected
                               ? 'ring-2 ring-primary shadow-lg shadow-primary/10'
-                              : 'border border-base-300 shadow-md hover:shadow-xl hover:border-primary/50'
+                              : 'border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50'
                           }`}
                         >
                           {/* Hover action pill overlay */}
@@ -979,13 +1019,13 @@ export default function VisualPdfOrganizerTool({
                               <img
                                 src={page.dataUrl}
                                 alt={`Page ${page.pageNumber}`}
-                                className="max-w-full max-h-full object-contain pointer-events-none transition-transform duration-150"
+                                className="w-full h-full object-contain pointer-events-none transition-transform duration-150"
                                 style={{
                                   transform: `rotate(${page.rotation}deg)`,
                                 }}
                               />
                             ) : (
-                              <div className="flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 select-none">
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 select-none bg-base-200/40">
                                 <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
                                 <span className="text-[11px] font-semibold text-base-content/60">Page {page.pageNumber}</span>
                               </div>
@@ -1071,12 +1111,12 @@ export default function VisualPdfOrganizerTool({
                       ) : (
                         <Square className="w-5 h-5 text-base-content/40" />
                       )}
-                      <div className="w-12 h-16 bg-white border rounded overflow-hidden flex items-center justify-center p-1">
+                      <div className="w-12 h-16 bg-white border border-base-300 rounded-none overflow-hidden flex items-center justify-center p-0 shadow-xs">
                         {page.dataUrl ? (
                           <img
                             src={page.dataUrl}
                             alt={`Page ${page.pageNumber}`}
-                            className="max-h-full object-contain"
+                            className="w-full h-full object-contain"
                             style={{ transform: `rotate(${page.rotation}deg)` }}
                           />
                         ) : (
@@ -1313,7 +1353,7 @@ export default function VisualPdfOrganizerTool({
             <div className="flex-1 w-full min-h-0 bg-base-200/50 rounded-xl sm:rounded-2xl overflow-hidden p-1.5 sm:p-2 flex flex-col">
               <PdfPreviewModalViewer
                 dataUrl={resultData.dataUrl}
-                filename="organized.pdf"
+                filename={resultData.filename}
               />
             </div>
           </div>

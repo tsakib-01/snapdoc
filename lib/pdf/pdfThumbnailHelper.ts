@@ -176,6 +176,7 @@ export interface ExtractPdfThumbnailsOptions {
   maxPages?: number;
   scale?: number;
   extractText?: boolean;
+  signal?: AbortSignal;
   onProgress?: (loaded: number, total: number) => void;
   onDocLoaded?: (pageCount: number) => void;
   onPageReady?: (thumbnail: PdfPageThumbnail) => void;
@@ -184,6 +185,7 @@ export interface ExtractPdfThumbnailsOptions {
 /**
  * Extracts thumbnails for all pages in a PDF file with progressive callbacks.
  * Uses OffscreenCanvas where supported so rendering continues seamlessly even in background tabs.
+ * Supports cancellation via AbortSignal to cleanly terminate when a new document is loaded.
  */
 export async function extractPdfThumbnails(
   file: File | ArrayBuffer,
@@ -193,10 +195,18 @@ export async function extractPdfThumbnails(
   pageCount: number;
   extractedText?: string[];
 }> {
+  if (options.signal?.aborted) {
+    return { thumbnails: [], pageCount: 0 };
+  }
+
   const pdfjs = await loadPdfJs();
   const scale = options.scale || 0.5; // Optimized crisp thumbnail scale
 
   const arrayBuffer = file instanceof File ? await file.arrayBuffer() : file;
+  if (options.signal?.aborted) {
+    return { thumbnails: [], pageCount: 0 };
+  }
+
   let pdfDoc: any;
   try {
     const loadingTask = pdfjs.getDocument({
@@ -207,6 +217,9 @@ export async function extractPdfThumbnails(
     });
     pdfDoc = await loadingTask.promise;
   } catch (workerErr) {
+    if (options.signal?.aborted) {
+      return { thumbnails: [], pageCount: 0 };
+    }
     console.warn('Standard PDF.js worker failed, falling back to inline worker mode:', workerErr);
     try {
       if (pdfjs.GlobalWorkerOptions) {
@@ -221,9 +234,19 @@ export async function extractPdfThumbnails(
       });
       pdfDoc = await fallbackTask.promise;
     } catch (fallbackErr) {
+      if (options.signal?.aborted) {
+        return { thumbnails: [], pageCount: 0 };
+      }
       console.error('PDF.js loading failed:', fallbackErr);
       throw fallbackErr;
     }
+  }
+
+  if (options.signal?.aborted) {
+    try {
+      pdfDoc.destroy();
+    } catch {}
+    return { thumbnails: [], pageCount: 0 };
   }
 
   const totalPages = pdfDoc.numPages;
@@ -238,7 +261,20 @@ export async function extractPdfThumbnails(
   const shouldExtractText = options.extractText ?? false;
 
   for (let i = 1; i <= maxPagesToRender; i++) {
+    if (options.signal?.aborted) {
+      try {
+        pdfDoc.destroy();
+      } catch {}
+      return { thumbnails, pageCount: totalPages };
+    }
+
     const page = await pdfDoc.getPage(i);
+    if (options.signal?.aborted) {
+      try {
+        pdfDoc.destroy();
+      } catch {}
+      return { thumbnails, pageCount: totalPages };
+    }
     const viewport = page.getViewport({ scale });
 
     // Use OffscreenCanvas if supported to prevent background tab pauses

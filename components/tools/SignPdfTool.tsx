@@ -1928,7 +1928,7 @@ export default function SignPdfTool() {
                       />
                     ) : (
                       <div className="w-full aspect-[1/1.414] bg-base-200/50 flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-primary/40 animate-pulse" />
+                        <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                       </div>
                     )}
                   </div>
@@ -1969,9 +1969,9 @@ export default function SignPdfTool() {
                       draggable={false}
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-8 text-base-content/40 bg-base-200/40">
-                      <FileText className="w-12 h-12 text-primary/40 animate-pulse" />
-                      <span className="font-semibold text-sm">Page {currentPage}</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-8 text-base-content/50 bg-base-200/40">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      <span className="font-semibold text-xs text-base-content/70">Loading...</span>
                     </div>
                   )}
 

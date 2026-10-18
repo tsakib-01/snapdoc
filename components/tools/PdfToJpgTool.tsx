@@ -272,7 +272,7 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                   {p.size > 0 ? (
                     <span className="badge badge-sm badge-neutral">{formatBytes(p.size)}</span>
                   ) : (
-                    <span className="badge badge-sm badge-ghost animate-pulse">Rendering...</span>
+                    <span className="badge badge-sm badge-ghost animate-pulse">Loading...</span>
                   )}
                 </div>
 
@@ -285,9 +285,9 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
                       className="max-h-[240px] max-w-full object-contain rounded-none border border-base-300 shadow-sm"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 text-base-content/40 py-12">
+                    <div className="flex flex-col items-center justify-center gap-2.5 text-base-content/50 py-12">
                       <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                      <span className="text-xs">Converting page {p.pageNumber}...</span>
+                      <span className="text-xs font-semibold text-base-content/70">Loading...</span>
                     </div>
                   )}
                 </div>

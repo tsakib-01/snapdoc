@@ -417,9 +417,9 @@ export default function PdfOcrTool() {
                         className="max-h-[330px] w-auto object-contain rounded-lg shadow-sm bg-white"
                       />
                     ) : (
-                      <div className="flex flex-col items-center justify-center gap-2 text-base-content/40 p-4">
-                        <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
-                        <span className="text-xs font-semibold">Page {selectedPageIndex + 1}</span>
+                      <div className="flex flex-col items-center justify-center gap-2.5 text-base-content/50 p-4">
+                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        <span className="text-xs font-semibold text-base-content/70">Loading...</span>
                       </div>
                     )}
                   </div>

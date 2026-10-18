@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Hash, RotateCcw, ArrowRight, Eye, FileText, Minus, Plus } from 'lucide-react';
+import { Hash, RotateCcw, ArrowRight, Eye, FileText, Minus, Plus, Loader2 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
 import { extractPdfThumbnails, PdfPageThumbnail } from '@/lib/pdf/pdfThumbnailHelper';
@@ -239,9 +239,9 @@ export default function PageNumbererTool() {
                       className="w-full h-full object-fill pointer-events-none rounded-none"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 bg-base-200/40">
-                      <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
-                      <span className="text-xs font-semibold">Page {currentPage}</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 bg-base-200/40">
+                      <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                      <span className="text-xs font-semibold text-base-content/70">Loading...</span>
                     </div>
                   )}
 
@@ -319,7 +319,7 @@ export default function PageNumbererTool() {
                         <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded-none object-fill bg-white" />
                       ) : (
                         <div className="w-full aspect-[1/1.414] bg-base-200/50 flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-primary/40 animate-pulse" />
+                          <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                         </div>
                       )}
                       <span className="block text-[9px] font-bold text-center mt-0.5">{pg.pageNumber}</span>

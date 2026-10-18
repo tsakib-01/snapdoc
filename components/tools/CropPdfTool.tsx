@@ -554,12 +554,19 @@ export default function CropPdfTool() {
                   }`}
                 >
                   {/* Base Page Image - Sharp 90-degree corners to show exact document dimensions */}
-                  <img
-                    src={activeThumbnail.dataUrl}
-                    alt={`Page ${currentPage}`}
-                    draggable={false}
-                    className="w-full h-full object-fill pointer-events-none block rounded-none"
-                  />
+                  {activeThumbnail.dataUrl ? (
+                    <img
+                      src={activeThumbnail.dataUrl}
+                      alt={`Page ${currentPage}`}
+                      draggable={false}
+                      className="w-full h-full object-fill pointer-events-none block rounded-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-8 text-base-content/50 bg-base-200/40">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      <span className="font-semibold text-xs text-base-content/70">Loading...</span>
+                    </div>
+                  )}
 
                   {/* Clean un-cropped state prompt */}
                   {!hasActiveCrop && !isDragging && (
@@ -753,11 +760,17 @@ export default function CropPdfTool() {
                               : 'border-base-300 opacity-70 hover:opacity-100'
                           }`}
                         >
-                          <img
-                            src={pg.dataUrl}
-                            alt={`P${pg.pageNumber}`}
-                            className="w-full h-auto rounded-none object-contain bg-white"
-                          />
+                          {pg.dataUrl ? (
+                            <img
+                              src={pg.dataUrl}
+                              alt={`P${pg.pageNumber}`}
+                              className="w-full h-auto rounded-none object-contain bg-white"
+                            />
+                          ) : (
+                            <div className="w-full aspect-[1/1.414] bg-base-200/50 flex items-center justify-center">
+                              <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                            </div>
+                          )}
                           <span className="block text-[9px] font-bold text-center mt-0.5">
                             {pg.pageNumber}
                           </span>

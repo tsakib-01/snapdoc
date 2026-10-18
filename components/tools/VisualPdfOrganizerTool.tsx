@@ -1026,9 +1026,9 @@ export default function VisualPdfOrganizerTool({
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 select-none bg-base-200/40">
-                              <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
-                              <span className="text-[11px] font-semibold text-base-content/60">Page {page.pageNumber}</span>
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 select-none bg-base-200/40">
+                              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                              <span className="text-xs font-semibold text-base-content/70">Loading...</span>
                             </div>
                           )}
                         </div>
@@ -1120,7 +1120,7 @@ export default function VisualPdfOrganizerTool({
                             style={{ transform: `rotate(${page.rotation}deg)` }}
                           />
                         ) : (
-                          <FileText className="w-5 h-5 text-primary/40 animate-pulse" />
+                          <Loader2 className="w-4 h-4 text-primary animate-spin" />
                         )}
                       </div>
                       <div>

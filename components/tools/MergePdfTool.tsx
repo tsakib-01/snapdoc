@@ -603,8 +603,8 @@ export default function MergePdfTool() {
                         {item.loading ? (
                           <div className="flex flex-col items-center justify-center gap-2 p-3 text-center bg-base-200/40 w-full h-full">
                             <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                            <span className="text-[10px] text-base-content/50 font-medium">
-                              Rendering 1st page...
+                            <span className="text-xs font-semibold text-base-content/70">
+                              Loading...
                             </span>
                           </div>
                         ) : item.thumbnailUrl ? (

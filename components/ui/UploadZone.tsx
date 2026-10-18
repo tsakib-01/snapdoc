@@ -151,11 +151,11 @@ export default function UploadZone({
         }
       }
 
-      // Validate size
-      const defaultMaxSize = isPdfOnly ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
-      const maxSize = maxSizeMb ? maxSizeMb * 1024 * 1024 : defaultMaxSize;
+      // Validate size (20 MB upload limit per file)
+      const defaultMaxSize = 20 * 1024 * 1024;
+      const maxSize = maxSizeMb ? Math.min(maxSizeMb * 1024 * 1024, defaultMaxSize) : defaultMaxSize;
       if (f.size > maxSize) {
-        setErrorMessage(`${t('errorFileTooLarge', 'Selected file exceeds the maximum allowed file size')} (${formatBytes(maxSize)}).`);
+        setErrorMessage(`${t('errorFileTooLarge', 'Selected file exceeds the maximum allowed file size')} (20 MB).`);
         return;
       }
 
@@ -341,8 +341,8 @@ export default function UploadZone({
             <span className="btn btn-primary btn-sm rounded-xl px-4 sm:px-5 shadow-sm font-semibold text-xs sm:text-sm">
               {multiple ? t('chooseFiles', 'Choose Files') : t('chooseFile', 'Choose File')}
             </span>
-            <span className="text-[10px] sm:text-[11px] text-base-content/50 px-2 py-1 bg-base-200 rounded-lg">
-              {accept.includes('pdf') ? t('pdfLimit', 'PDF up to 100MB') : t('imageLimit', 'JPG, PNG, WebP up to 50MB')}
+            <span className="text-[10px] sm:text-[11px] text-base-content/60 px-2.5 py-1 bg-base-200 rounded-lg font-medium">
+              20 MB upload limit per file
             </span>
           </div>
         </div>

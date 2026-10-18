@@ -490,7 +490,7 @@ export default function SignPdfTool() {
   // Handle Logo Upload for Seal
   const handleSealLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
+    if (!f || f.size > 20 * 1024 * 1024) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       setSealLogoDataUrl(ev.target?.result as string);
@@ -501,7 +501,7 @@ export default function SignPdfTool() {
   // Handle Uploaded Seal Image
   const handleSealUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (!f) return;
+    if (!f || f.size > 20 * 1024 * 1024) return;
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const raw = ev.target?.result as string;
@@ -933,7 +933,7 @@ export default function SignPdfTool() {
           <UploadZone
             accept=".pdf,application/pdf"
             maxFiles={1}
-            maxSizeMb={50}
+            maxSizeMb={20}
             title={t('uploadPdfToSign', 'Upload PDF to eSign')}
             subtitle={t('uploadPdfToSignSubtitle', 'Draw, type, or upload your signature and place it anywhere with drag-and-drop.')}
             onFilesSelected={handleFilesSelected}
@@ -1327,7 +1327,7 @@ export default function SignPdfTool() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-base-content">{t('uploadSealTitle', 'Upload Seal or Stamp Image')}</p>
-                          <p className="text-xs text-base-content/60">{t('uploadSealFormats', 'PNG, JPG, WebP or SVG supported')}</p>
+                          <p className="text-xs text-base-content/60">{t('uploadSealFormats', 'PNG, JPG, WebP or SVG supported')} (20 MB upload limit per file)</p>
                         </div>
                         <button type="button" className="btn btn-xs btn-primary rounded-lg font-bold">
                           {t('browseFiles', 'Browse Files')}
@@ -1636,7 +1636,7 @@ export default function SignPdfTool() {
                   accept="image/png,image/jpeg"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) {
+                    if (f && f.size <= 20 * 1024 * 1024) {
                       const reader = new FileReader();
                       reader.onload = () => setUploadedSignatureUrl(reader.result as string);
                       reader.readAsDataURL(f);
@@ -1644,6 +1644,7 @@ export default function SignPdfTool() {
                   }}
                   className="file-input file-input-bordered file-input-md w-full rounded-2xl"
                 />
+                <p className="text-[11px] text-base-content/60 font-medium">20 MB upload limit per file</p>
                 {uploadedSignatureUrl && (
                   <div className="p-3 rounded-2xl border border-base-300 bg-base-200/40 flex items-center justify-center">
                     <img

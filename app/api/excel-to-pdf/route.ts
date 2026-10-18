@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (file.size > MAX_IMAGE_FILE_SIZE) {
-      return NextResponse.json({ error: 'File exceeds maximum size limit (50MB).' }, { status: 400 });
+      return NextResponse.json({ error: 'File exceeds 20 MB upload limit per file.' }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();

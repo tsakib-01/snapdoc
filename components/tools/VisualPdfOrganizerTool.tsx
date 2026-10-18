@@ -199,6 +199,11 @@ export default function VisualPdfOrganizerTool({
   // Handle adding new document pages without deleting existing ones
   const handleAddDocumentPages = async (newFile: File) => {
     setError(null);
+    if (!newFile) return;
+    if (newFile.size > 20 * 1024 * 1024) {
+      setError('File exceeds 20 MB upload limit per file.');
+      return;
+    }
 
     const nextFileIndex = files.length;
     setFiles((prev) => [...prev, newFile]);
@@ -636,7 +641,7 @@ export default function VisualPdfOrganizerTool({
           <UploadZone
             accept=".pdf,application/pdf"
             maxFiles={1}
-            maxSizeMb={50}
+            maxSizeMb={20}
             title={localizedTitle}
             subtitle={localizedDescription}
             onFilesSelected={(files) => handleFileSelected(files[0])}
@@ -756,7 +761,7 @@ export default function VisualPdfOrganizerTool({
                     <li>
                       <button type="button" onClick={() => addFileInputRef.current?.click()}>
                         <FileText className="w-4 h-4 text-success" />
-                        <span>{t('addDocumentPages', 'Add Document Pages')}</span>
+                        <span>{t('addDocumentPages', 'Add Document Pages')} (Max 20MB)</span>
                       </button>
                     </li>
                   </ul>

@@ -189,7 +189,7 @@ export default function PageNumbererTool() {
         <UploadZone
           accept=".pdf,application/pdf"
           maxFiles={1}
-          maxSizeMb={50}
+          maxSizeMb={20}
           title={t('pageNumbers', 'Add Page Numbers to PDF')}
           subtitle={t('pageNumbersSubtitle', 'Stamp page numbers at any position with customizable numbering formats.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}

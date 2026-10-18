@@ -15,6 +15,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No PDF file uploaded.' }, { status: 400 });
     }
 
+    if (file.size > 20 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File exceeds 20 MB upload limit per file.' }, { status: 400 });
+    }
+
     const baseName = file.name.replace(/\.[^/.]+$/, '');
     const buffer = Buffer.from(await file.arrayBuffer());
 

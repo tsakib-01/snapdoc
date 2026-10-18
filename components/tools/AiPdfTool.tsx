@@ -308,7 +308,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
         <UploadZone
           accept=".pdf,application/pdf"
           maxFiles={1}
-          maxSizeMb={50}
+          maxSizeMb={20}
           title={t('uploadPdfForAi', 'Upload PDF for AI Assistant & Summarizer')}
           subtitle={t('localNeuralAiDesc', 'Local neural AI — your document never leaves your device.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}

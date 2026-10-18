@@ -149,7 +149,7 @@ export default function DocToPdfTool({
           <UploadZone
             accept=".xlsx,.xls,.docx,.doc,.txt,.csv,.html,.rtf"
             maxFiles={1}
-            maxSizeMb={50}
+            maxSizeMb={20}
             title={resolvedTitle}
             subtitle={resolvedSubtitle}
             onFilesSelected={(files) => setFile(files[0])}

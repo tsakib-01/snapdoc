@@ -469,7 +469,7 @@ export default function CropPdfTool() {
         <UploadZone
           accept=".pdf,application/pdf"
           maxFiles={1}
-          maxSizeMb={50}
+          maxSizeMb={20}
           title={t('cropPdf', 'Upload PDF to Crop & Trim Margins')}
           subtitle={t('cropSubtitle', 'Select with your mouse or finger, trim margins, remove headers/footers, and choose to apply to one or all pages.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}

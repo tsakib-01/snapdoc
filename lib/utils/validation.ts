@@ -1,5 +1,6 @@
-export const MAX_IMAGE_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-export const MAX_PDF_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+export const MAX_UPLOAD_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+export const MAX_IMAGE_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+export const MAX_PDF_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 export const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',
@@ -27,7 +28,7 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
   }
 
   if (file.size > MAX_IMAGE_FILE_SIZE) {
-    return { valid: false, error: 'File exceeds maximum size of 50MB.' };
+    return { valid: false, error: 'File exceeds 20 MB upload limit per file.' };
   }
 
   const isAllowed = ALLOWED_IMAGE_TYPES.includes(file.type) ||
@@ -46,7 +47,7 @@ export function validatePdfFile(file: File): { valid: boolean; error?: string } 
   }
 
   if (file.size > MAX_PDF_FILE_SIZE) {
-    return { valid: false, error: 'File exceeds maximum size of 100MB.' };
+    return { valid: false, error: 'File exceeds 20 MB upload limit per file.' };
   }
 
   const isAllowed = ALLOWED_PDF_TYPES.includes(file.type) || /\.pdf$/i.test(file.name);

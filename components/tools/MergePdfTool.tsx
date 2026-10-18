@@ -123,12 +123,16 @@ export default function MergePdfTool() {
   // Adding more files to existing list
   const handleAddMoreFiles = (addedFiles: FileList | File[] | null) => {
     if (!addedFiles) return;
+    const oversized = Array.from(addedFiles).some((f) => f.size > 20 * 1024 * 1024);
+    if (oversized) {
+      setError('One or more files exceeded the 20 MB upload limit per file.');
+    }
     const filesArray = Array.from(addedFiles).filter(
-      (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+      (f) => (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) && f.size <= 20 * 1024 * 1024
     );
     if (filesArray.length === 0) return;
 
-    setError(null);
+    if (!oversized) setError(null);
     const newItems: PdfMergeItem[] = filesArray.map((file, idx) => ({
       id: `merge-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 7)}`,
       file,
@@ -715,7 +719,7 @@ export default function MergePdfTool() {
                     {items.length === 1 ? t('addNextPdf', 'Add Next PDF') : t('addDocument', 'Add Document')}
                   </p>
                   <p className="text-[11px] text-base-content/50 mt-0.5">
-                    {t('clickBrowseOrDrop', 'Click to browse or drop file here')}
+                    {t('clickBrowseOrDrop', 'Click to browse or drop file here')} · 20 MB upload limit per file
                   </p>
                 </div>
               </div>

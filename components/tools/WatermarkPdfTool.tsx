@@ -84,6 +84,10 @@ export default function WatermarkPdfTool() {
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
+    if (f && f.size > 20 * 1024 * 1024) {
+      setError('Logo image exceeds 20 MB upload limit per file.');
+      return;
+    }
     setImageFile(f);
     if (f) {
       const url = URL.createObjectURL(f);
@@ -269,7 +273,7 @@ export default function WatermarkPdfTool() {
         <UploadZone
           accept=".pdf,application/pdf"
           maxFiles={1}
-          maxSizeMb={50}
+          maxSizeMb={20}
           title={t('watermarkPdf', 'Upload PDF to Add Watermark')}
           subtitle={t('watermarkPdfDesc', 'Stamp high-visibility text or logo watermarks across every page of your PDF document.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}
@@ -458,6 +462,7 @@ export default function WatermarkPdfTool() {
                       onChange={handleImageFileChange}
                       className="file-input file-input-bordered file-input-sm w-full rounded-xl"
                     />
+                    <p className="text-[11px] text-base-content/60 font-medium">20 MB upload limit per file</p>
                   </div>
                 )}
 

@@ -145,7 +145,7 @@ export default function PdfToOfficeTool({
         <UploadZone
           accept=".pdf,application/pdf"
           maxFiles={1}
-          maxSizeMb={50}
+          maxSizeMb={20}
           title={t('uploadPdf', title)}
           subtitle={t('dropPdfToExtract', subtitle)}
           onFilesSelected={(files) => handleFileSelected(files[0])}

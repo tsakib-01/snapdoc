@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
 
     const imageItems: ImageInputItem[] = [];
     for (const file of files) {
+      if (file.size > 20 * 1024 * 1024) {
+        return NextResponse.json({ error: `File "${file.name}" exceeds 20 MB upload limit per file.` }, { status: 400 });
+      }
       const buffer = Buffer.from(await file.arrayBuffer());
       imageItems.push({
         buffer,

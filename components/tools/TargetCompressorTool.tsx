@@ -172,7 +172,7 @@ export default function TargetCompressorTool({
           files={files}
           onFilesSelected={setFiles}
           title={t('dropImageToCompress', 'Drop your image to compress')}
-          subtitle={t('dropImageToCompressSubtitle', 'Supports JPG, PNG, WebP, and camera formats (Up to 50MB)')}
+          subtitle={t('dropImageToCompressSubtitle', 'Supports JPG, PNG, WebP, and camera formats (20 MB upload limit per file)')}
         />
       )}
 

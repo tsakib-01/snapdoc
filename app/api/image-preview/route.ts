@@ -13,6 +13,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Empty file provided' }, { status: 400 });
     }
 
+    if (file.size > 20 * 1024 * 1024) {
+      return NextResponse.json({ success: false, error: 'File exceeds 20 MB upload limit per file.' }, { status: 400 });
+    }
+
     const buffer = Buffer.from(await file.arrayBuffer());
     const rawImage = sharp(buffer, { failOnError: false });
     const metadata = await rawImage.metadata();

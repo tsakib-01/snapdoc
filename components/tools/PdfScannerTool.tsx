@@ -139,7 +139,12 @@ export default function PdfScannerTool() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    let hasOversized = false;
     Array.from(files).forEach((file) => {
+      if (file.size > 20 * 1024 * 1024) {
+        hasOversized = true;
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -148,6 +153,10 @@ export default function PdfScannerTool() {
       };
       reader.readAsDataURL(file);
     });
+
+    if (hasOversized) {
+      setError('One or more files exceed the 20 MB upload limit per file.');
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -275,6 +284,11 @@ export default function PdfScannerTool() {
                     className="hidden"
                   />
                 </label>
+              </div>
+              <div className="pt-1">
+                <span className="text-[10px] sm:text-[11px] text-base-content/60 px-2.5 py-1 bg-base-200 rounded-lg font-medium">
+                  20 MB upload limit per file
+                </span>
               </div>
             </div>
           ) : (

@@ -167,7 +167,7 @@ export default function FlattenPdfTool() {
         <UploadZone
           accept=".pdf,application/pdf"
           maxFiles={1}
-          maxSizeMb={50}
+          maxSizeMb={20}
           title={t('cropPdf', 'Upload PDF to Flatten')}
           subtitle={t('flattenPdfSubtitle', 'Lock form fields, signatures, and annotations or make entire PDF uneditable.')}
           onFilesSelected={(files) => setFile(files[0])}

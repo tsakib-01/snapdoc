@@ -73,11 +73,18 @@ export default function ResizerTool() {
   // Helper to load natural dimensions for uploaded files
   const loadFiles = async (filesToAdd: File[]) => {
     if (!filesToAdd || filesToAdd.length === 0) return;
-    setError(null);
+    const oversized = filesToAdd.some((f) => f.size > 20 * 1024 * 1024);
+    if (oversized) {
+      setError('One or more files exceeded the 20 MB upload limit per file.');
+    }
+    const validFiles = filesToAdd.filter((f) => f.size <= 20 * 1024 * 1024);
+    if (validFiles.length === 0) return;
+
+    if (!oversized) setError(null);
 
     try {
       const newItems: ImageItem[] = await Promise.all(
-        filesToAdd.map(async (file) => {
+        validFiles.map(async (file) => {
           let previewUrl = '';
           let w = 800;
           let h = 600;

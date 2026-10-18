@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     for (const f of allFiles) {
       if (f.size > MAX_PDF_FILE_SIZE) {
-        return NextResponse.json({ error: `File "${f.name}" exceeds maximum 50MB size limit.` }, { status: 400 });
+        return NextResponse.json({ error: `File "${f.name}" exceeds 20 MB upload limit per file.` }, { status: 400 });
       }
     }
 

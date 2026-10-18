@@ -131,7 +131,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         </span>
                         {tool.badge && (
                           <span className="badge badge-xs badge-primary font-medium">
-                            {tool.badge}
+                            {tool.badge === 'Popular' ? t('badgePopular', 'Popular') : tool.badge}
                           </span>
                         )}
                       </div>

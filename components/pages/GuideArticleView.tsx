@@ -6,7 +6,7 @@ import { GuideArticle } from '@/lib/config/guides';
 import { ToolMeta } from '@/lib/config/tools';
 import ToolCard from '@/components/ui/ToolCard';
 import FAQSection from '@/components/ui/FAQSection';
-import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useLanguage, getToolTranslationKey } from '@/lib/i18n/LanguageContext';
 import {
   ArrowLeft,
   Clock,
@@ -76,7 +76,7 @@ export default function GuideArticleView({
       <header className="max-w-4xl space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <span className="badge badge-primary badge-sm font-semibold">
-            {guide.categoryLabel}
+            {t(guide.category, guide.categoryLabel)}
           </span>
           <div className="flex items-center gap-1.5 text-xs text-base-content/50">
             <Clock className="w-3.5 h-3.5" />
@@ -89,11 +89,11 @@ export default function GuideArticleView({
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-base-content leading-tight">
-          {guide.title}
+          {t(`${guide.slug}_title`, guide.title)}
         </h1>
 
         <p className="text-base sm:text-lg text-base-content/80 leading-relaxed font-normal pt-2">
-          {guide.introduction}
+          {t(`${guide.slug}_desc`, guide.introduction)}
         </p>
       </header>
 
@@ -104,7 +104,7 @@ export default function GuideArticleView({
             {t('recommendedTool', 'Recommended Free Online Tool')}
           </span>
           <h3 className="text-lg sm:text-xl font-bold text-base-content">
-            {guide.primaryToolName}
+            {t(getToolTranslationKey(guide.primaryToolSlug), guide.primaryToolName)}
           </h3>
           <p className="text-xs sm:text-sm text-base-content/70">
             {t('processInMemoryBadge', 'Process your files in memory directly in your browser with zero data retention or watermarks.')}
@@ -115,7 +115,7 @@ export default function GuideArticleView({
           href={`/${guide.primaryToolSlug}`}
           className="btn btn-primary btn-md gap-2 font-semibold shadow-lg shadow-primary/25 shrink-0"
         >
-          <span>{guide.primaryToolCtaText}</span>
+          <span>{t(getToolTranslationKey(guide.primaryToolSlug), guide.primaryToolCtaText)}</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -255,10 +255,10 @@ export default function GuideArticleView({
               <div className="p-6 rounded-3xl bg-gradient-to-br from-primary/10 to-base-100 border border-primary/20 space-y-3">
                 <span className="badge badge-primary badge-xs">{t('instantTool', 'Instant Tool')}</span>
                 <h4 className="font-bold text-sm text-base-content">
-                  {primaryTool.name}
+                  {t(getToolTranslationKey(primaryTool.slug), primaryTool.name)}
                 </h4>
                 <p className="text-xs text-base-content/70 leading-relaxed">
-                  {primaryTool.description}
+                  {t(`${getToolTranslationKey(primaryTool.slug)}Desc`, primaryTool.description)}
                 </p>
                 <Link
                   href={`/${primaryTool.slug}`}
@@ -288,13 +288,13 @@ export default function GuideArticleView({
               >
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-base-content/50">
-                    {rel.categoryLabel}
+                    {t(rel.category, rel.categoryLabel)}
                   </span>
                   <h4 className="font-bold text-sm text-base-content group-hover:text-primary transition-colors leading-snug">
-                    {rel.title}
+                    {t(`${rel.slug}_title`, rel.title)}
                   </h4>
                   <p className="text-xs text-base-content/60 line-clamp-2">
-                    {rel.shortDescription}
+                    {t(`${rel.slug}_desc`, rel.shortDescription)}
                   </p>
                 </div>
                 <div className="pt-3 text-xs font-semibold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">

@@ -5,7 +5,7 @@ import { ShieldCheck, Lock, Trash2, EyeOff } from 'lucide-react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function PrivacyContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
@@ -18,7 +18,7 @@ export default function PrivacyContent() {
           {t('privacyPolicyTitle', 'Privacy Policy')}
         </h1>
         <p className="text-sm text-base-content/60">
-          {t('lastUpdated', 'Last updated')}: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          {t('lastUpdated', 'Last updated')}: {new Date().toLocaleDateString(language || 'en', { month: 'long', day: 'numeric', year: 'numeric' })}
         </p>
       </div>
 

@@ -4,7 +4,7 @@ import React from 'react';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function TermsContent() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
@@ -13,7 +13,7 @@ export default function TermsContent() {
           {t('termsOfServiceTitle', 'Terms of Service')}
         </h1>
         <p className="text-sm text-base-content/60">
-          {t('lastUpdated', 'Last updated')}: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          {t('lastUpdated', 'Last updated')}: {new Date().toLocaleDateString(language || 'en', { month: 'long', day: 'numeric', year: 'numeric' })}
         </p>
       </div>
 

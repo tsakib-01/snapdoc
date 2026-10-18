@@ -5,6 +5,8 @@ import { PAGE_TRANSLATIONS, getToolTranslationKey } from './pageTranslations';
 import { TOOL_UI_TRANSLATIONS } from './toolTranslations';
 import { MORE_TOOL_TRANSLATIONS } from './moreToolTranslations';
 import { EXTENDED_APP_TRANSLATIONS } from './extendedAppTranslations';
+import { GUIDE_TRANSLATIONS } from './guideTranslations';
+import { ALL_MISSING_UI_TRANSLATIONS } from './allMissingUiTranslations';
 
 export { getToolTranslationKey };
 
@@ -1392,6 +1394,22 @@ for (const [langCode, extDict] of Object.entries(EXTENDED_APP_TRANSLATIONS)) {
     TRANSLATIONS[langCode] = {};
   }
   Object.assign(TRANSLATIONS[langCode], extDict);
+}
+
+// 1e. Merge guide titles, descriptions, and category labels across all languages
+for (const [langCode, guideDict] of Object.entries(GUIDE_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], guideDict);
+}
+
+// 1f. Merge all audited UI strings across all 27 languages
+for (const [langCode, uiDict] of Object.entries(ALL_MISSING_UI_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], uiDict);
 }
 
 // 2. Bi-directional synchronization ensuring both 2-letter ISO and 3-letter OCR codes have all translations

@@ -140,7 +140,7 @@ export default function GuidesIndexPage() {
                   <div className="flex items-center gap-2">
                     {getCategoryIcon(guide.category)}
                     <span className="text-xs font-bold uppercase tracking-wider text-base-content/60">
-                      {guide.categoryLabel}
+                      {t(guide.category, guide.categoryLabel)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-base-content/50">
@@ -150,11 +150,11 @@ export default function GuidesIndexPage() {
                 </div>
 
                 <h3 className="text-lg font-bold text-base-content group-hover:text-primary transition-colors leading-snug mb-2">
-                  {guide.title}
+                  {t(`${guide.slug}_title`, guide.title)}
                 </h3>
 
                 <p className="text-xs text-base-content/70 leading-relaxed mb-6 flex-1 line-clamp-3">
-                  {guide.shortDescription}
+                  {t(`${guide.slug}_desc`, guide.shortDescription)}
                 </p>
 
                 <div className="flex items-center text-xs font-semibold text-primary group-hover:translate-x-1 transition-transform">
@@ -171,7 +171,9 @@ export default function GuidesIndexPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl sm:text-2xl font-bold text-base-content">
-            {selectedCategory === 'all' ? t('allArticles', 'All Articles & Tutorials') : `${GUIDE_CATEGORIES.find(c => c.id === selectedCategory)?.label}`}
+            {selectedCategory === 'all'
+              ? t('allArticles', 'All Articles & Tutorials')
+              : t(selectedCategory, GUIDE_CATEGORIES.find((c) => c.id === selectedCategory)?.label || '')}
           </h2>
           <span className="text-xs text-base-content/50">
             {filteredGuides.length} {filteredGuides.length === 1 ? t('guide', 'guide') : t('guides', 'guides')}
@@ -198,7 +200,7 @@ export default function GuidesIndexPage() {
                   <div className="flex items-center gap-1.5">
                     {getCategoryIcon(guide.category)}
                     <span className="text-[11px] font-bold uppercase tracking-wider text-base-content/60">
-                      {guide.categoryLabel}
+                      {t(guide.category, guide.categoryLabel)}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-base-content/50">
@@ -208,11 +210,11 @@ export default function GuidesIndexPage() {
                 </div>
 
                 <h3 className="text-base font-bold text-base-content group-hover:text-primary transition-colors leading-snug mb-2">
-                  {guide.title}
+                  {t(`${guide.slug}_title`, guide.title)}
                 </h3>
 
                 <p className="text-xs text-base-content/70 leading-relaxed mb-6 flex-1 line-clamp-3">
-                  {guide.shortDescription}
+                  {t(`${guide.slug}_desc`, guide.shortDescription)}
                 </p>
 
                 <div className="flex items-center justify-between pt-4 border-t border-base-200/80 text-xs">
@@ -242,19 +244,19 @@ export default function GuidesIndexPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { name: 'Compress JPG', slug: 'compress-jpg' },
-            { name: 'JPG to 10KB', slug: 'compress-jpg-to-10kb' },
-            { name: 'Merge PDF', slug: 'merge-pdf' },
-            { name: 'Compress PDF', slug: 'compress-pdf' },
-            { name: 'Sign PDF', slug: 'sign-pdf' },
-            { name: 'PDF to JPG', slug: 'pdf-to-jpg' },
+            { key: 'compressJpg', fallback: 'Compress JPG', slug: 'compress-jpg' },
+            { key: 'compressJpg10kb', fallback: 'JPG to 10KB', slug: 'compress-jpg-to-10kb' },
+            { key: 'mergePdf', fallback: 'Merge PDF', slug: 'merge-pdf' },
+            { key: 'compressPdf', fallback: 'Compress PDF', slug: 'compress-pdf' },
+            { key: 'signPdf', fallback: 'Sign PDF', slug: 'sign-pdf' },
+            { key: 'pdfToJpg', fallback: 'PDF to JPG', slug: 'pdf-to-jpg' },
           ].map((tool) => (
             <Link
               key={tool.slug}
               href={`/${tool.slug}`}
               className="flex items-center justify-between p-3 rounded-xl bg-base-100 border border-base-300 hover:border-primary/50 text-xs font-semibold text-base-content group transition-colors"
             >
-              <span>{tool.name}</span>
+              <span>{t(tool.key, tool.fallback)}</span>
               <ArrowUpRight className="w-3.5 h-3.5 text-base-content/40 group-hover:text-primary transition-colors" />
             </Link>
           ))}

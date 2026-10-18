@@ -155,8 +155,8 @@ export default function TransformTool({ mode }: TransformToolProps) {
           accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
-          title={`Upload image to ${mode === 'rotate' ? 'rotate' : 'flip'}`}
-          subtitle="Supports JPG, PNG, WebP, and camera formats"
+          title={mode === 'rotate' ? t('rotateImage', 'Rotate Image') : t('flipImage', 'Flip Image')}
+          subtitle={t('supportsFormatsShort', 'Supports JPG, PNG, WebP, and camera formats')}
         />
       )}
 

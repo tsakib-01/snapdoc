@@ -43,7 +43,7 @@ export default function RotatePdfPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <VisualPdfOrganizerTool initialMode="rotate" title="Rotate PDF Pages" />
+      <VisualPdfOrganizerTool initialMode="rotate" />
     </ToolLayout>
   );
 }

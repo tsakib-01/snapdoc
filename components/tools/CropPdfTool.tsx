@@ -565,7 +565,7 @@ export default function CropPdfTool() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-8 text-base-content/50 bg-base-200/40">
                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                      <span className="font-semibold text-xs text-base-content/70">Loading...</span>
+                      <span className="font-semibold text-xs text-base-content/70">{t('loading', 'Loading...')}</span>
                     </div>
                   )}
 
@@ -574,7 +574,7 @@ export default function CropPdfTool() {
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none bg-black/[0.02] p-4 text-center">
                       <div className="bg-base-100/95 backdrop-blur-sm px-3.5 py-2 rounded-xl shadow-md border border-base-300 flex items-center gap-2 text-xs font-semibold text-base-content/85">
                         <Crop className="w-4 h-4 text-primary animate-pulse" />
-                        <span>Click & drag to select crop area</span>
+                        <span>{t('clickDragCropArea', 'Click & drag to select crop area')}</span>
                       </div>
                     </div>
                   )}

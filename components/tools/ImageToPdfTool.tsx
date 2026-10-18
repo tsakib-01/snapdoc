@@ -28,12 +28,27 @@ interface ImageItem {
 }
 
 export default function ImageToPdfTool({
-  title = 'Drop one or multiple images to convert to PDF',
-  subtitle = 'Supports JPG, PNG, and WebP (Up to 30 images)',
+  title,
+  subtitle,
   accept = 'image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif',
   fileTypeLabel = 'Image',
 }: ImageToPdfToolProps = {}) {
   const { t } = useLanguage();
+
+  const isJpg = fileTypeLabel === 'JPG' || (title && title.includes('JPG'));
+
+  const resolvedTitle = title
+    ? t(title, title)
+    : isJpg
+    ? t('dropJpgToPdf', 'Drop one or multiple JPG images to convert to PDF')
+    : t('dropImagesToPdf', 'Drop one or multiple images to convert to PDF');
+
+  const resolvedSubtitle = subtitle
+    ? t(subtitle, subtitle)
+    : isJpg
+    ? t('dropJpgToPdfSubtitle', 'Supports JPG and JPEG photos (Up to 30 images)')
+    : t('dropImagesToPdfSubtitle', 'Supports JPG, PNG, and WebP (Up to 30 images)');
+
   const [items, setItems] = useState<ImageItem[]>([]);
   const [pageSize, setPageSize] = useState<'A4' | 'LETTER' | 'FIT'>('A4');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape' | 'auto'>('portrait');
@@ -298,8 +313,8 @@ export default function ImageToPdfTool({
           maxFiles={30}
           files={items.map((i) => i.file)}
           onFilesSelected={handleFilesSelected}
-          title={title}
-          subtitle={subtitle}
+          title={resolvedTitle}
+          subtitle={resolvedSubtitle}
         />
       )}
 
@@ -377,7 +392,7 @@ export default function ImageToPdfTool({
                     disabled={idx === 0}
                     onClick={() => moveItem(idx, 'left')}
                     className="btn btn-ghost btn-xs btn-circle disabled:opacity-30"
-                    title="Move Backward"
+                    title={t('moveBackward', 'Move Backward')}
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                   </button>
@@ -396,7 +411,7 @@ export default function ImageToPdfTool({
                     disabled={idx === items.length - 1}
                     onClick={() => moveItem(idx, 'right')}
                     className="btn btn-ghost btn-xs btn-circle disabled:opacity-30"
-                    title="Move Forward"
+                    title={t('moveForward', 'Move Forward')}
                   >
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -414,7 +429,7 @@ export default function ImageToPdfTool({
                 <Plus className="w-5 h-5" />
               </div>
               <span className="text-xs font-bold text-base-content">{t('addMoreImages', 'Add More Images')}</span>
-              <span className="text-[10px] text-base-content/50 mt-0.5">JPG, PNG, WebP</span>
+              <span className="text-[10px] text-base-content/50 mt-0.5">{t('supportedImageFormats', 'JPG, PNG, WebP')}</span>
               <input
                 ref={addMoreInputRef}
                 type="file"
@@ -446,8 +461,8 @@ export default function ImageToPdfTool({
                   onChange={(e) => setPageSize(e.target.value as any)}
                   className="select select-bordered select-sm w-full rounded-xl font-medium"
                 >
-                  <option value="A4">A4 (Standard 210 × 297 mm)</option>
-                  <option value="LETTER">US Letter (8.5 × 11 in)</option>
+                  <option value="A4">{t('pageA4Standard', 'A4 (Standard 210 × 297 mm)')}</option>
+                  <option value="LETTER">{t('pageLetterStandard', 'US Letter (8.5 × 11 in)')}</option>
                   <option value="FIT">{t('fitToImage', 'Fit to Original Image Dimensions')}</option>
                 </select>
               </div>

@@ -143,7 +143,7 @@ export default function Header() {
             <button
               onClick={() => setIsSearchOpen(true)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-base-200 hover:bg-base-300/80 border border-base-300 text-xs text-base-content/60 transition-colors whitespace-nowrap shrink-0"
-              aria-label="Search tools"
+              aria-label={t('searchTools', 'Search tools')}
             >
               <Search className="w-3.5 h-3.5 text-base-content/50 shrink-0" />
               <span className="hidden xl:inline whitespace-nowrap truncate max-w-[120px]">
@@ -167,7 +167,7 @@ export default function Header() {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="btn btn-ghost btn-circle btn-sm lg:hidden text-base-content shrink-0"
-              aria-label="Toggle navigation menu"
+              aria-label={t('toggleNavMenu', 'Toggle navigation menu')}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>

@@ -21,6 +21,7 @@ import {
 import UploadZone from '@/components/ui/UploadZone';
 import { extractPdfThumbnails } from '@/lib/pdf/pdfThumbnailHelper';
 import { formatBytes } from '@/lib/utils/formatters';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import {
   buildChunks,
   embedChunks,
@@ -68,6 +69,7 @@ interface ProgressInfo {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
+  const { t } = useLanguage();
   const [file, setFile] = useState<File | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'chat' | 'quiz'>(defaultTab);
 
@@ -307,8 +309,8 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
           accept=".pdf,application/pdf"
           maxFiles={1}
           maxSizeMb={50}
-          title="Upload PDF for AI Assistant & Summarizer"
-          subtitle="Local neural AI — your document never leaves your device."
+          title={t('uploadPdfForAi', 'Upload PDF for AI Assistant & Summarizer')}
+          subtitle={t('localNeuralAiDesc', 'Local neural AI — your document never leaves your device.')}
           onFilesSelected={(files) => handleFileSelected(files[0])}
           loading={isProcessing}
           loadingMessage={progress.message || 'Processing…'}
@@ -352,7 +354,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
         <div className="rounded-2xl bg-error/10 border border-error/30 p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-error shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-error">Processing failed</p>
+            <p className="text-sm font-semibold text-error">{t('processingFailed', 'Processing failed')}</p>
             <p className="text-xs text-base-content/70">{progress.message}</p>
           </div>
         </div>
@@ -384,7 +386,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
                 </div>
               </div>
             </div>
-            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title="Upload another document">
+            <button onClick={handleReset} className="btn btn-ghost btn-sm btn-circle" title={t('uploadAnotherDoc', 'Upload another document')}>
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -545,7 +547,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
 
               {/* Suggestion pills */}
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] uppercase font-bold text-base-content/40">Try:</span>
+                <span className="text-[10px] uppercase font-bold text-base-content/40">{t('tryLabel', 'Try:')}</span>
                 {[
                   'What is this document about?',
                   'What are the key findings?',
@@ -570,7 +572,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
                   value={inputQuestion}
                   onChange={(e) => setInputQuestion(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !chatLoading && handleSendMessage()}
-                  placeholder="Ask any question about this document…"
+                  placeholder={t('askQuestionAboutDoc', 'Ask any question about this document...')}
                   className="input input-bordered input-sm flex-1 rounded-xl"
                   disabled={chatLoading}
                 />
@@ -580,7 +582,7 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
                   className="btn btn-primary btn-sm rounded-xl gap-1.5"
                 >
                   {chatLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  <span>{chatLoading ? 'Thinking' : 'Ask'}</span>
+                  <span>{chatLoading ? t('thinking', 'Thinking') : t('ask', 'Ask')}</span>
                 </button>
               </div>
             </div>
@@ -591,11 +593,11 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="flex items-center justify-between pb-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/60">
-                  Document Questions & Verified Answers
+                  {t('docQuestionsVerifiedAnswers', 'Document Questions & Verified Answers')}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="badge badge-sm badge-primary text-[10px]">
-                    {quizzes.length} Questions
+                    {quizzes.length} {t('questions', 'Questions')}
                   </span>
                   {doc && (
                     <span className="badge badge-sm badge-success text-[10px] gap-1">
@@ -631,10 +633,10 @@ export default function AiPdfTool({ defaultTab = 'summary' }: AiPdfToolProps) {
                       <button
                         onClick={() => handleAskInChat(q.question)}
                         className="btn btn-ghost btn-xs text-primary gap-1 shrink-0 hover:bg-primary/10 rounded-lg text-[10px]"
-                        title="Explore in Chat"
+                        title={t('askInChat', 'Ask in Chat')}
                       >
                         <CornerDownLeft className="w-3 h-3" />
-                        <span>Ask in Chat</span>
+                        <span>{t('askInChat', 'Ask in Chat')}</span>
                       </button>
                     </div>
                     <div className="text-sm text-base-content/85 bg-base-100 p-3 rounded-xl border border-base-200 leading-relaxed">

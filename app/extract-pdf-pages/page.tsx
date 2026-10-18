@@ -44,7 +44,7 @@ export default function ExtractPdfPagesPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <VisualPdfOrganizerTool initialMode="extract" title="Extract PDF Pages" />
+      <VisualPdfOrganizerTool initialMode="extract" />
     </ToolLayout>
   );
 }

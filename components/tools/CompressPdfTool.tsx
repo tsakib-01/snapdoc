@@ -185,8 +185,20 @@ export default function CompressPdfTool() {
                   level.id === 'extreme'
                     ? t('extremeCompression', 'Extreme Compression')
                     : level.id === 'recommended'
-                    ? t('recommendedCompression', 'Recommended Compression')
-                    : t('lessCompression', 'Less Compression');
+                    ? t('recommended', 'Recommended')
+                    : t('lowCompression', 'Low Compression');
+                const levelBadge =
+                  level.id === 'extreme'
+                    ? t('maxReduction', 'Max Reduction')
+                    : level.id === 'recommended'
+                    ? t('bestBalance', 'Best Balance')
+                    : t('highAccuracy', 'High Accuracy');
+                const levelDesc =
+                  level.id === 'extreme'
+                    ? t('extremeCompressionDesc', level.description)
+                    : level.id === 'recommended'
+                    ? t('recommendedCompressionDesc', level.description)
+                    : t('lowCompressionDesc', level.description);
                 return (
                   <div
                     key={level.id}
@@ -213,11 +225,11 @@ export default function CompressPdfTool() {
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider whitespace-nowrap shrink-0 shadow-sm ${level.badgeClass}`}
                         >
-                          {level.badge}
+                          {levelBadge}
                         </span>
                       </div>
                       <p className="text-xs text-base-content/70 leading-relaxed">
-                        {level.description}
+                        {levelDesc}
                       </p>
                     </div>
 
@@ -268,37 +280,37 @@ export default function CompressPdfTool() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="badge badge-sm badge-success font-bold text-[10px] text-white uppercase">
-                  Already Optimal
+                  {t('alreadyOptimal', 'Already Optimal')}
                 </span>
-                <span className="text-xs text-base-content/50">100% Quality Preserved</span>
+                <span className="text-xs text-base-content/50">{t('quality100Preserved', '100% Quality Preserved')}</span>
               </div>
               <h3 className="text-lg sm:text-xl font-extrabold text-base-content mt-1">
-                Your PDF is already at its optimal file size
+                {t('pdfOptimalTitle', 'Your PDF is already at its optimal file size')}
               </h3>
             </div>
           </div>
 
           <div className="p-4 rounded-2xl bg-base-200/50 border border-base-300 space-y-2 text-xs leading-relaxed text-base-content/80">
             <p>
-              Your document <strong>{files[0]?.name || result.filename}</strong> is composed of clean vector text and streams with no bloated images or redundant metadata.
+              {t('pdfOptimalExplanation', 'Your document is composed of clean vector text and streams with no bloated images or redundant metadata.')}
             </p>
             <p className="text-base-content/60">
-              Further compression without discarding text legibility or removing pages is physically not possible. To preserve complete document fidelity and avoid making the file larger, SnapDoc kept your file at its exact optimal size of <strong>{formatBytes(result.originalSize)}</strong>.
+              {t('pdfOptimalPreserved', 'To preserve complete document fidelity and avoid making the file larger, SnapDoc kept your file at its exact optimal size.')}
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-xl bg-base-200/30 border border-base-200 text-center">
-              <span className="text-[10px] uppercase font-bold text-base-content/50 block">Current Size</span>
+              <span className="text-[10px] uppercase font-bold text-base-content/50 block">{t('currentSize', 'Current Size')}</span>
               <span className="text-sm font-bold text-base-content font-mono">{formatBytes(result.originalSize)}</span>
             </div>
             <div className="p-3 rounded-xl bg-base-200/30 border border-base-200 text-center">
-              <span className="text-[10px] uppercase font-bold text-base-content/50 block">Pages</span>
-              <span className="text-sm font-bold text-base-content">{result.pageCount} Pages</span>
+              <span className="text-[10px] uppercase font-bold text-base-content/50 block">{t('pages', 'Pages')}</span>
+              <span className="text-sm font-bold text-base-content">{result.pageCount} {t('pages', 'Pages')}</span>
             </div>
             <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center col-span-2 sm:col-span-1">
-              <span className="text-[10px] uppercase font-bold text-emerald-700 block">Status</span>
-              <span className="text-xs font-bold text-emerald-700">Fully Optimized</span>
+              <span className="text-[10px] uppercase font-bold text-emerald-700 block">{t('status', 'Status')}</span>
+              <span className="text-xs font-bold text-emerald-700">{t('fullyOptimized', 'Fully Optimized')}</span>
             </div>
           </div>
 
@@ -309,7 +321,7 @@ export default function CompressPdfTool() {
               className="btn btn-ghost btn-sm rounded-xl gap-2 w-full sm:w-auto text-xs"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Compress Another PDF</span>
+              <span>{t('compressAnotherPdf', 'Compress Another PDF')}</span>
             </button>
 
             <a
@@ -318,7 +330,7 @@ export default function CompressPdfTool() {
               className="btn btn-primary btn-md rounded-2xl gap-2 font-bold px-8 shadow-lg shadow-primary/20 w-full sm:w-auto text-white"
             >
               <Download className="w-4 h-4" />
-              <span>Download File ({formatBytes(result.originalSize)})</span>
+              <span>{t('downloadFile', 'Download File')} ({formatBytes(result.originalSize)})</span>
             </a>
           </div>
         </div>

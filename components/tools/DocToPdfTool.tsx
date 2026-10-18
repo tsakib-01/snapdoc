@@ -22,10 +22,27 @@ interface DocToPdfToolProps {
 
 export default function DocToPdfTool({
   initialFormat = 'txt',
-  title = 'Convert Document to PDF',
-  subtitle = 'Convert Word, Excel, TXT, CSV, or HTML documents into clean, professional PDF files.',
+  title,
+  subtitle,
 }: DocToPdfToolProps) {
   const { t } = useLanguage();
+
+  const defaultTitle =
+    initialFormat === 'html'
+      ? t('htmlToPdf', 'Convert HTML to PDF')
+      : initialFormat === 'csv'
+      ? t('csvToPdf', 'Convert CSV to PDF')
+      : initialFormat === 'excel'
+      ? t('excelToPdf', 'Convert Excel to PDF')
+      : initialFormat === 'word'
+      ? t('wordToPdf', 'Convert Word to PDF')
+      : t('txtToPdf', 'Convert TXT to PDF');
+
+  const defaultSubtitle = t('docToPdfDesc', 'Convert Word, Excel, TXT, CSV, or HTML documents into clean, professional PDF files.');
+
+  const resolvedTitle = title ? t(title, title) : defaultTitle;
+  const resolvedSubtitle = subtitle ? t(subtitle, subtitle) : defaultSubtitle;
+
   const [file, setFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState<string>('');
   const [format, setFormat] = useState<'txt' | 'csv' | 'html'>(
@@ -133,8 +150,8 @@ export default function DocToPdfTool({
             accept=".xlsx,.xls,.docx,.doc,.txt,.csv,.html,.rtf"
             maxFiles={1}
             maxSizeMb={50}
-            title={t(title, title)}
-            subtitle={t(subtitle, subtitle)}
+            title={resolvedTitle}
+            subtitle={resolvedSubtitle}
             onFilesSelected={(files) => setFile(files[0])}
           />
 
@@ -200,7 +217,8 @@ export default function DocToPdfTool({
             <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
               <Sparkles className="w-4 h-4 shrink-0 text-emerald-500" />
               <span>
-                <strong>Smart Auto-Fit Active:</strong> Spreadsheet will be formatted in <strong>Landscape</strong> orientation and automatically scaled to fit completely onto a <strong>single page</strong> without breaking.
+                <strong>{t('smartAutoFitActive', 'Smart Auto-Fit Active:')}</strong>{' '}
+                {t('smartAutoFitDesc', 'Spreadsheet will be formatted in Landscape orientation and automatically scaled to fit completely onto a single page without breaking.')}
               </span>
             </div>
           )}

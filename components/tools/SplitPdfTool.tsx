@@ -246,7 +246,7 @@ export default function SplitPdfTool() {
               <Scissors className="w-8 h-8" />
             </div>
             <div>
-              <h4 className="font-bold text-base text-base-content">PDF Split Completed</h4>
+              <h4 className="font-bold text-base text-base-content">{t('pdfSplitCompleted', 'PDF Split Completed')}</h4>
               <p className="text-xs text-base-content/60 mt-0.5">
                 Output: {result.filename} ({formatBytes(result.fileSize)})
               </p>
@@ -259,7 +259,7 @@ export default function SplitPdfTool() {
             filename={result.filename}
             dataUrl={result.dataUrl}
             format={result.mode === 'zip-individual' ? 'ZIP' : 'PDF'}
-            extraInfo={`${result.pageCount} Pages`}
+            extraInfo={`${result.pageCount} ${t('pages', 'Pages')}`}
             onReset={handleReset}
           />
         </div>

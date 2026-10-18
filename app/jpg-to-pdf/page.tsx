@@ -23,8 +23,6 @@ export default function JpgToPdfPage() {
   return (
     <ToolLayout tool={tool}>
       <ImageToPdfTool
-        title="Drop one or multiple JPG images to convert to PDF"
-        subtitle="Supports JPG and JPEG photos (Up to 30 images)"
         accept="image/jpeg,image/jpg,image/*,.jpg,.jpeg,.jfif,.pjpeg"
         fileTypeLabel="JPG"
       />

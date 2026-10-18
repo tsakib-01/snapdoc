@@ -479,7 +479,7 @@ export default function ResizerTool() {
                         type="button"
                         onClick={() => handleRemoveImage(item.id)}
                         className="absolute top-1.5 right-1.5 btn btn-circle btn-xs btn-error text-white opacity-80 hover:opacity-100 shadow transition-opacity"
-                        title="Remove image"
+                        title={t('removeImage', 'Remove image')}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -515,13 +515,13 @@ export default function ResizerTool() {
               <div
                 onClick={() => hiddenFileInputRef.current?.click()}
                 className="rounded-2xl border-2 border-dashed border-base-300 hover:border-primary/60 hover:bg-primary/5 cursor-pointer flex flex-col items-center justify-center p-4 min-h-[160px] text-center transition-all group"
-                title="Add more photos"
+                title={t('addMorePhotos', 'Add more photos')}
               >
                 <div className="w-10 h-10 rounded-xl bg-base-200 group-hover:bg-primary/10 text-base-content/60 group-hover:text-primary flex items-center justify-center mb-2 transition-colors">
                   <Plus className="w-5 h-5" />
                 </div>
                 <span className="text-xs font-bold text-base-content/70 group-hover:text-primary">
-                  Add Images
+                  {t('addImages', 'Add Images')}
                 </span>
               </div>
             </div>
@@ -613,7 +613,7 @@ export default function ResizerTool() {
                       onChange={(e) =>
                         handleWidthChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))
                       }
-                      placeholder="Width"
+                      placeholder={t('width', 'Width')}
                       className="input input-sm input-bordered w-full rounded-xl font-bold font-mono text-center text-xs"
                     />
                   </div>
@@ -630,7 +630,7 @@ export default function ResizerTool() {
                       onChange={(e) =>
                         handleHeightChange(e.target.value === '' ? '' : parseInt(e.target.value, 10))
                       }
-                      placeholder="Height"
+                      placeholder={t('height', 'Height')}
                       className="input input-sm input-bordered w-full rounded-xl font-bold font-mono text-center text-xs"
                     />
                   </div>
@@ -654,7 +654,7 @@ export default function ResizerTool() {
             {mode === 'percentage' && (
               <div className="space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-base-content">Scale Down (Max 100%)</span>
+                  <span className="text-xs font-bold text-base-content">{t('scaleDownMax', 'Scale Down (Max 100%)')}</span>
                   <span className="badge badge-primary font-bold text-xs px-2 py-0.5 font-mono">
                     {scalePercent}%
                   </span>
@@ -707,7 +707,7 @@ export default function ResizerTool() {
                       onChange={(e) => setDoNotEnlarge(e.target.checked)}
                       className="checkbox checkbox-xs checkbox-primary rounded"
                     />
-                    <span>Do not enlarge if smaller</span>
+                    <span>{t('doNotEnlarge', 'Do not enlarge if smaller')}</span>
                   </label>
                 </div>
               </div>
@@ -716,7 +716,7 @@ export default function ResizerTool() {
             {/* Collapsible Social Presets */}
             <details className="collapse collapse-arrow bg-base-200/40 rounded-xl border border-base-300/70">
               <summary className="collapse-title text-xs font-bold text-base-content/80 py-2.5 min-h-0 flex items-center justify-between">
-                <span>Popular Social Presets</span>
+                <span>{t('popularSocialPresets', 'Popular Social Presets')}</span>
                 {selectedPreset && (
                   <span className="badge badge-xs badge-primary font-normal mr-6">
                     {selectedPreset}
@@ -736,7 +736,7 @@ export default function ResizerTool() {
                 >
                   <span className="flex items-center gap-1.5">
                     <RotateCcw className="w-3.5 h-3.5 opacity-70" />
-                    Default (Original Size - No Preset)
+                    {t('defaultOriginalNoPreset', 'Default (Original Size - No Preset)')}
                   </span>
                   <span className="font-mono text-[11px] opacity-70">
                     {primaryImage ? `${primaryImage.originalWidth}×${primaryImage.originalHeight}` : 'Original'}
@@ -858,12 +858,12 @@ export default function ResizerTool() {
                     {isZipping ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Creating ZIP...</span>
+                        <span>{t('creatingZip', 'Creating ZIP...')}</span>
                       </>
                     ) : (
                       <>
                         <Archive className="w-4 h-4" />
-                        <span>Download All (ZIP)</span>
+                        <span>{t('downloadAllZip', 'Download All (ZIP)')}</span>
                       </>
                     )}
                   </button>
@@ -874,7 +874,7 @@ export default function ResizerTool() {
                     className="btn btn-ghost rounded-xl text-xs gap-1.5"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Resize More</span>
+                    <span>{t('resizeMore', 'Resize More')}</span>
                   </button>
                 </div>
               </div>
@@ -913,7 +913,7 @@ export default function ResizerTool() {
                       className="btn btn-xs sm:btn-sm btn-outline btn-primary rounded-xl w-full gap-1.5 font-bold"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Download</span>
+                      <span>{t('download', 'Download')}</span>
                     </a>
                   </div>
                 ))}

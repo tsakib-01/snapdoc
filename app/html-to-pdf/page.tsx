@@ -43,7 +43,7 @@ export default function HtmlToPdfPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <DocToPdfTool initialFormat="txt" title="Convert HTML to PDF" />
+      <DocToPdfTool initialFormat="html" />
     </ToolLayout>
   );
 }

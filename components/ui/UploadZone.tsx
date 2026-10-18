@@ -128,14 +128,14 @@ export default function UploadZone({
 
       // Validate non-empty file
       if (f.size === 0) {
-        setErrorMessage(`"${f.name || 'Photo'}" has 0 bytes. If taking a photo with your camera, please wait a moment or choose it from your photo library.`);
+        setErrorMessage(t('errorZeroBytes', 'Selected file has 0 bytes. Please select a valid non-empty file.'));
         return;
       }
 
       // Validate type
       if (isPdfOnly) {
         if (!f.type.includes('pdf') && !f.name.toLowerCase().endsWith('.pdf')) {
-          setErrorMessage(`"${f.name}" is not a valid PDF file. Please upload PDF files only.`);
+          setErrorMessage(t('errorInvalidPdf', 'Selected file is not a valid PDF file. Please upload PDF files only.'));
           return;
         }
       } else if (accept.includes('image')) {
@@ -146,7 +146,7 @@ export default function UploadZone({
           /\.(jpe?g|jfif|pjpeg|pjp|png|webp|avif|bmp|tiff?|gif|heic|heif|dng|raw)$/i.test(f.name) ||
           !f.name.includes('.'); // Camera captures without file extensions
         if (!isImg) {
-          setErrorMessage(`"${f.name}" is not a supported image format. Please upload JPG, PNG, or WebP.`);
+          setErrorMessage(t('errorUnsupportedImage', 'Selected file is not a supported image format. Please upload JPG, PNG, or WebP.'));
           return;
         }
       }
@@ -155,7 +155,7 @@ export default function UploadZone({
       const defaultMaxSize = isPdfOnly ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
       const maxSize = maxSizeMb ? maxSizeMb * 1024 * 1024 : defaultMaxSize;
       if (f.size > maxSize) {
-        setErrorMessage(`"${f.name}" exceeds the maximum allowed file size of ${formatBytes(maxSize)}.`);
+        setErrorMessage(`${t('errorFileTooLarge', 'Selected file exceeds the maximum allowed file size')} (${formatBytes(maxSize)}).`);
         return;
       }
 
@@ -368,10 +368,10 @@ export default function UploadZone({
       {files.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-base-content/70 font-semibold px-1">
-            <span>{t('uploaded', 'Uploaded')} {files.length} {files.length === 1 ? 'file' : 'files'}</span>
+            <span>{t('uploaded', 'Uploaded')} {files.length} {files.length === 1 ? t('file', 'file') : t('files', 'files')}</span>
             {multiple && files.length > 1 && (
               <span className="text-[11px] font-normal text-base-content/50">
-                (Max {maxFiles} files)
+                ({t('maxFilesPrefix', 'Max')} {maxFiles} {t('files', 'files')})
               </span>
             )}
           </div>

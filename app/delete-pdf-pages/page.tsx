@@ -43,7 +43,7 @@ export default function DeletePdfPagesPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <VisualPdfOrganizerTool initialMode="delete" title="Delete PDF Pages" />
+      <VisualPdfOrganizerTool initialMode="delete" />
     </ToolLayout>
   );
 }

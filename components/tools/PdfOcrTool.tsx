@@ -159,8 +159,8 @@ export default function PdfOcrTool() {
             accept="application/pdf,image/*"
             files={file ? [file] : []}
             onFilesSelected={handleFileSelected}
-            title="Drop Scanned PDF or Images to Extract Text"
-            subtitle="Converts flat picture scans into selectable, searchable PDFs and machine-readable text."
+            title={t('dropScannedPdfTitle', 'Drop Scanned PDF or Images to Extract Text')}
+            subtitle={t('dropScannedPdfSubtitle', 'Converts flat picture scans into selectable, searchable PDFs and machine-readable text.')}
           />
 
           {/* Language Selector Card */}
@@ -170,9 +170,9 @@ export default function PdfOcrTool() {
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm text-base-content">Recognition Language</h4>
+                <h4 className="font-bold text-sm text-base-content">{t('recognitionLanguage', 'Recognition Language')}</h4>
                 <p className="text-xs text-base-content/60">
-                  Select the primary language of the text in your document
+                  {t('selectPrimaryLanguage', 'Select the primary language of the text in your document')}
                 </p>
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function PdfOcrTool() {
             <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5 text-xs text-base-content/80">
               <div className="flex items-center gap-2 font-bold text-primary">
                 <Sparkles className="w-4 h-4" />
-                <span>What will happen:</span>
+                <span>{t('whatWillHappen', 'What will happen:')}</span>
               </div>
               <p>
                 1. Every scanned page image will be analyzed to detect printed characters and words.
@@ -429,7 +429,7 @@ export default function PdfOcrTool() {
                       className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1"
                     >
                       <Eye className="w-3 h-3" />
-                      <span>Full view</span>
+                      <span>{t('fullView', 'Full view')}</span>
                     </button>
                   </div>
                   <div className="relative rounded-2xl overflow-hidden border border-base-300 bg-base-200/50 shadow-inner min-h-[220px] max-h-[350px] flex items-center justify-center p-2">
@@ -442,12 +442,12 @@ export default function PdfOcrTool() {
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-2.5 text-base-content/50 p-4">
                         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        <span className="text-xs font-semibold text-base-content/70">Loading...</span>
+                        <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
                       </div>
                     )}
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-base-content/60 px-1">
-                    <span>Detected words:</span>
+                    <span>{t('detectedWords', 'Detected words:')}</span>
                     <strong className="text-base-content font-mono">
                       {result.pages[selectedPageIndex].wordCount}
                     </strong>
@@ -459,7 +459,7 @@ export default function PdfOcrTool() {
               <div className="md:col-span-8 flex flex-col space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] uppercase font-bold text-base-content/50">
-                    Extracted Text (Editable)
+                    {t('extractedText', 'Extracted Text (Editable)')}
                   </span>
                   <button
                     type="button"
@@ -467,7 +467,7 @@ export default function PdfOcrTool() {
                     className="btn btn-ghost btn-xs text-primary gap-1"
                   >
                     {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied ? 'Copied' : 'Copy'}</span>
+                    <span>{copied ? t('copied', 'Copied') : t('copy', 'Copy')}</span>
                   </button>
                 </div>
                 <textarea
@@ -475,7 +475,7 @@ export default function PdfOcrTool() {
                   onChange={(e) => setEditedText(e.target.value)}
                   rows={14}
                   className="textarea textarea-bordered w-full rounded-2xl font-mono text-xs leading-relaxed p-4 bg-base-200/30 border-base-300 focus:border-primary focus:bg-base-100 transition-all resize-y"
-                  placeholder="Recognized text will appear here..."
+                  placeholder={t('ocrTextPlaceholder', 'Recognized text will appear here...')}
                 />
               </div>
             </div>

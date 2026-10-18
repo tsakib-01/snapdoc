@@ -13,6 +13,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface PdfPreviewModalViewerProps {
   dataUrl: string;
@@ -20,6 +21,7 @@ interface PdfPreviewModalViewerProps {
 }
 
 export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewModalViewerProps) {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
@@ -372,7 +374,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
     return (
       <div className="w-full h-full flex flex-col min-h-0">
         <div className="flex items-center justify-between pb-2 mb-2 border-b border-base-200 text-xs shrink-0">
-          <span className="text-base-content/60 font-medium">Standard browser viewer</span>
+          <span className="text-base-content/60 font-medium">{t('standardBrowserViewer', 'Standard browser viewer')}</span>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
@@ -380,14 +382,14 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
               className="btn btn-ghost btn-xs text-primary font-bold gap-1"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span>New tab</span>
+              <span>{t('newTab', 'New tab')}</span>
             </button>
             <button
               type="button"
               onClick={() => setUseIframeFallback(false)}
               className="btn btn-ghost btn-xs text-primary font-bold"
             >
-              Switch to interactive
+              {t('switchToInteractive', 'Switch to interactive')}
             </button>
           </div>
         </div>
@@ -411,7 +413,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             onClick={handlePrevPage}
             disabled={currentPage <= 1 || loading}
             className="btn btn-ghost btn-xs btn-circle disabled:opacity-30"
-            title="Previous page"
+            title={t('previousPage', 'Previous page')}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -423,7 +425,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             onClick={handleNextPage}
             disabled={currentPage >= totalPages || loading}
             className="btn btn-ghost btn-xs btn-circle disabled:opacity-30"
-            title="Next page"
+            title={t('nextPage', 'Next page')}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -437,17 +439,17 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             onClick={toggleFitMode}
             disabled={loading}
             className="btn btn-ghost btn-xs rounded-lg gap-1 font-semibold text-[11px] text-base-content/75 hover:text-base-content px-1.5 sm:px-2"
-            title={fitMode === 'page' ? 'Switch to Fit Width' : 'Switch to Fit Entire Page'}
+            title={fitMode === 'page' ? t('switchToFitWidth', 'Switch to Fit Width') : t('switchToFitPage', 'Switch to Fit Entire Page')}
           >
             {fitMode === 'page' ? (
               <>
                 <Maximize2 className="w-3.5 h-3.5 text-base-content/70" />
-                <span className="hidden sm:inline">Fit Page</span>
+                <span className="hidden sm:inline">{t('fitPage', 'Fit Page')}</span>
               </>
             ) : (
               <>
                 <Minimize2 className="w-3.5 h-3.5 text-base-content/70" />
-                <span className="hidden sm:inline">Fit Width</span>
+                <span className="hidden sm:inline">{t('fitWidth', 'Fit Width')}</span>
               </>
             )}
           </button>
@@ -458,7 +460,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             onClick={handleZoomOut}
             disabled={scale <= 0.5 || loading}
             className="btn btn-ghost btn-xs btn-circle disabled:opacity-30"
-            title="Zoom out"
+            title={t('zoomOut', 'Zoom out')}
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -469,7 +471,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             onClick={handleResetZoom}
             disabled={loading}
             className="btn btn-ghost btn-xs px-1 sm:px-1.5 font-mono text-[10px] sm:text-[11px] text-base-content/70 hover:text-base-content"
-            title="Reset to 100%"
+            title={t('resetTo100', 'Reset to 100%')}
           >
             {Math.round(scale * 100)}%
           </button>
@@ -480,7 +482,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             onClick={handleZoomIn}
             disabled={scale >= 3.0 || loading}
             className="btn btn-ghost btn-xs btn-circle disabled:opacity-30"
-            title="Zoom in"
+            title={t('zoomIn', 'Zoom in')}
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
@@ -490,10 +492,10 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
             type="button"
             onClick={handleOpenExternal}
             className="btn btn-ghost btn-xs rounded-lg text-primary gap-1 font-semibold hover:bg-primary/10 px-1.5 sm:px-2"
-            title="Open PDF in new tab"
+            title={t('openInNewTab', 'Open PDF in new tab')}
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="text-[11px] hidden sm:inline">New tab</span>
+            <span className="text-[11px] hidden sm:inline">{t('newTab', 'New tab')}</span>
           </button>
         </div>
       </div>
@@ -506,7 +508,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
         {loading && (
           <div className="my-auto flex flex-col items-center justify-center gap-2 p-8 text-base-content/60">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <span className="text-xs font-semibold">Rendering document preview...</span>
+            <span className="text-xs font-semibold">{t('renderingPreview', 'Rendering document preview...')}</span>
           </div>
         )}
 
@@ -514,7 +516,7 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
           <div className="my-auto flex flex-col items-center justify-center gap-3 p-6 text-center max-w-sm">
             <AlertCircle className="w-10 h-10 text-warning" />
             <div>
-              <p className="text-xs font-bold text-base-content">Preview unavailable inline</p>
+              <p className="text-xs font-bold text-base-content">{t('previewUnavailableInline', 'Preview unavailable inline')}</p>
               <p className="text-[11px] text-base-content/60 mt-0.5">{error}</p>
             </div>
             <div className="flex flex-wrap gap-2 justify-center">
@@ -524,14 +526,14 @@ export default function PdfPreviewModalViewer({ dataUrl, filename }: PdfPreviewM
                 className="btn btn-xs btn-primary font-bold gap-1 rounded-lg"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open in Viewer</span>
+                <span>{t('openInViewer', 'Open in Viewer')}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setUseIframeFallback(true)}
                 className="btn btn-xs btn-ghost border border-base-300 font-semibold rounded-lg"
               >
-                Try Browser Frame
+                {t('tryBrowserFrame', 'Try Browser Frame')}
               </button>
             </div>
           </div>

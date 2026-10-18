@@ -1098,7 +1098,7 @@ export default function SignPdfTool() {
                         type="text"
                         value={sealCompanyName}
                         onChange={(e) => setSealCompanyName(e.target.value)}
-                        placeholder="e.g. ACME GLOBAL CORPORATION"
+                        placeholder={t('sealCompanyPlaceholder', 'e.g. ACME GLOBAL CORPORATION')}
                         className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs font-semibold"
                       />
                     </div>
@@ -1126,7 +1126,7 @@ export default function SignPdfTool() {
                         type="text"
                         value={sealTitle}
                         onChange={(e) => setSealTitle(e.target.value)}
-                        placeholder="e.g. OFFICIAL SEAL or NOTARY PUBLIC"
+                        placeholder={t('sealTitlePlaceholder', 'e.g. OFFICIAL SEAL or NOTARY PUBLIC')}
                         className="input input-sm input-bordered w-full rounded-xl text-xs font-semibold"
                       />
                     </div>
@@ -1140,7 +1140,7 @@ export default function SignPdfTool() {
                         type="text"
                         value={sealRegNumber}
                         onChange={(e) => setSealRegNumber(e.target.value)}
-                        placeholder="e.g. REG-892410-X or LIC-998822"
+                        placeholder={t('sealRegPlaceholder', 'e.g. REG-892410-X or LIC-998822')}
                         className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs"
                       />
                     </div>
@@ -1154,7 +1154,7 @@ export default function SignPdfTool() {
                         type="text"
                         value={sealAuthorizedName}
                         onChange={(e) => setSealAuthorizedName(e.target.value)}
-                        placeholder="e.g. DIRECTOR OF OPERATIONS or John Smith"
+                        placeholder={t('sealAuthorizedPlaceholder', 'e.g. DIRECTOR OF OPERATIONS or John Smith')}
                         className="input input-sm input-bordered w-full rounded-xl mt-1 text-xs font-semibold"
                       />
                     </div>
@@ -1261,7 +1261,7 @@ export default function SignPdfTool() {
                         ))}
                         <label
                           className="w-7 h-7 rounded-xl border border-base-300 flex items-center justify-center cursor-pointer hover:bg-base-200 overflow-hidden relative"
-                          title="Custom Color Picker"
+                          title={t('customColorPicker', 'Custom Color Picker')}
                         >
                           <input
                             type="color"
@@ -1279,8 +1279,8 @@ export default function SignPdfTool() {
                   <div className="md:col-span-5 flex flex-col justify-between space-y-3">
                     <div className="bg-gradient-to-b from-base-200/60 to-base-200/20 p-4 rounded-3xl border border-base-300 flex flex-col items-center justify-center text-center">
                       <div className="flex items-center justify-between w-full mb-3 px-1">
-                        <span className="text-[11px] font-bold text-base-content/70 uppercase tracking-wider">Live Preview</span>
-                        <span className="badge badge-sm badge-ghost text-[10px] font-mono">600 DPI Vector</span>
+                        <span className="text-[11px] font-bold text-base-content/70 uppercase tracking-wider">{t('livePreview', 'Live Preview')}</span>
+                        <span className="badge badge-sm badge-ghost text-[10px] font-mono">{t('vector600Dpi', '600 DPI Vector')}</span>
                       </div>
 
                       <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-2xl bg-white shadow-md border border-slate-200 flex items-center justify-center p-3 relative overflow-hidden">
@@ -1304,7 +1304,7 @@ export default function SignPdfTool() {
                       </div>
 
                       <p className="text-[11px] text-base-content/60 mt-3 max-w-xs">
-                        This official seal will be placed onto your document. You can drag, resize, rotate, and adjust opacity directly on the page.
+                        {t('sealPlacementNote', 'This official seal will be placed onto your document. You can drag, resize, rotate, and adjust opacity directly on the page.')}
                       </p>
                     </div>
                   </div>
@@ -1326,11 +1326,11 @@ export default function SignPdfTool() {
                           <Upload className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-base-content">Upload Seal or Stamp Image</p>
-                          <p className="text-xs text-base-content/60">PNG, JPG, WebP or SVG supported</p>
+                          <p className="text-sm font-bold text-base-content">{t('uploadSealTitle', 'Upload Seal or Stamp Image')}</p>
+                          <p className="text-xs text-base-content/60">{t('uploadSealFormats', 'PNG, JPG, WebP or SVG supported')}</p>
                         </div>
                         <button type="button" className="btn btn-xs btn-primary rounded-lg font-bold">
-                          Browse Files
+                          {t('browseFiles', 'Browse Files')}
                         </button>
                       </div>
 
@@ -1344,11 +1344,11 @@ export default function SignPdfTool() {
                             className="checkbox checkbox-primary checkbox-xs rounded"
                           />
                           <span className="text-xs font-bold text-base-content">
-                            Auto-remove white background (Make Transparent)
+                            {t('autoRemoveWhiteBg', 'Auto-remove white background (Make Transparent)')}
                           </span>
                         </label>
                         <p className="text-[11px] text-base-content/60 pl-6">
-                          Converts scanned white paper backgrounds into authentic transparent stamps that blend seamlessly over PDF text.
+                          {t('autoRemoveWhiteBgDesc', 'Converts scanned white paper backgrounds into authentic transparent stamps that blend seamlessly over PDF text.')}
                         </p>
                       </div>
                     </div>
@@ -1357,7 +1357,7 @@ export default function SignPdfTool() {
                     <div className="md:col-span-5">
                       <div className="bg-base-200/50 p-4 rounded-3xl border border-base-300 flex flex-col items-center justify-center text-center">
                         <span className="text-[11px] font-bold text-base-content/70 uppercase tracking-wider mb-2">
-                          Uploaded Seal Preview
+                          {t('uploadedSealPreview', 'Uploaded Seal Preview')}
                         </span>
 
                         <div
@@ -1372,7 +1372,7 @@ export default function SignPdfTool() {
                           {isProcessingSealUpload ? (
                             <div className="flex flex-col items-center gap-2">
                               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                              <span className="text-xs text-base-content/70 font-medium">Removing background...</span>
+                              <span className="text-xs text-base-content/70 font-medium">{t('removingBackground', 'Removing background...')}</span>
                             </div>
                           ) : uploadedSealProcessedUrl ? (
                             <img
@@ -1383,7 +1383,7 @@ export default function SignPdfTool() {
                           ) : (
                             <div className="text-center text-base-content/40 p-4">
                               <Stamp className="w-10 h-10 mx-auto mb-2 stroke-1" />
-                              <p className="text-xs">No image uploaded yet</p>
+                              <p className="text-xs">{t('noImageUploadedYet', 'No image uploaded yet')}</p>
                             </div>
                           )}
                         </div>
@@ -1901,7 +1901,7 @@ export default function SignPdfTool() {
               } w-24 sm:w-28 border-r border-base-300 bg-base-100 overflow-y-auto p-2 space-y-2 shrink-0 flex-col items-center h-full transition-all`}
             >
               <div className="flex items-center justify-between w-full px-1 md:hidden pb-1 border-b border-base-200">
-                <span className="text-[10px] font-bold uppercase text-base-content/60">Pages</span>
+                <span className="text-[10px] font-bold uppercase text-base-content/60">{t('pages', 'Pages')}</span>
                 <button
                   onClick={() => setShowMobileThumbnails(false)}
                   className="btn btn-ghost btn-xs btn-circle"
@@ -1973,7 +1973,7 @@ export default function SignPdfTool() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-8 text-base-content/50 bg-base-200/40">
                       <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                      <span className="font-semibold text-xs text-base-content/70">Loading...</span>
+                      <span className="font-semibold text-xs text-base-content/70">{t('loading', 'Loading...')}</span>
                     </div>
                   )}
 
@@ -2064,14 +2064,14 @@ export default function SignPdfTool() {
                               {pages.length > 1 && (
                                 <>
                                   <div className="flex items-center gap-1">
-                                    <span className="text-[10px] text-base-content/60 font-semibold">Page:</span>
+                                    <span className="text-[10px] text-base-content/60 font-semibold">{t('pageColon', 'Page:')}</span>
                                     <select
                                       value={elem.pageIndex}
                                       onChange={(e) =>
                                         updateElementProp(elem.id, { pageIndex: parseInt(e.target.value, 10) })
                                       }
                                       className="select select-xs rounded-lg bg-base-200 border-none text-[10px] font-bold px-1.5 py-0 h-6 min-h-0"
-                                      title="Move to page"
+                                      title={t('moveToPage', 'Move to page')}
                                     >
                                       {pages.map((_, idx) => (
                                         <option key={idx} value={idx}>
@@ -2093,7 +2093,7 @@ export default function SignPdfTool() {
                                       rotation: ((elem.rotation || 0) - 15 + 360) % 360,
                                     })
                                   }
-                                  title="Rotate Left 15°"
+                                  title={t('rotateLeft15', 'Rotate Left 15°')}
                                   className="btn btn-xs btn-ghost btn-circle"
                                 >
                                   <RotateCcw className="w-3 h-3" />
@@ -2105,7 +2105,7 @@ export default function SignPdfTool() {
                                       rotation: ((elem.rotation || 0) + 15) % 360,
                                     })
                                   }
-                                  title="Rotate Right 15°"
+                                  title={t('rotateRight15', 'Rotate Right 15°')}
                                   className="btn btn-xs btn-ghost btn-circle"
                                 >
                                   <RotateCw className="w-3 h-3" />
@@ -2114,7 +2114,7 @@ export default function SignPdfTool() {
                                   <button
                                     type="button"
                                     onClick={() => updateElementProp(elem.id, { rotation: 0 })}
-                                    title="Reset Rotation (0°)"
+                                    title={t('resetRotation0', 'Reset Rotation (0°)')}
                                     className="px-1 py-0.5 text-[9px] font-bold bg-primary/10 hover:bg-primary/20 text-primary rounded"
                                   >
                                     0°
@@ -2126,7 +2126,7 @@ export default function SignPdfTool() {
 
                               {/* Opacity Selector */}
                               <div className="flex items-center gap-1">
-                                <span className="text-[10px] text-base-content/60 font-semibold">Opacity:</span>
+                                <span className="text-[10px] text-base-content/60 font-semibold">{t('opacityColon', 'Opacity:')}</span>
                                 <select
                                   value={elem.opacity}
                                   onChange={(e) =>
@@ -2155,7 +2155,7 @@ export default function SignPdfTool() {
                                       ? 'ring-2 ring-primary ring-offset-1 scale-110'
                                       : 'opacity-80 hover:opacity-100 hover:scale-105'
                                   }`}
-                                  title="Black"
+                                  title={t('colorBlack', 'Black')}
                                 />
                                 <button
                                   type="button"
@@ -2165,7 +2165,7 @@ export default function SignPdfTool() {
                                       ? 'ring-2 ring-primary ring-offset-1 scale-110'
                                       : 'opacity-80 hover:opacity-100 hover:scale-105'
                                   }`}
-                                  title="Official Blue"
+                                  title={t('officialBlue', 'Official Blue')}
                                 />
                                 <button
                                   type="button"
@@ -2175,7 +2175,7 @@ export default function SignPdfTool() {
                                       ? 'ring-2 ring-primary ring-offset-1 scale-110'
                                       : 'opacity-80 hover:opacity-100 hover:scale-105'
                                   }`}
-                                  title="Red"
+                                  title={t('colorRed', 'Red')}
                                 />
                                 <button
                                   type="button"
@@ -2185,7 +2185,7 @@ export default function SignPdfTool() {
                                       ? 'ring-2 ring-primary ring-offset-1 scale-110'
                                       : 'opacity-80 hover:opacity-100 hover:scale-105'
                                   }`}
-                                  title="Emerald"
+                                  title={t('emerald', 'Emerald')}
                                 />
                               </div>
 
@@ -2195,7 +2195,7 @@ export default function SignPdfTool() {
                               <button
                                 type="button"
                                 onClick={() => handleDuplicateElement(elem.id)}
-                                title="Duplicate"
+                                title={t('duplicate', 'Duplicate')}
                                 className="btn btn-xs btn-ghost btn-circle"
                               >
                                 <Copy className="w-3 h-3" />
@@ -2205,7 +2205,7 @@ export default function SignPdfTool() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteElement(elem.id)}
-                                title="Delete"
+                                title={t('delete', 'Delete')}
                                 className="btn btn-xs btn-ghost btn-circle text-error"
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -2225,7 +2225,7 @@ export default function SignPdfTool() {
                                   handleRotateStart(e.touches[0].clientX, e.touches[0].clientY, elem);
                                 }
                               }}
-                              title="Drag to Rotate freely"
+                              title={t('dragToRotate', 'Drag to Rotate freely')}
                             >
                               <div className="w-5 h-5 rounded-full bg-white border-2 border-primary shadow flex items-center justify-center hover:scale-110 transition-transform">
                                 <RotateCw className="w-3 h-3 text-primary" />
@@ -2321,7 +2321,7 @@ export default function SignPdfTool() {
               <button
                 onClick={() => setZoomLevel((z) => Math.max(50, z - 15))}
                 className="btn btn-xs btn-ghost btn-circle"
-                title="Zoom Out"
+                title={t('zoomOut', 'Zoom Out')}
               >
                 <ZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </button>

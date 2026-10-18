@@ -63,6 +63,29 @@ export default function VisualPdfOrganizerTool({
   description = 'Visually reorder by dragging pages, rotate, delete, extract or split PDF pages with live thumbnail previews.',
 }: VisualPdfOrganizerToolProps) {
   const { t } = useLanguage();
+
+  const localizedTitle =
+    initialMode === 'delete'
+      ? t('deletePdfPages', title)
+      : initialMode === 'extract'
+      ? t('extractPdfPages', title)
+      : initialMode === 'rotate'
+      ? t('rotatePdf', title)
+      : initialMode === 'split'
+      ? t('splitPdf', title)
+      : t('organizePdf', title);
+
+  const localizedDescription =
+    initialMode === 'delete'
+      ? t('deletePdfPagesDesc', description)
+      : initialMode === 'extract'
+      ? t('extractPdfPagesDesc', description)
+      : initialMode === 'rotate'
+      ? t('rotatePdfDesc', description)
+      : initialMode === 'split'
+      ? t('splitPdfDesc', description)
+      : t('organizePdfDesc', description);
+
   const [files, setFiles] = useState<File[]>([]);
   const file = files[0] || null;
   const [pages, setPages] = useState<VisualPageItem[]>([]);
@@ -614,8 +637,8 @@ export default function VisualPdfOrganizerTool({
             accept=".pdf,application/pdf"
             maxFiles={1}
             maxSizeMb={50}
-            title={title}
-            subtitle={description}
+            title={localizedTitle}
+            subtitle={localizedDescription}
             onFilesSelected={(files) => handleFileSelected(files[0])}
           />
         </div>
@@ -673,7 +696,7 @@ export default function VisualPdfOrganizerTool({
                 </button>
 
                 <span className="font-extrabold text-xs sm:text-sm lg:text-base text-base-content truncate max-w-[120px] xs:max-w-[150px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-none">
-                  {t(title, title) || (toolTab === 'split' ? t('split', 'Split') : t('extractPages', 'Extract Pages'))}
+                  {localizedTitle || (toolTab === 'split' ? t('split', 'Split') : t('extractPages', 'Extract Pages'))}
                 </span>
               </div>
 

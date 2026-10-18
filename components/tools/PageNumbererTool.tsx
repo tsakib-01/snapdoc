@@ -243,7 +243,7 @@ export default function PageNumbererTool() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 bg-base-200/40">
                       <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                      <span className="text-xs font-semibold text-base-content/70">Loading...</span>
+                      <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
                     </div>
                   )}
 
@@ -368,9 +368,9 @@ export default function PageNumbererTool() {
                       onChange={(e) => setFormat(e.target.value)}
                       className="select select-bordered select-sm w-full rounded-xl"
                     >
-                      <option value="page-n-of-total">Page 1 of 10</option>
-                      <option value="n-of-total">1 of 10</option>
-                      <option value="page-n">Page 1</option>
+                      <option value="page-n-of-total">{t('formatPageNOfTotal', 'Page 1 of 10')}</option>
+                      <option value="n-of-total">{t('formatNOfTotal', '1 of 10')}</option>
+                      <option value="page-n">{t('formatPageN', 'Page 1')}</option>
                       <option value="n">1, 2, 3...</option>
                     </select>
                   </div>
@@ -412,7 +412,7 @@ export default function PageNumbererTool() {
                         type="button"
                         onClick={() => setFontSize((prev) => Math.max(6, prev - 1))}
                         className="btn btn-xs btn-outline border-base-300 rounded-lg w-8 h-8 p-0 text-base font-bold shrink-0 hover:bg-base-200"
-                        title="Decrease font size (-1)"
+                        title={t('decreaseFontSize', 'Decrease font size (-1)')}
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
@@ -428,7 +428,7 @@ export default function PageNumbererTool() {
                         type="button"
                         onClick={() => setFontSize((prev) => Math.min(36, prev + 1))}
                         className="btn btn-xs btn-outline border-base-300 rounded-lg w-8 h-8 p-0 text-base font-bold shrink-0 hover:bg-base-200"
-                        title="Increase font size (+1)"
+                        title={t('increaseFontSize', 'Increase font size (+1)')}
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
@@ -452,19 +452,19 @@ export default function PageNumbererTool() {
                           value={fontColor}
                           onChange={(e) => setFontColor(e.target.value)}
                           className="w-8 h-8 rounded-lg cursor-pointer border border-base-300 p-0.5 bg-base-100 shrink-0"
-                          title="Custom font color picker"
+                          title={t('customFontColorPicker', 'Custom font color picker')}
                         />
                         <select
                           value={fontColor}
                           onChange={(e) => setFontColor(e.target.value)}
                           className="select select-bordered select-xs w-full rounded-xl text-xs font-medium"
                         >
-                          <option value="#000000">Black</option>
-                          <option value="#374151">Dark Gray</option>
-                          <option value="#ffffff">White</option>
-                          <option value="#2563eb">Blue</option>
-                          <option value="#dc2626">Red</option>
-                          <option value="#16a34a">Green</option>
+                          <option value="#000000">{t('colorBlack', 'Black')}</option>
+                          <option value="#374151">{t('colorDarkGray', 'Dark Gray')}</option>
+                          <option value="#ffffff">{t('colorWhite', 'White')}</option>
+                          <option value="#2563eb">{t('colorBlue', 'Blue')}</option>
+                          <option value="#dc2626">{t('colorRed', 'Red')}</option>
+                          <option value="#16a34a">{t('colorGreen', 'Green')}</option>
                         </select>
                       </div>
                     </div>
@@ -485,12 +485,12 @@ export default function PageNumbererTool() {
                             value={bgColor}
                             onChange={(e) => setBgColor(e.target.value)}
                             className="w-8 h-8 rounded-lg cursor-pointer border border-base-300 p-0.5 bg-base-100 shrink-0"
-                            title="Custom background color picker"
+                            title={t('customBgColorPicker', 'Custom background color picker')}
                           />
                         ) : (
                           <div
                             className="w-8 h-8 rounded-lg border border-dashed border-base-300 flex items-center justify-center shrink-0 text-xs text-base-content/40 font-mono"
-                            title="Transparent background"
+                            title={t('transparentBackground', 'Transparent background')}
                           >
                             Ø
                           </div>
@@ -501,11 +501,11 @@ export default function PageNumbererTool() {
                           className="select select-bordered select-xs w-full rounded-xl text-xs font-medium"
                         >
                           <option value="transparent">{t('transparent', 'Transparent (None)')}</option>
-                          <option value="#ffffff">White Badge</option>
-                          <option value="#000000">Black Badge</option>
-                          <option value="#2563eb">Blue Badge</option>
-                          <option value="#f1f5f9">Light Gray</option>
-                          <option value="#fef08a">Yellow Highlight</option>
+                          <option value="#ffffff">{t('whiteBadge', 'White Badge')}</option>
+                          <option value="#000000">{t('blackBadge', 'Black Badge')}</option>
+                          <option value="#2563eb">{t('blueBadge', 'Blue Badge')}</option>
+                          <option value="#f1f5f9">{t('lightGray', 'Light Gray')}</option>
+                          <option value="#fef08a">{t('yellowHighlight', 'Yellow Highlight')}</option>
                         </select>
                       </div>
                     </div>

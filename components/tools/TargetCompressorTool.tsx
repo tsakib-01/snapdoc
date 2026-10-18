@@ -171,8 +171,8 @@ export default function TargetCompressorTool({
           accept="image/*, .jpg, .jpeg, .jfif, .pjpeg, .pjp, .png, .webp, .avif, .bmp, .heic, .heif"
           files={files}
           onFilesSelected={setFiles}
-          title="Drop your image to compress"
-          subtitle="Supports JPG, PNG, WebP, and camera formats (Up to 50MB)"
+          title={t('dropImageToCompress', 'Drop your image to compress')}
+          subtitle={t('dropImageToCompressSubtitle', 'Supports JPG, PNG, WebP, and camera formats (Up to 50MB)')}
         />
       )}
 
@@ -256,7 +256,7 @@ export default function TargetCompressorTool({
           ) : isPreviewLoading ? (
             <div className="rounded-2xl border border-base-300 bg-base-100 p-8 flex flex-col items-center justify-center gap-2 text-xs text-base-content/60">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <span>Preparing uploaded image preview...</span>
+              <span>{t('preparingImagePreview', 'Preparing uploaded image preview...')}</span>
             </div>
           ) : null}
 

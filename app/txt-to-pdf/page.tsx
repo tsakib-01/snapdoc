@@ -43,7 +43,7 @@ export default function TxtToPdfPage() {
 
   return (
     <ToolLayout tool={tool}>
-      <DocToPdfTool initialFormat="txt" title="Convert TXT to PDF" />
+      <DocToPdfTool initialFormat="txt" />
     </ToolLayout>
   );
 }

@@ -49,7 +49,7 @@ export interface PdfMergeItem {
 }
 
 export default function MergePdfTool() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [items, setItems] = useState<PdfMergeItem[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -351,12 +351,13 @@ export default function MergePdfTool() {
         }
 
         const now = new Date();
-        const dateStr = now.toLocaleDateString('en-US', {
+        const dateLocale = language || 'en';
+        const dateStr = now.toLocaleDateString(dateLocale, {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
         });
-        const timeStr = now.toLocaleTimeString('en-US', {
+        const timeStr = now.toLocaleTimeString(dateLocale, {
           hour: '2-digit',
           minute: '2-digit',
           hour12: true,
@@ -418,7 +419,7 @@ export default function MergePdfTool() {
                   type="button"
                   onClick={handleReset}
                   className="btn btn-ghost btn-xs sm:btn-sm btn-circle text-base-content/70 hover:text-base-content shrink-0"
-                  title="Start over / Clear all"
+                  title={t('startOverClearAll', 'Start over / Clear all')}
                 >
                   <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </button>
@@ -446,7 +447,7 @@ export default function MergePdfTool() {
                 type="button"
                 onClick={() => addFileInputRef.current?.click()}
                 className="btn btn-ghost btn-xs sm:btn-sm rounded-xl font-bold text-xs text-primary gap-1 sm:gap-1.5 hover:bg-primary/10 px-2 sm:px-3"
-                title="Add more PDF documents"
+                title={t('addMorePdfs', 'Add more PDF documents')}
               >
                 <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span>{t('addDocument', 'Add Document')}</span>
@@ -457,11 +458,11 @@ export default function MergePdfTool() {
                   type="button"
                   onClick={handleReverseOrder}
                   className="btn btn-ghost btn-xs sm:btn-sm rounded-xl text-xs text-base-content/70 gap-1 hover:bg-base-300/50 px-2 sm:px-3"
-                  title="Reverse document order"
+                  title={t('reverseOrder', 'Reverse document order')}
                   disabled={items.length < 2}
                 >
                   <ArrowUpDown className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Reverse</span>
+                  <span className="hidden sm:inline">{t('reverseOrder', 'Reverse')}</span>
                 </button>
 
                 {/* View Mode Toggle */}
@@ -474,7 +475,7 @@ export default function MergePdfTool() {
                         ? 'bg-primary text-primary-content shadow-xs'
                         : 'text-base-content/60 hover:text-base-content'
                     }`}
-                    title="Grid View"
+                    title={t('gridView', 'Grid View')}
                   >
                     <LayoutGrid className="w-3.5 h-3.5" />
                   </button>
@@ -486,7 +487,7 @@ export default function MergePdfTool() {
                         ? 'bg-primary text-primary-content shadow-xs'
                         : 'text-base-content/60 hover:text-base-content'
                     }`}
-                    title="List View"
+                    title={t('listView', 'List View')}
                   >
                     <List className="w-3.5 h-3.5" />
                   </button>
@@ -504,10 +505,10 @@ export default function MergePdfTool() {
                 </div>
                 <div>
                   <p className="font-bold text-sm">
-                    1 PDF uploaded &mdash; Please upload the next PDF to merge
+                    1 PDF uploaded &mdash; {t('uploadNextPdfDoc', 'Please upload the next PDF to merge')}
                   </p>
                   <p className="text-xs opacity-80 mt-0.5">
-                    Merging requires at least 2 PDF documents. Upload another PDF below to enable merging.
+                    {t('mergeRequires2Pdfs', 'Merging requires at least 2 PDF documents. Upload another PDF below to enable merging.')}
                   </p>
                 </div>
               </div>
@@ -517,7 +518,7 @@ export default function MergePdfTool() {
                 className="btn btn-warning btn-sm rounded-xl font-bold gap-1.5 shrink-0 shadow-xs"
               >
                 <Plus className="w-4 h-4" />
-                Upload Next PDF
+                {t('uploadNextPdf', 'Upload Next PDF')}
               </button>
             </div>
           )}
@@ -526,10 +527,10 @@ export default function MergePdfTool() {
           <div className="px-2 flex items-center justify-between text-xs text-base-content/60">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-primary/70 animate-pulse"></span>
-              Drag &amp; drop cards or use arrows to change the merge sequence
+              {t('dragDropMergeSequence', 'Drag & drop cards or use arrows to change the merge sequence')}
             </span>
             <span className="text-[11px] text-base-content/50">
-              Total size: {formatBytes(totalOriginalSize)}
+              {t('totalSize', 'Total size')}: {formatBytes(totalOriginalSize)}
             </span>
           </div>
 
@@ -574,11 +575,11 @@ export default function MergePdfTool() {
                       {item.loading ? (
                         <span className="badge badge-ghost badge-sm text-[10px] gap-1 text-base-content/60">
                           <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                          Pages...
+                          {t('pages', 'Pages')}...
                         </span>
                       ) : item.pageCount !== null ? (
                         <span className="badge badge-primary/10 text-primary border-primary/20 font-bold text-[11px]">
-                          {item.pageCount} {item.pageCount === 1 ? 'Page' : 'Pages'}
+                          {item.pageCount} {item.pageCount === 1 ? t('page', 'Page') : t('pages', 'Pages')}
                         </span>
                       ) : null}
 
@@ -590,7 +591,7 @@ export default function MergePdfTool() {
                           removeItem(item.id);
                         }}
                         className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error hover:bg-error/10"
-                        title="Remove document"
+                        title={t('removeDocument', 'Remove document')}
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -606,7 +607,7 @@ export default function MergePdfTool() {
                           <div className="flex flex-col items-center justify-center gap-2 p-3 text-center bg-base-200/40 w-full h-full">
                             <Loader2 className="w-6 h-6 text-primary animate-spin" />
                             <span className="text-xs font-semibold text-base-content/70">
-                              Loading...
+                              {t('loading', 'Loading...')}
                             </span>
                           </div>
                         ) : item.thumbnailUrl ? (
@@ -625,7 +626,7 @@ export default function MergePdfTool() {
                                   setZoomItem(item);
                                 }}
                                 className="btn btn-circle btn-xs bg-base-100/90 text-base-content hover:bg-base-100 border-none shadow-md"
-                                title="Zoom 1st page preview"
+                                title={t('zoomFirstPage', 'Zoom 1st page preview')}
                               >
                                 <ZoomIn className="w-3.5 h-3.5" />
                               </button>
@@ -634,7 +635,7 @@ export default function MergePdfTool() {
                         ) : (
                           <div className="flex flex-col items-center justify-center gap-1.5 p-3 text-center text-base-content/40">
                             <FileText className="w-8 h-8" />
-                            <span className="text-[10px]">Preview unavailable</span>
+                            <span className="text-[10px]">{t('previewUnavailable', 'Preview unavailable')}</span>
                           </div>
                         )}
                       </div>
@@ -656,14 +657,14 @@ export default function MergePdfTool() {
 
                       {/* Quick Move Reorder Buttons */}
                       <div className="flex items-center justify-between pt-1 border-t border-base-200">
-                        <span className="text-[10px] text-base-content/40 font-medium">Order</span>
+                        <span className="text-[10px] text-base-content/40 font-medium">{t('order', 'Order')}</span>
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
                             disabled={index === 0}
                             onClick={() => moveItem(index, 'up')}
                             className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
-                            title="Move earlier in merge order"
+                            title={t('moveEarlier', 'Move earlier in merge order')}
                           >
                             <ArrowLeft className="w-3 h-3" />
                           </button>
@@ -672,7 +673,7 @@ export default function MergePdfTool() {
                             disabled={index === items.length - 1}
                             onClick={() => moveItem(index, 'down')}
                             className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
-                            title="Move later in merge order"
+                            title={t('moveLater', 'Move later in merge order')}
                           >
                             <ArrowRight className="w-3 h-3" />
                           </button>
@@ -711,10 +712,10 @@ export default function MergePdfTool() {
                 </div>
                 <div>
                   <p className="font-bold text-xs sm:text-sm text-base-content">
-                    {items.length === 1 ? 'Add Next PDF' : 'Add Document'}
+                    {items.length === 1 ? t('addNextPdf', 'Add Next PDF') : t('addDocument', 'Add Document')}
                   </p>
                   <p className="text-[11px] text-base-content/50 mt-0.5">
-                    Click to browse or drop file here
+                    {t('clickBrowseOrDrop', 'Click to browse or drop file here')}
                   </p>
                 </div>
               </div>
@@ -754,7 +755,7 @@ export default function MergePdfTool() {
                       <div
                         onClick={() => item.thumbnailUrl && setZoomItem(item)}
                         className="relative w-12 h-16 rounded-lg bg-base-200 overflow-hidden border border-base-200 shrink-0 flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-                        title="Click to view 1st page"
+                        title={t('clickToViewPage', 'Click to view 1st page')}
                       >
                         {item.loading ? (
                           <Loader2 className="w-4 h-4 text-primary animate-spin" />
@@ -782,11 +783,11 @@ export default function MergePdfTool() {
                           {item.loading ? (
                             <span className="text-[11px] text-base-content/50 flex items-center gap-1">
                               <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                              Loading pages...
+                              {t('loadingPages', 'Loading pages...')}
                             </span>
                           ) : item.pageCount !== null ? (
                             <span className="badge badge-primary/10 text-primary border-primary/20 font-bold text-[10px]">
-                              {item.pageCount} {item.pageCount === 1 ? 'Page' : 'Pages'}
+                              {item.pageCount} {item.pageCount === 1 ? t('page', 'Page') : t('pages', 'Pages')}
                             </span>
                           ) : null}
                         </div>
@@ -800,7 +801,7 @@ export default function MergePdfTool() {
                         disabled={index === 0}
                         onClick={() => moveItem(index, 'up')}
                         className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
-                        title="Move Up"
+                        title={t('moveUp', 'Move Up')}
                       >
                         <MoveUp className="w-4 h-4" />
                       </button>
@@ -809,7 +810,7 @@ export default function MergePdfTool() {
                         disabled={index === items.length - 1}
                         onClick={() => moveItem(index, 'down')}
                         className="btn btn-ghost btn-xs btn-circle text-base-content/60 disabled:opacity-20"
-                        title="Move Down"
+                        title={t('moveDown', 'Move Down')}
                       >
                         <MoveDown className="w-4 h-4" />
                       </button>
@@ -817,7 +818,7 @@ export default function MergePdfTool() {
                         type="button"
                         onClick={() => removeItem(item.id)}
                         className="btn btn-ghost btn-xs btn-circle text-base-content/40 hover:text-error hover:bg-error/10"
-                        title="Remove"
+                        title={t('remove', 'Remove')}
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -837,7 +838,7 @@ export default function MergePdfTool() {
               >
                 <Plus className="w-4 h-4" />
                 <span>
-                  {items.length === 1 ? 'Upload Next PDF Document' : 'Add Another PDF Document'}
+                  {items.length === 1 ? t('uploadNextPdfDoc', 'Upload Next PDF Document') : t('addAnotherPdfDoc', 'Add Another PDF Document')}
                 </span>
               </div>
             </div>
@@ -869,10 +870,10 @@ export default function MergePdfTool() {
             </div>
             <div className="space-y-1">
               <h3 className="font-extrabold text-lg sm:text-2xl text-base-content leading-snug sm:leading-tight">
-                Your PDF has been merged successfully!
+                {t('pdfMergedSuccess', 'Your PDF has been merged successfully!')}
               </h3>
               <p className="text-xs sm:text-sm text-base-content/60 leading-relaxed max-w-sm sm:max-w-none">
-                Your files have been combined into one PDF. You can now download it or perform other actions below.
+                {t('filesCombinedDesc', 'Your files have been combined into one PDF. You can now download it or perform other actions below.')}
               </p>
             </div>
           </div>
@@ -894,11 +895,11 @@ export default function MergePdfTool() {
                       {result.filename || 'merged-file.pdf'}
                     </h4>
                     <span className="badge badge-sm badge-ready border font-bold">
-                      Ready
+                      {t('ready', 'Ready')}
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-base-content/60 mt-0.5">
-                    {result.pageCount} {result.pageCount === 1 ? 'page' : 'pages'}  •  {formatBytes(result.fileSize)}  •  PDF
+                    {result.pageCount} {result.pageCount === 1 ? t('page', 'page') : t('pages', 'pages')}  •  {formatBytes(result.fileSize)}  •  PDF
                   </p>
                 </div>
               </div>
@@ -907,8 +908,8 @@ export default function MergePdfTool() {
               <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-base-100 border border-base-200 shadow-xs shrink-0">
                 <Layers className="w-5 h-5 text-primary" />
                 <div className="text-left">
-                  <div className="text-[10px] text-base-content/50 uppercase font-bold tracking-wider leading-none">Merged from</div>
-                  <div className="font-extrabold text-xs sm:text-sm text-base-content mt-0.5 leading-none">{items.length} files</div>
+                  <div className="text-[10px] text-base-content/50 uppercase font-bold tracking-wider leading-none">{t('mergedFrom', 'Merged from')}</div>
+                  <div className="font-extrabold text-xs sm:text-sm text-base-content mt-0.5 leading-none">{items.length} {items.length === 1 ? t('file', 'file') : t('files', 'files')}</div>
                 </div>
               </div>
             </div>
@@ -922,8 +923,8 @@ export default function MergePdfTool() {
                   className="btn btn-primary btn-md rounded-xl font-bold text-white shadow-md shadow-primary/20 gap-2 px-3 sm:px-6 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
                 >
                   <Download className="w-4 h-4 shrink-0" />
-                  <span className="inline sm:hidden">Download</span>
-                  <span className="hidden sm:inline">Download File</span>
+                  <span className="inline sm:hidden">{t('download', 'Download')}</span>
+                  <span className="hidden sm:inline">{t('downloadFile', 'Download File')}</span>
                 </button>
 
                 <button
@@ -932,7 +933,7 @@ export default function MergePdfTool() {
                   className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-2 px-3 sm:px-5 text-base-content/70 hover:text-base-content hover:bg-base-200 flex-1 sm:flex-none justify-center flex-row flex-nowrap whitespace-nowrap"
                 >
                   <Eye className="w-4 h-4 shrink-0" />
-                  <span>Preview</span>
+                  <span>{t('preview', 'Preview')}</span>
                 </button>
               </div>
 
@@ -942,18 +943,18 @@ export default function MergePdfTool() {
                 className="btn btn-ghost border border-base-300 btn-md rounded-xl font-semibold gap-1.5 px-4 text-base-content/70 hover:text-base-content hover:bg-base-200 w-full sm:w-auto justify-center flex-row flex-nowrap whitespace-nowrap"
               >
                 <RotateCcw className="w-4 h-4 shrink-0" />
-                <span className="truncate">Merge Another</span>
+                <span className="truncate">{t('mergeAnother', 'Merge Another')}</span>
               </button>
             </div>
 
             {/* File Details */}
             <div className="pt-4 border-t border-base-200 space-y-3.5">
-              <h5 className="font-bold text-sm sm:text-base text-base-content">File Details</h5>
+              <h5 className="font-bold text-sm sm:text-base text-base-content">{t('fileDetails', 'File Details')}</h5>
               <div className="space-y-2.5 text-xs sm:text-sm font-medium">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                     <FileText className="w-4 h-4 text-base-content/40" />
-                    <span>File name</span>
+                    <span>{t('fileName', 'File name')}</span>
                   </span>
                   <span className="text-base-content/40">:</span>
                   <span className="font-semibold text-base-content truncate">{result.filename || 'merged-file.pdf'}</span>
@@ -962,7 +963,7 @@ export default function MergePdfTool() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                     <HardDrive className="w-4 h-4 text-base-content/40" />
-                    <span>File size</span>
+                    <span>{t('fileSize', 'File size')}</span>
                   </span>
                   <span className="text-base-content/40">:</span>
                   <span className="font-semibold text-base-content">{formatBytes(result.fileSize)}</span>
@@ -971,16 +972,16 @@ export default function MergePdfTool() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                     <Layers className="w-4 h-4 text-base-content/40" />
-                    <span>Pages</span>
+                    <span>{t('pages', 'Pages')}</span>
                   </span>
                   <span className="text-base-content/40">:</span>
-                  <span className="font-semibold text-base-content">{result.pageCount} pages</span>
+                  <span className="font-semibold text-base-content">{result.pageCount} {t('pages', 'pages')}</span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-2 text-base-content/60 w-28 sm:w-32 shrink-0">
                     <Calendar className="w-4 h-4 text-base-content/40" />
-                    <span>Created</span>
+                    <span>{t('created', 'Created')}</span>
                   </span>
                   <span className="text-base-content/40">:</span>
                   <span className="font-semibold text-base-content">{createdTimestamp}</span>
@@ -1007,7 +1008,7 @@ export default function MergePdfTool() {
                 <h5 className="font-bold text-xs sm:text-base text-base-content truncate">
                   {result.filename || 'merged-file.pdf'}
                 </h5>
-                <span className="badge badge-xs sm:badge-sm font-semibold shrink-0 hidden sm:inline-flex">{result.pageCount} Pages</span>
+                <span className="badge badge-xs sm:badge-sm font-semibold shrink-0 hidden sm:inline-flex">{result.pageCount} {t('pages', 'Pages')}</span>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                 <button
@@ -1016,13 +1017,13 @@ export default function MergePdfTool() {
                   className="btn btn-xs btn-primary font-bold gap-1 rounded-lg px-2 sm:px-3"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden sm:inline">{t('download', 'Download')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowResultPreviewModal(false)}
                   className="btn btn-ghost btn-xs btn-circle"
-                  aria-label="Close modal"
+                  aria-label={t('close', 'Close modal')}
                 >
                   <X className="w-4 h-4" />
                 </button>

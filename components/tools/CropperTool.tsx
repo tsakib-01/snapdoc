@@ -650,7 +650,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'nw')}
                           className="absolute -top-3.5 -left-3.5 w-7 h-7 flex items-center justify-center cursor-nwse-resize z-20 touch-none"
-                          title="Resize top-left"
+                          title={t('resizeTopLeft', 'Resize top-left')}
                         >
                           <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md hover:scale-125 transition-transform" />
                         </div>
@@ -659,7 +659,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'ne')}
                           className="absolute -top-3.5 -right-3.5 w-7 h-7 flex items-center justify-center cursor-nesw-resize z-20 touch-none"
-                          title="Resize top-right"
+                          title={t('resizeTopRight', 'Resize top-right')}
                         >
                           <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md hover:scale-125 transition-transform" />
                         </div>
@@ -668,7 +668,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'se')}
                           className="absolute -bottom-3.5 -right-3.5 w-7 h-7 flex items-center justify-center cursor-nwse-resize z-20 touch-none"
-                          title="Resize bottom-right"
+                          title={t('resizeBottomRight', 'Resize bottom-right')}
                         >
                           <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md hover:scale-125 transition-transform" />
                         </div>
@@ -677,7 +677,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'sw')}
                           className="absolute -bottom-3.5 -left-3.5 w-7 h-7 flex items-center justify-center cursor-nesw-resize z-20 touch-none"
-                          title="Resize bottom-left"
+                          title={t('resizeBottomLeft', 'Resize bottom-left')}
                         >
                           <div className="w-3.5 h-3.5 bg-white border-2 border-emerald-600 rounded-full shadow-md hover:scale-125 transition-transform" />
                         </div>
@@ -687,7 +687,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'n')}
                           className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-6 flex items-center justify-center cursor-ns-resize z-10 touch-none"
-                          title="Resize top"
+                          title={t('resizeTop', 'Resize top')}
                         >
                           <div className="w-5 h-1.5 bg-white border border-emerald-600 rounded-full shadow hover:scale-110 transition-transform" />
                         </div>
@@ -696,7 +696,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 's')}
                           className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-6 flex items-center justify-center cursor-ns-resize z-10 touch-none"
-                          title="Resize bottom"
+                          title={t('resizeBottom', 'Resize bottom')}
                         >
                           <div className="w-5 h-1.5 bg-white border border-emerald-600 rounded-full shadow hover:scale-110 transition-transform" />
                         </div>
@@ -705,7 +705,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'w')}
                           className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-8 flex items-center justify-center cursor-ew-resize z-10 touch-none"
-                          title="Resize left"
+                          title={t('resizeLeft', 'Resize left')}
                         >
                           <div className="w-1.5 h-5 bg-white border border-emerald-600 rounded-full shadow hover:scale-110 transition-transform" />
                         </div>
@@ -714,7 +714,7 @@ export default function CropperTool() {
                         <div
                           onPointerDown={(e) => handlePointerDown(e, 'e')}
                           className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-8 flex items-center justify-center cursor-ew-resize z-10 touch-none"
-                          title="Resize right"
+                          title={t('resizeRight', 'Resize right')}
                         >
                           <div className="w-1.5 h-5 bg-white border border-emerald-600 rounded-full shadow hover:scale-110 transition-transform" />
                         </div>
@@ -846,7 +846,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Decrease top margin"
+                          title={t('decreaseTopMargin', 'Decrease top margin')}
                         >
                           <Minus className="w-2.5 h-2.5" />
                         </button>
@@ -860,7 +860,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Increase top margin"
+                          title={t('increaseTopMargin', 'Increase top margin')}
                         >
                           <Plus className="w-2.5 h-2.5" />
                         </button>
@@ -891,7 +891,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Decrease bottom margin"
+                          title={t('decreaseBottomMargin', 'Decrease bottom margin')}
                         >
                           <Minus className="w-2.5 h-2.5" />
                         </button>
@@ -905,7 +905,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Increase bottom margin"
+                          title={t('increaseBottomMargin', 'Increase bottom margin')}
                         >
                           <Plus className="w-2.5 h-2.5" />
                         </button>
@@ -936,7 +936,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Decrease left margin"
+                          title={t('decreaseLeftMargin', 'Decrease left margin')}
                         >
                           <Minus className="w-2.5 h-2.5" />
                         </button>
@@ -950,7 +950,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Increase left margin"
+                          title={t('increaseLeftMargin', 'Increase left margin')}
                         >
                           <Plus className="w-2.5 h-2.5" />
                         </button>
@@ -981,7 +981,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Decrease right margin"
+                          title={t('decreaseRightMargin', 'Decrease right margin')}
                         >
                           <Minus className="w-2.5 h-2.5" />
                         </button>
@@ -995,7 +995,7 @@ export default function CropperTool() {
                             setActivePreset('custom');
                           }}
                           className="btn btn-ghost btn-xs btn-square h-5 w-5 min-h-0"
-                          title="Increase right margin"
+                          title={t('increaseRightMargin', 'Increase right margin')}
                         >
                           <Plus className="w-2.5 h-2.5" />
                         </button>

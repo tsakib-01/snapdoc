@@ -224,7 +224,7 @@ export default function PdfToOfficeTool({
               <div className="flex items-center gap-1.5 bg-base-200/60 rounded-xl px-2.5 py-1 text-xs">
                 <Globe className="w-3.5 h-3.5 text-base-content/60" />
                 <select
-                  aria-label="Document Language"
+                  aria-label={t('documentLanguage', 'Document Language')}
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                   className="select select-ghost select-xs text-xs font-medium focus:bg-transparent"

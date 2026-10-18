@@ -1,0 +1,31 @@
+{
+  "components/tools/PdfScannerTool.tsx": {
+    "is_client": true,
+    "uses_t": true,
+    "snippets": [
+      "(prev!"
+    ]
+  },
+  "components/tools/SignPdfTool.tsx": {
+    "is_client": true,
+    "uses_t": true,
+    "snippets": [
+      "| React.TouchEvent",
+      "| React.TouchEvent"
+    ]
+  },
+  "components/tools/VisualPdfOrganizerTool.tsx": {
+    "is_client": true,
+    "uses_t": true,
+    "snippets": [
+      "0 && thumbnailProgress.loaded"
+    ]
+  },
+  "components/ui/ProcessingButton.tsx": {
+    "is_client": true,
+    "uses_t": true,
+    "snippets": [
+      "void | Promise"
+    ]
+  }
+}

@@ -22,11 +22,7 @@ export const metadata: Metadata = {
 export default function SplitPdfPage() {
   return (
     <ToolLayout tool={tool}>
-      <VisualPdfOrganizerTool
-        initialMode="split"
-        title="Split PDF Pages Visually"
-        description="Select split points between thumbnails, extract custom ranges, or split into separate documents with live visual page previews."
-      />
+      <VisualPdfOrganizerTool initialMode="split" />
     </ToolLayout>
   );
 }

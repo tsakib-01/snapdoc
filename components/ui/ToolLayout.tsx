@@ -239,13 +239,13 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
                 >
                   <div className="space-y-1.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-base-content/50">
-                      {guide.categoryLabel}
+                      {t(`guideCat_${guide.category}`, guide.categoryLabel)}
                     </span>
                     <h4 className="font-bold text-sm text-base-content group-hover:text-primary transition-colors leading-snug">
-                      {guide.title}
+                      {t(guide.slug, guide.title)}
                     </h4>
                     <p className="text-xs text-base-content/65 line-clamp-2">
-                      {guide.shortDescription}
+                      {t(`${guide.slug}_desc`, guide.shortDescription)}
                     </p>
                   </div>
                   <div className="pt-3 text-xs font-semibold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">

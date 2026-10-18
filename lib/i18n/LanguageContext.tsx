@@ -7,6 +7,8 @@ import { MORE_TOOL_TRANSLATIONS } from './moreToolTranslations';
 import { EXTENDED_APP_TRANSLATIONS } from './extendedAppTranslations';
 import { GUIDE_TRANSLATIONS } from './guideTranslations';
 import { ALL_MISSING_UI_TRANSLATIONS } from './allMissingUiTranslations';
+import { ADDITIONAL_TRANSLATIONS } from './additionalTranslations';
+import { DEEP_AUDITED_TRANSLATIONS } from './deepAuditedTranslations';
 
 export { getToolTranslationKey };
 
@@ -1410,6 +1412,22 @@ for (const [langCode, uiDict] of Object.entries(ALL_MISSING_UI_TRANSLATIONS)) {
     TRANSLATIONS[langCode] = {};
   }
   Object.assign(TRANSLATIONS[langCode], uiDict);
+}
+
+// 1g. Merge additional UI translations across all 27 languages
+for (const [langCode, addDict] of Object.entries(ADDITIONAL_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], addDict);
+}
+
+// 1h. Merge deep audited translations across all 27 languages
+for (const [langCode, auditedDict] of Object.entries(DEEP_AUDITED_TRANSLATIONS)) {
+  if (!TRANSLATIONS[langCode]) {
+    TRANSLATIONS[langCode] = {};
+  }
+  Object.assign(TRANSLATIONS[langCode], auditedDict);
 }
 
 // 2. Bi-directional synchronization ensuring both 2-letter ISO and 3-letter OCR codes have all translations

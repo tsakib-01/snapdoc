@@ -101,7 +101,7 @@ export default function LanguageSelector() {
             isRtl ? 'right-0 left-auto' : 'left-0 right-auto'
           }`}
           role="dialog"
-          aria-label="Language Selector Mega Menu"
+          aria-label={t('selectLanguage', 'Language Selector Mega Menu')}
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-base-200">
@@ -115,7 +115,7 @@ export default function LanguageSelector() {
               type="button"
               onClick={() => setIsOpen(false)}
               className="btn btn-ghost btn-xs btn-circle text-base-content/60 hover:text-base-content"
-              aria-label="Close language menu"
+              aria-label={t('close', 'Close language menu')}
             >
               <X className="w-4 h-4" />
             </button>

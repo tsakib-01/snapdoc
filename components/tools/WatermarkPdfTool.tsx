@@ -323,7 +323,7 @@ export default function WatermarkPdfTool() {
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 bg-base-200/40">
                       <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                      <span className="text-xs font-semibold text-base-content/70">Loading...</span>
+                      <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
                     </div>
                   )}
 
@@ -418,7 +418,7 @@ export default function WatermarkPdfTool() {
                         type="text"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
-                        placeholder="e.g. DRAFT, CONFIDENTIAL, SAMPLE"
+                        placeholder={t('watermarkPlaceholder', 'e.g. DRAFT, CONFIDENTIAL, SAMPLE')}
                         className="input input-bordered input-sm w-full rounded-xl"
                       />
                     </div>

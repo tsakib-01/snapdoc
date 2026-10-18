@@ -83,36 +83,46 @@ export async function processPdfOcr(
   const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
   const pdfjs = await loadPdfJs();
 
-  // Combine selected language with English to ensure both national characters (e.g. German ä,ö,ü,ß)
+  // Combine selected language with English to ensure both national characters
   // and numbers/Latin punctuation are recognized with maximum accuracy
-  const ocrLang =
-    language === 'deu'
-      ? 'deu+eng'
-      : language === 'eng'
-      ? 'eng+deu'
-      : `${language}+eng`;
+  const ocrLang = language === 'eng' ? 'eng' : `${language}+eng`;
 
-  report(`Loading ${language === 'deu' ? 'German' : language.toUpperCase()} OCR language models...`, 10);
+  report(`Loading ${language.toUpperCase()} OCR language models...`, 10);
 
   // Create Tesseract worker with specified language and live progress reporter
-  const worker = await createWorker(ocrLang, 1, {
-    logger: (m: any) => {
-      if (m.status === 'downloading tesseract core') {
-        report('Downloading OCR core engine...', Math.round(m.progress * 8));
-      } else if (m.status === 'loading tesseract core') {
-        report('Loading OCR core...', 8);
-      } else if (m.status === 'downloading traineddata') {
-        report(`Downloading ${language.toUpperCase()} language model...`, 10 + Math.round((m.progress || 0) * 15));
-      } else if (m.status === 'loading language traineddata') {
-        report('Loading language model...', 25);
-      } else if (m.status === 'initializing api') {
-        report('Initializing OCR engine...', 28);
-      } else if (m.status === 'recognizing text') {
-        const pagePct = Math.round((m.progress || 0) * 100);
-        report(`Recognizing text... ${pagePct}%`, Math.min(95, 30 + Math.round((m.progress || 0) * 60)));
-      }
-    },
-  });
+  let worker: any;
+  try {
+    worker = await createWorker(ocrLang, 1, {
+      logger: (m: any) => {
+        if (m.status === 'downloading tesseract core') {
+          report('Downloading OCR core engine...', Math.round(m.progress * 8));
+        } else if (m.status === 'loading tesseract core') {
+          report('Loading OCR core...', 8);
+        } else if (m.status === 'downloading traineddata') {
+          report(`Downloading ${language.toUpperCase()} language model...`, 10 + Math.round((m.progress || 0) * 15));
+        } else if (m.status === 'loading language traineddata') {
+          report('Loading language model...', 25);
+        } else if (m.status === 'initializing api') {
+          report('Initializing OCR engine...', 28);
+        } else if (m.status === 'recognizing text') {
+          const pagePct = Math.round((m.progress || 0) * 100);
+          report(`Recognizing text... ${pagePct}%`, Math.min(95, 30 + Math.round((m.progress || 0) * 60)));
+        }
+      },
+    });
+  } catch (workerErr) {
+    console.warn(`Could not load combined language ${ocrLang}, trying single ${language}:`, workerErr);
+    worker = await createWorker(language, 1, {
+      logger: (m: any) => {
+        if (m.status === 'downloading traineddata') {
+          report(`Downloading ${language.toUpperCase()} language model...`, 10 + Math.round((m.progress || 0) * 15));
+        } else if (m.status === 'recognizing text') {
+          const pagePct = Math.round((m.progress || 0) * 100);
+          report(`Recognizing text... ${pagePct}%`, Math.min(95, 30 + Math.round((m.progress || 0) * 60)));
+        }
+      },
+    });
+  }
 
   report('Loading document...', 15);
 
@@ -163,7 +173,7 @@ export async function processPdfOcr(
       const thumbnail = thumbCanvas.toDataURL('image/jpeg', 0.85);
       thumbCanvas.width = thumbCanvas.height = 0;
 
-      report('Recognizing German / multilingual characters...', 40);
+      report('Recognizing characters...', 40);
       let pageText = '';
       let words: any[] = [];
       try {

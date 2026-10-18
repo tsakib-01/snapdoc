@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Sparkles, ShieldCheck, Zap, Lock, Heart } from 'lucide-react';
+import LanguageSelector from '@/components/ui/LanguageSelector';
 
 export default function Footer() {
   return (
@@ -58,8 +59,8 @@ export default function Footer() {
   The modern, privacy-first online toolkit for compressing, resizing, converting, and editing images and PDF files. Fast, free, and secure.
 </p>
 
-<div className="text-xs text-base-content/60 mt-3">
-  Developed by <span className="font-medium text-base-content/80">Tasnim Sakib</span>
+<div className="mt-3">
+  <LanguageSelector />
 </div>
 
 <div className="text-xs text-base-content/50 mt-2">

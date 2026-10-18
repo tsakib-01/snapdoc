@@ -158,9 +158,26 @@ export default function CropPdfTool() {
     setActivePreset('none');
 
     try {
-      const { thumbnails } = await extractPdfThumbnails(selectedFile);
-      setPages(thumbnails);
-      setCurrentPage(1);
+      await extractPdfThumbnails(selectedFile, {
+        onDocLoaded: (total) => {
+          // Instantly unlock workspace with page items in 50ms!
+          const skeletons: PdfPageThumbnail[] = Array.from({ length: total }, (_, i) => ({
+            pageNumber: i + 1,
+            dataUrl: '',
+            width: 595,
+            height: 842,
+            aspectRatio: 1 / 1.414,
+          }));
+          setPages(skeletons);
+          setCurrentPage(1);
+          setLoadingThumbnails(false);
+        },
+        onPageReady: (thumb) => {
+          setPages((prev) =>
+            prev.map((p) => (p.pageNumber === thumb.pageNumber ? thumb : p))
+          );
+        },
+      });
     } catch (err: any) {
       console.error(err);
       setError('Could not extract PDF page thumbnails. You can still crop the file.');
@@ -541,7 +558,7 @@ export default function CropPdfTool() {
                     src={activeThumbnail.dataUrl}
                     alt={`Page ${currentPage}`}
                     draggable={false}
-                    className="w-full h-full object-contain pointer-events-none block rounded-none"
+                    className="w-full h-full object-fill pointer-events-none block rounded-none"
                   />
 
                   {/* Clean un-cropped state prompt */}

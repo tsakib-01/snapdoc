@@ -596,9 +596,12 @@ export default function MergePdfTool() {
 
                     {/* 1st Page Thumbnail Container */}
                     <div className="px-2.5 py-1.5 flex items-center justify-center">
-                      <div className="relative w-full aspect-[1/1.414] bg-base-200/60 rounded-xl overflow-hidden border border-base-200 flex items-center justify-center group/thumb">
+                      <div
+                        style={{ aspectRatio: item.aspectRatio ? `${item.aspectRatio}` : '1 / 1.414' }}
+                        className="relative w-full bg-white rounded-none overflow-hidden border border-base-300 flex items-center justify-center group/thumb"
+                      >
                         {item.loading ? (
-                          <div className="flex flex-col items-center justify-center gap-2 p-3 text-center">
+                          <div className="flex flex-col items-center justify-center gap-2 p-3 text-center bg-base-200/40 w-full h-full">
                             <Loader2 className="w-6 h-6 text-primary animate-spin" />
                             <span className="text-[10px] text-base-content/50 font-medium">
                               Rendering 1st page...
@@ -609,7 +612,7 @@ export default function MergePdfTool() {
                             <img
                               src={item.thumbnailUrl}
                               alt={`Page 1 of ${item.file.name}`}
-                              className="w-full h-full object-contain bg-white shadow-xs"
+                              className="w-full h-full object-fill bg-white"
                             />
                             {/* Hover overlay with zoom */}
                             <div className="absolute inset-0 bg-base-900/40 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-2">

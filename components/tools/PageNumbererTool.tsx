@@ -40,9 +40,25 @@ export default function PageNumbererTool() {
     setLoadingThumbnails(true);
 
     try {
-      const { thumbnails } = await extractPdfThumbnails(selectedFile);
-      setPages(thumbnails);
-      setCurrentPage(1);
+      await extractPdfThumbnails(selectedFile, {
+        onDocLoaded: (total) => {
+          const skeletons: PdfPageThumbnail[] = Array.from({ length: total }, (_, i) => ({
+            pageNumber: i + 1,
+            dataUrl: '',
+            width: 595,
+            height: 842,
+            aspectRatio: 1 / 1.414,
+          }));
+          setPages(skeletons);
+          setCurrentPage(1);
+          setLoadingThumbnails(false);
+        },
+        onPageReady: (thumb) => {
+          setPages((prev) =>
+            prev.map((p) => (p.pageNumber === thumb.pageNumber ? thumb : p))
+          );
+        },
+      });
     } catch (err: any) {
       console.error(err);
       setError('Could not extract thumbnails. You can still apply page numbers.');
@@ -216,11 +232,18 @@ export default function PageNumbererTool() {
                   style={{ aspectRatio: `${activeThumbnail.aspectRatio}` }}
                   className="relative w-full max-w-[340px] sm:max-w-[400px] bg-white rounded-none shadow-lg border border-base-300 select-none my-2"
                 >
-                  <img
-                    src={activeThumbnail.dataUrl}
-                    alt={`Page ${currentPage}`}
-                    className="w-full h-full object-contain pointer-events-none rounded-none"
-                  />
+                  {activeThumbnail.dataUrl ? (
+                    <img
+                      src={activeThumbnail.dataUrl}
+                      alt={`Page ${currentPage}`}
+                      className="w-full h-full object-fill pointer-events-none rounded-none"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 bg-base-200/40">
+                      <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
+                      <span className="text-xs font-semibold">Page {currentPage}</span>
+                    </div>
+                  )}
 
                   {/* Stamp Badge with Live Font Size, Font Color, and Background Color */}
                   {getSampleText(currentPage) && (
@@ -292,7 +315,13 @@ export default function PageNumbererTool() {
                         currentPage === pg.pageNumber ? 'border-primary bg-primary/10 scale-105' : 'border-base-200 opacity-70 hover:opacity-100'
                       }`}
                     >
-                      <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded-none object-contain bg-white" />
+                      {pg.dataUrl ? (
+                        <img src={pg.dataUrl} alt={`P${pg.pageNumber}`} className="w-full h-auto rounded-none object-fill bg-white" />
+                      ) : (
+                        <div className="w-full aspect-[1/1.414] bg-base-200/50 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-primary/40 animate-pulse" />
+                        </div>
+                      )}
                       <span className="block text-[9px] font-bold text-center mt-0.5">{pg.pageNumber}</span>
                     </button>
                   ))}

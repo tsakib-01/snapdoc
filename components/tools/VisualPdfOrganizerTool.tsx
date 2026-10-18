@@ -961,7 +961,9 @@ export default function VisualPdfOrganizerTool({
                         <div
                           onClick={() => toggleSelectPage(page.id)}
                           style={{
-                            aspectRatio: page.aspectRatio ? `${page.aspectRatio}` : '1 / 1.414',
+                            aspectRatio: page.rotation % 180 !== 0
+                              ? `${1 / (page.aspectRatio || 1 / 1.414)}`
+                              : `${page.aspectRatio || 1 / 1.414}`,
                           }}
                           className={`relative w-40 sm:w-48 bg-white rounded-none p-0 transition-all duration-200 cursor-pointer select-none flex items-center justify-center overflow-hidden ${
                             page.selected
@@ -1013,24 +1015,22 @@ export default function VisualPdfOrganizerTool({
                             </button>
                           </div>
 
-                          {/* Rendered Canvas Image */}
-                          <div className="w-full h-full flex items-center justify-center overflow-hidden bg-white">
-                            {page.dataUrl ? (
-                              <img
-                                src={page.dataUrl}
-                                alt={`Page ${page.pageNumber}`}
-                                className="w-full h-full object-contain pointer-events-none transition-transform duration-150"
-                                style={{
-                                  transform: `rotate(${page.rotation}deg)`,
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 select-none bg-base-200/40">
-                                <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
-                                <span className="text-[11px] font-semibold text-base-content/60">Page {page.pageNumber}</span>
-                              </div>
-                            )}
-                          </div>
+                          {/* Rendered Canvas Image - Fills 100% of paper borders without top/bottom gaps */}
+                          {page.dataUrl ? (
+                            <img
+                              src={page.dataUrl}
+                              alt={`Page ${page.pageNumber}`}
+                              className="w-full h-full object-fill pointer-events-none select-none"
+                              style={{
+                                transform: page.rotation ? `rotate(${page.rotation}deg)` : undefined,
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-4 text-base-content/40 select-none bg-base-200/40">
+                              <FileText className="w-8 h-8 text-primary/40 animate-pulse" />
+                              <span className="text-[11px] font-semibold text-base-content/60">Page {page.pageNumber}</span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Pink / Rose Pill Badge with Document Name */}

@@ -33,6 +33,7 @@ import {
   Stamp,
   RotateCw,
   Palette,
+  FileText,
 } from 'lucide-react';
 import UploadZone from '@/components/ui/UploadZone';
 import ResultCard from '@/components/ui/ResultCard';
@@ -263,13 +264,27 @@ export default function SignPdfTool() {
     setError(null);
 
     try {
-      const { thumbnails } = await extractPdfThumbnails(selectedFile, { scale: 1.2 });
-      if (!thumbnails || thumbnails.length === 0) {
-        throw new Error('Unable to render PDF pages. The file may be password protected or corrupted.');
-      }
-      setPages(thumbnails);
-      setCurrentPage(1);
-      setShowSealingModal(true);
+      await extractPdfThumbnails(selectedFile, {
+        scale: 1.2,
+        onDocLoaded: (total) => {
+          const skeletons: PdfPageThumbnail[] = Array.from({ length: total }, (_, i) => ({
+            pageNumber: i + 1,
+            dataUrl: '',
+            width: 595,
+            height: 842,
+            aspectRatio: 1 / 1.414,
+          }));
+          setPages(skeletons);
+          setCurrentPage(1);
+          setShowSealingModal(true);
+          setLoadingPdf(false);
+        },
+        onPageReady: (thumb) => {
+          setPages((prev) =>
+            prev.map((p) => (p.pageNumber === thumb.pageNumber ? thumb : p))
+          );
+        },
+      });
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to load PDF.');
@@ -1905,11 +1920,17 @@ export default function SignPdfTool() {
                   }`}
                 >
                   <div className="w-full bg-white rounded-none shadow-sm flex items-center justify-center">
-                    <img
-                      src={pg.dataUrl}
-                      alt={`Page ${pg.pageNumber}`}
-                      className="w-full h-auto object-contain rounded-none"
-                    />
+                    {pg.dataUrl ? (
+                      <img
+                        src={pg.dataUrl}
+                        alt={`Page ${pg.pageNumber}`}
+                        className="w-full h-auto object-fill rounded-none"
+                      />
+                    ) : (
+                      <div className="w-full aspect-[1/1.414] bg-base-200/50 flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-primary/40 animate-pulse" />
+                      </div>
+                    )}
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-bold text-base-content/70">
                     {pg.pageNumber}
@@ -1940,12 +1961,19 @@ export default function SignPdfTool() {
                   className="relative bg-white shadow-xl rounded-none select-none border border-base-300 my-auto w-full max-w-full sm:max-w-[900px]"
                 >
                   {/* Rendered PDF Page Background */}
-                  <img
-                    src={pages[currentPage - 1].dataUrl}
-                    alt={`Current Page ${currentPage}`}
-                    className="w-full h-full object-contain pointer-events-none select-none"
-                    draggable={false}
-                  />
+                  {pages[currentPage - 1].dataUrl ? (
+                    <img
+                      src={pages[currentPage - 1].dataUrl}
+                      alt={`Current Page ${currentPage}`}
+                      className="w-full h-full object-fill pointer-events-none select-none"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-8 text-base-content/40 bg-base-200/40">
+                      <FileText className="w-12 h-12 text-primary/40 animate-pulse" />
+                      <span className="font-semibold text-sm">Page {currentPage}</span>
+                    </div>
+                  )}
 
                   {/* Placed Elements on Current Page */}
                   {currentElements.map((elem) => {

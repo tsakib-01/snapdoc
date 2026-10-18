@@ -72,6 +72,14 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
       }).promise;
       const totalPages = pdf.numPages;
 
+      // Unpack skeleton cards immediately so the user sees page cards ready
+      const initialSkeletons: ExtractedPage[] = Array.from({ length: totalPages }, (_, i) => ({
+        pageNumber: i + 1,
+        dataUrl: '',
+        size: 0,
+      }));
+      setPages(initialSkeletons);
+
       const renderedPages: ExtractedPage[] = [];
 
       for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -96,11 +104,18 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
           const dataUrl = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.95);
           const byteLength = Math.round((dataUrl.length * 3) / 4);
 
-          renderedPages.push({
+          const newPageItem: ExtractedPage = {
             pageNumber: pageNum,
             dataUrl,
             size: byteLength,
-          });
+          };
+
+          renderedPages.push(newPageItem);
+
+          // Update page state progressively so pages appear one after another
+          setPages((prev) =>
+            prev.map((p) => (p.pageNumber === pageNum ? newPageItem : p))
+          );
 
           setProgress(Math.max(14, Math.round((pageNum / totalPages) * 98)));
         }
@@ -254,21 +269,33 @@ export default function PdfToJpgTool({ outputFormat = 'jpg' }: PdfToJpgToolProps
               >
                 <div className="p-2.5 bg-base-200/50 border-b border-base-300 flex items-center justify-between text-xs font-semibold">
                   <span className="text-base-content/70">Page {p.pageNumber}</span>
-                  <span className="badge badge-sm badge-neutral">{formatBytes(p.size)}</span>
+                  {p.size > 0 ? (
+                    <span className="badge badge-sm badge-neutral">{formatBytes(p.size)}</span>
+                  ) : (
+                    <span className="badge badge-sm badge-ghost animate-pulse">Rendering...</span>
+                  )}
                 </div>
 
                 <div className="p-3 flex items-center justify-center bg-base-200/20 min-h-[220px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.dataUrl}
-                    alt={`Page ${p.pageNumber}`}
-                    className="max-h-[240px] max-w-full object-contain rounded-none border border-base-300 shadow-sm"
-                  />
+                  {p.dataUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={p.dataUrl}
+                      alt={`Page ${p.pageNumber}`}
+                      className="max-h-[240px] max-w-full object-contain rounded-none border border-base-300 shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 text-base-content/40 py-12">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                      <span className="text-xs">Converting page {p.pageNumber}...</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-3 bg-base-100 border-t border-base-200">
                   <button
                     type="button"
+                    disabled={!p.dataUrl}
                     onClick={() => handleDownloadSingle(p)}
                     className="btn btn-outline btn-primary btn-xs w-full rounded-xl gap-1.5 font-semibold"
                   >

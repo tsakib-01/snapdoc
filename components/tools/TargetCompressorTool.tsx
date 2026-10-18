@@ -11,6 +11,7 @@ import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { compressToTargetSizeInBrowser } from '@/lib/browser-converters/image-compress';
 
 interface TargetCompressorToolProps {
   defaultTargetKb?: number;
@@ -99,10 +100,27 @@ export default function TargetCompressorTool({
     startProgress();
     setResult(null);
 
+    const activeKb = isCustom ? (parseFloat(customKb) || 50) : targetKb;
+    const file = files[0];
+
     try {
-      const activeKb = isCustom ? (parseFloat(customKb) || 50) : targetKb;
+      // 1. Primary: Instant client-side target compression in browser (handles 10MB+ phone photos, 0ms upload, no 413 limits)
+      try {
+        const clientResult = await compressToTargetSizeInBrowser(file, {
+          targetKb: activeKb,
+          format: 'original',
+        });
+        await finishProgress(() => {
+          setResult(clientResult);
+        });
+        return;
+      } catch (clientErr) {
+        console.warn('Client-side compression fallback to server:', clientErr);
+      }
+
+      // 2. Server fallback if browser canvas fails
       const formData = new FormData();
-      formData.append('file', files[0]);
+      formData.append('file', file);
       formData.append('targetKb', activeKb.toString());
       formData.append('format', 'original');
 
@@ -117,6 +135,18 @@ export default function TargetCompressorTool({
         setResult(data);
       });
     } catch (err: any) {
+      // 3. Fallback to client-side compression if server rejects with 413 or errors
+      try {
+        const fallbackClientResult = await compressToTargetSizeInBrowser(file, {
+          targetKb: activeKb,
+          format: 'original',
+        });
+        await finishProgress(() => {
+          setResult(fallbackClientResult);
+        });
+        return;
+      } catch {}
+
       resetProgress();
       setError(err.message || 'Something went wrong during compression.');
     }

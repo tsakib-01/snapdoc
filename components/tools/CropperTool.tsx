@@ -381,9 +381,76 @@ export default function CropperTool() {
     startProgress();
     setResult(null);
 
+    const file = files[0];
+
     try {
+      // 1. Primary: Instant client-side crop in browser (handles 10MB+ phone photos, 0ms upload, no 413 limits)
+      try {
+        let sourceImg: CanvasImageSource | null = null;
+        if (typeof createImageBitmap !== 'undefined') {
+          try {
+            sourceImg = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          } catch {}
+        }
+        if (!sourceImg && originalPreviewUrl) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = originalPreviewUrl;
+          });
+          sourceImg = img;
+        }
+
+        if (sourceImg) {
+          const canvas = document.createElement('canvas');
+          canvas.width = cropPixels.width;
+          canvas.height = cropPixels.height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('Canvas not supported');
+
+          ctx.drawImage(
+            sourceImg,
+            cropPixels.left,
+            cropPixels.top,
+            cropPixels.width,
+            cropPixels.height,
+            0,
+            0,
+            cropPixels.width,
+            cropPixels.height
+          );
+
+          if ('close' in sourceImg && typeof (sourceImg as any).close === 'function') {
+            (sourceImg as any).close();
+          }
+
+          const mime = file.type || 'image/jpeg';
+          const dataUrl = canvas.toDataURL(mime, 0.92);
+          const approxSize = Math.round((dataUrl.length * 3) / 4);
+
+          await finishProgress(() => {
+            setResult({
+              success: true,
+              originalName: file.name,
+              originalSize: file.size,
+              compressedSize: approxSize,
+              width: cropPixels.width,
+              height: cropPixels.height,
+              format: mime.split('/')[1] || 'jpeg',
+              dataUrl,
+            });
+          });
+          return;
+        }
+      } catch (clientErr) {
+        console.warn('Client-side crop fallback to server:', clientErr);
+      }
+
+      // 2. Server fallback
       const formData = new FormData();
-      formData.append('file', files[0]);
+      formData.append('file', file);
       formData.append('crop', JSON.stringify(cropPixels));
 
       const res = await fetch('/api/transform-image', {
@@ -397,55 +464,8 @@ export default function CropperTool() {
         setResult(data);
       });
     } catch (err: any) {
-      // Client-side fallback using Canvas
-      try {
-        if (!originalPreviewUrl) throw new Error('Preview not ready');
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          img.src = originalPreviewUrl;
-        });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = cropPixels.width;
-        canvas.height = cropPixels.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Canvas not supported');
-
-        ctx.drawImage(
-          img,
-          cropPixels.left,
-          cropPixels.top,
-          cropPixels.width,
-          cropPixels.height,
-          0,
-          0,
-          cropPixels.width,
-          cropPixels.height
-        );
-
-        const mime = files[0].type || 'image/jpeg';
-        const dataUrl = canvas.toDataURL(mime, 0.92);
-        const approxSize = Math.round((dataUrl.length * 3) / 4);
-
-        await finishProgress(() => {
-          setResult({
-            success: true,
-            originalName: files[0].name,
-            originalSize: files[0].size,
-            compressedSize: approxSize,
-            width: cropPixels.width,
-            height: cropPixels.height,
-            format: mime.split('/')[1] || 'jpeg',
-            dataUrl,
-          });
-        });
-      } catch (fallbackErr: any) {
-        resetProgress();
-        setError(fallbackErr.message || 'Error occurred while cropping image.');
-      }
+      resetProgress();
+      setError(err.message || 'Error occurred while cropping image.');
     }
   };
 

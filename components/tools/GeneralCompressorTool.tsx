@@ -11,6 +11,7 @@ import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { compressImageGeneralInBrowser } from '@/lib/browser-converters/image-compress';
 
 // Optimal high-efficiency compression quality giving maximum file reduction with clear visuals
 const MAX_COMPRESSION_QUALITY = 65;
@@ -82,9 +83,26 @@ export default function GeneralCompressorTool() {
     startProgress();
     setResult(null);
 
+    const file = files[0];
+
     try {
+      // 1. Primary: Instant client-side compression in browser (handles 10MB+ phone photos, 0ms upload, no 413 limits)
+      try {
+        const clientResult = await compressImageGeneralInBrowser(file, {
+          quality: MAX_COMPRESSION_QUALITY,
+          format: targetFormat,
+        });
+        await finishProgress(() => {
+          setResult(clientResult);
+        });
+        return;
+      } catch (clientErr) {
+        console.warn('Client-side compression fallback to server:', clientErr);
+      }
+
+      // 2. Server fallback if browser canvas fails
       const formData = new FormData();
-      formData.append('file', files[0]);
+      formData.append('file', file);
       formData.append('quality', MAX_COMPRESSION_QUALITY.toString());
       formData.append('format', targetFormat);
 
@@ -99,6 +117,18 @@ export default function GeneralCompressorTool() {
         setResult(data);
       });
     } catch (err: any) {
+      // 3. Fallback to client-side compression if server rejects with 413 or errors
+      try {
+        const fallbackClientResult = await compressImageGeneralInBrowser(file, {
+          quality: MAX_COMPRESSION_QUALITY,
+          format: targetFormat,
+        });
+        await finishProgress(() => {
+          setResult(fallbackClientResult);
+        });
+        return;
+      } catch {}
+
       resetProgress();
       setError(err.message || 'Error occurred while compressing image.');
     }

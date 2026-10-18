@@ -10,6 +10,7 @@ import { getSafeImagePreview } from '@/lib/utils/previewHelper';
 import { useProgressAction } from '@/lib/hooks/useProgressAction';
 import ProcessingButton from '@/components/ui/ProcessingButton';
 import { safeFetchJson } from '@/lib/utils/apiHelper';
+import { transformImageInBrowser } from '@/lib/browser-converters/image-compress';
 
 interface TransformToolProps {
   mode: 'rotate' | 'flip';
@@ -81,9 +82,27 @@ export default function TransformTool({ mode }: TransformToolProps) {
     startProgress();
     setResult(null);
 
+    const file = files[0];
+
     try {
+      // 1. Primary: Instant client-side transform in browser (handles 10MB+ phone photos, 0ms upload, no 413 limits)
+      try {
+        const clientResult = await transformImageInBrowser(file, {
+          rotateAngle,
+          flipHorizontal: flipH,
+          flipVertical: flipV,
+        });
+        await finishProgress(() => {
+          setResult(clientResult);
+        });
+        return;
+      } catch (clientErr) {
+        console.warn('Client-side transform fallback to server:', clientErr);
+      }
+
+      // 2. Server fallback if browser canvas fails
       const formData = new FormData();
-      formData.append('file', files[0]);
+      formData.append('file', file);
       if (rotateAngle !== 0) formData.append('rotateAngle', rotateAngle.toString());
       if (flipH) formData.append('flipHorizontal', 'true');
       if (flipV) formData.append('flipVertical', 'true');
@@ -99,6 +118,19 @@ export default function TransformTool({ mode }: TransformToolProps) {
         setResult(data);
       });
     } catch (err: any) {
+      // 3. Fallback to client-side transform if server rejects with 413 or errors
+      try {
+        const fallbackClientResult = await transformImageInBrowser(file, {
+          rotateAngle,
+          flipHorizontal: flipH,
+          flipVertical: flipV,
+        });
+        await finishProgress(() => {
+          setResult(fallbackClientResult);
+        });
+        return;
+      } catch {}
+
       resetProgress();
       setError(err.message || 'Error transforming image.');
     }

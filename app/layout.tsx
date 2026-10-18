@@ -161,6 +161,8 @@ const softwareApplicationSchema = {
   description: 'Complete online tool suite to compress, resize, convert, edit, and e-sign PDF documents and images completely free with client-side privacy.',
 };
 
+import { LanguageProvider } from '@/lib/i18n/LanguageContext';
+
 export default function RootLayout({
   children,
 }: {
@@ -175,8 +177,13 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const saved = localStorage.getItem('theme');
-                document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
+                const savedTheme = localStorage.getItem('theme');
+                document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
+                const savedLang = localStorage.getItem('snapdoc_lang');
+                if (savedLang) {
+                  document.documentElement.setAttribute('lang', savedLang);
+                  document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');
+                }
               } catch (_) {}
             `,
           }}
@@ -196,14 +203,16 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-base-200/30 text-base-content antialiased flex flex-col min-h-screen selection:bg-primary selection:text-white">
-        <div className="sticky top-0 z-50 w-full flex flex-col">
-          <ConnectionStatusBanner />
-          <Header />
-        </div>
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+        <LanguageProvider>
+          <div className="sticky top-0 z-50 w-full flex flex-col">
+            <ConnectionStatusBanner />
+            <Header />
+          </div>
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </LanguageProvider>
       </body>
     </html>
   );

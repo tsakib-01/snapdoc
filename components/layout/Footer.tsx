@@ -1,9 +1,14 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
-import { Sparkles, ShieldCheck, Zap, Lock, Heart } from 'lucide-react';
+import { ShieldCheck, Zap, Lock } from 'lucide-react';
 import LanguageSelector from '@/components/ui/LanguageSelector';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="mt-auto border-t border-base-300 bg-base-200/50 text-base-content transition-colors">
       {/* Privacy & Trust Bar */}
@@ -14,8 +19,10 @@ export default function Footer() {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-semibold text-sm">100% Privacy Focused</h4>
-              <p className="text-xs text-base-content/60">Files processed in memory and never saved to disk or database.</p>
+              <h4 className="font-semibold text-sm">{t('privacyTitle', '100% Privacy Focused')}</h4>
+              <p className="text-xs text-base-content/60">
+                {t('privacyDesc', 'Files processed in memory and never saved to disk or database.')}
+              </p>
             </div>
           </div>
 
@@ -24,8 +31,10 @@ export default function Footer() {
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-semibold text-sm">Lightning Fast</h4>
-              <p className="text-xs text-base-content/60">Engineered with high-speed performance architecture.</p>
+              <h4 className="font-semibold text-sm">{t('fastTitle', 'Lightning Fast')}</h4>
+              <p className="text-xs text-base-content/60">
+                {t('fastDesc', 'Engineered with high-speed performance architecture.')}
+              </p>
             </div>
           </div>
 
@@ -34,8 +43,10 @@ export default function Footer() {
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-semibold text-sm">Free Forever & No Signup</h4>
-              <p className="text-xs text-base-content/60">No account required, no watermark, no hidden subscription traps.</p>
+              <h4 className="font-semibold text-sm">{t('freeTitle', 'Free Forever & No Signup')}</h4>
+              <p className="text-xs text-base-content/60">
+                {t('freeDesc', 'No account required, no watermark, no hidden subscription traps.')}
+              </p>
             </div>
           </div>
         </div>
@@ -55,55 +66,136 @@ export default function Footer() {
                 Snap<span className="text-primary">Doc</span>
               </span>
             </Link>
-           <p className="text-xs text-base-content/70 leading-relaxed max-w-sm">
-  The modern, privacy-first online toolkit for compressing, resizing, converting, and editing images and PDF files. Fast, free, and secure.
-</p>
+            <p className="text-xs text-base-content/70 leading-relaxed max-w-sm">
+              {t(
+                'footerDesc',
+                'The modern, privacy-first online toolkit for compressing, resizing, converting, and editing images and PDF files. Fast, free, and secure.'
+              )}
+            </p>
 
-<div className="mt-3">
-  <LanguageSelector />
-</div>
+            <div className="mt-3">
+              <LanguageSelector />
+            </div>
 
-<div className="text-xs text-base-content/50 mt-2">
-  &copy; {new Date().getFullYear()} SnapDoc. All rights reserved.
-</div>
+            <div className="text-xs text-base-content/50 mt-2">
+              &copy; {new Date().getFullYear()} SnapDoc. {t('allRightsReserved', 'All rights reserved.')}
+            </div>
           </div>
 
           {/* PDF Organize & Edit */}
           <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Organize & Edit</h5>
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">
+              {t('organizeEdit', 'Organize & Edit')}
+            </h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/organize-pdf" className="hover:text-primary transition-colors text-primary font-medium">Organize PDF</Link></li>
-              <li><Link href="/extract-pdf-pages" className="hover:text-primary transition-colors">Extract Pages</Link></li>
-              <li><Link href="/delete-pdf-pages" className="hover:text-primary transition-colors">Delete Pages</Link></li>
-              <li><Link href="/rotate-pdf" className="hover:text-primary transition-colors">Rotate PDF</Link></li>
-              <li><Link href="/sign-pdf" className="hover:text-primary transition-colors">Sign PDF (eSign)</Link></li>
-              <li><Link href="/add-page-numbers-to-pdf" className="hover:text-primary transition-colors">Page Numbers</Link></li>
-              <li><Link href="/watermark-pdf" className="hover:text-primary transition-colors">Watermark PDF</Link></li>
+              <li>
+                <Link href="/organize-pdf" className="hover:text-primary transition-colors text-primary font-medium">
+                  {t('organizePdf', 'Organize PDF')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/extract-pdf-pages" className="hover:text-primary transition-colors">
+                  {t('extractPages', 'Extract Pages')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/delete-pdf-pages" className="hover:text-primary transition-colors">
+                  {t('deletePages', 'Delete Pages')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/rotate-pdf" className="hover:text-primary transition-colors">
+                  {t('rotatePdf', 'Rotate PDF')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/sign-pdf" className="hover:text-primary transition-colors">
+                  {t('signPdf', 'Sign PDF (eSign)')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/add-page-numbers-to-pdf" className="hover:text-primary transition-colors">
+                  {t('pageNumbers', 'Page Numbers')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/watermark-pdf" className="hover:text-primary transition-colors">
+                  {t('watermarkPdf', 'Watermark PDF')}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* Convert & Office */}
           <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Convert & Office</h5>
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">
+              {t('convertPdf', 'Convert PDF')}
+            </h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/pdf-to-jpg" className="hover:text-primary transition-colors">PDF to JPG</Link></li>
-              <li><Link href="/pdf-to-png" className="hover:text-primary transition-colors">PDF to PNG</Link></li>
-              <li><Link href="/html-to-pdf" className="hover:text-primary transition-colors">HTML to PDF</Link></li>
-              <li><Link href="/pdf-ocr" className="hover:text-primary transition-colors">OCR Text Extractor</Link></li>
-              <li><Link href="/txt-to-pdf" className="hover:text-primary transition-colors">TXT to PDF</Link></li>
+              <li>
+                <Link href="/pdf-to-jpg" className="hover:text-primary transition-colors">
+                  {t('pdfToJpg', 'PDF to JPG')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/pdf-to-png" className="hover:text-primary transition-colors">
+                  {t('pdfToPng', 'PDF to PNG')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/html-to-pdf" className="hover:text-primary transition-colors">
+                  {t('htmlToPdf', 'HTML to PDF')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/pdf-ocr" className="hover:text-primary transition-colors">
+                  {t('pdfOcr', 'OCR Text Extractor')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/txt-to-pdf" className="hover:text-primary transition-colors">
+                  {t('txtToPdf', 'TXT to PDF')}
+                </Link>
+              </li>
             </ul>
           </div>
 
           {/* More Tools & Links */}
           <div className="space-y-3">
-            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">Tools & Resources</h5>
+            <h5 className="font-semibold text-xs text-base-content/90 uppercase tracking-wider">
+              {t('toolsResources', 'Tools & Resources')}
+            </h5>
             <ul className="space-y-2 text-xs text-base-content/70">
-              <li><Link href="/pdf-scanner" className="hover:text-primary transition-colors">Camera Scanner</Link></li>
-              <li><Link href="/compress-pdf" className="hover:text-primary transition-colors">Compress PDF</Link></li>
-              <li><Link href="/compress-jpg-to-10kb" className="hover:text-primary transition-colors">JPG to 10KB</Link></li>
-              <li><Link href="/guides" className="hover:text-primary transition-colors text-primary font-medium">Guides & Tutorials</Link></li>
-              <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+              <li>
+                <Link href="/pdf-scanner" className="hover:text-primary transition-colors">
+                  {t('scanner', 'Camera Scanner')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/compress-pdf" className="hover:text-primary transition-colors">
+                  {t('compressPdf', 'Compress PDF')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/compress-jpg-to-10kb" className="hover:text-primary transition-colors">
+                  {t('compressJpg10kb', 'JPG to 10KB')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/guides" className="hover:text-primary transition-colors text-primary font-medium">
+                  {t('guides', 'Guides & Tutorials')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-primary transition-colors">
+                  {t('privacy', 'Privacy Policy')}
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-primary transition-colors">
+                  {t('terms', 'Terms of Service')}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

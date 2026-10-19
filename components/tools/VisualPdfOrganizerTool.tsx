@@ -44,11 +44,52 @@ export interface VisualPageItem {
   originalIndex: number; // 0-based index in original file (-1 for blank)
   pageNumber: number; // 1-based display index
   dataUrl: string;
+  originalDataUrl?: string; // Pristine unrotated thumbnail
   rotation: number; // 0, 90, 180, 270
   selected: boolean;
-  aspectRatio: number;
+  aspectRatio: number; // Current visual aspect ratio (width / height)
+  originalAspectRatio?: number; // Pristine unrotated aspect ratio
   isBlank?: boolean;
   docName?: string;
+}
+
+/**
+ * Fast off-screen canvas rotation for crisp, unstretched page thumbnails.
+ * Always renders from pristine unrotated source onto an exact-dimension canvas.
+ */
+function rotateImageDataUrl(dataUrl: string, degrees: number): Promise<string> {
+  const normDeg = ((degrees % 360) + 360) % 360;
+  if (normDeg === 0 || !dataUrl) {
+    return Promise.resolve(dataUrl);
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const isSideways = normDeg === 90 || normDeg === 270;
+        canvas.width = isSideways ? img.height : img.width;
+        canvas.height = isSideways ? img.width : img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((normDeg * Math.PI) / 180);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
+      } catch (err) {
+        console.warn('Canvas rotation fallback:', err);
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 interface VisualPdfOrganizerToolProps {
@@ -160,9 +201,11 @@ export default function VisualPdfOrganizerTool({
             originalIndex: idx,
             pageNumber: idx + 1,
             dataUrl: '',
+            originalDataUrl: '',
             rotation: 0,
             selected: initialMode === 'delete' || initialMode === 'extract' ? false : true,
             aspectRatio: 1 / 1.414,
+            originalAspectRatio: 1 / 1.414,
             docName: selectedFile.name,
           }));
 
@@ -173,11 +216,20 @@ export default function VisualPdfOrganizerTool({
         onPageReady: (thumb) => {
           if (controller.signal.aborted) return;
           setPages((prev) =>
-            prev.map((p) =>
-              p.fileIndex === 0 && p.originalIndex === thumb.pageNumber - 1
-                ? { ...p, dataUrl: thumb.dataUrl, aspectRatio: thumb.aspectRatio }
-                : p
-            )
+            prev.map((p) => {
+              if (p.fileIndex === 0 && p.originalIndex === thumb.pageNumber - 1) {
+                const curRot = p.rotation || 0;
+                const finalAspect = curRot % 180 !== 0 ? 1 / thumb.aspectRatio : thumb.aspectRatio;
+                return {
+                  ...p,
+                  dataUrl: thumb.dataUrl,
+                  originalDataUrl: thumb.dataUrl,
+                  aspectRatio: finalAspect,
+                  originalAspectRatio: thumb.aspectRatio,
+                };
+              }
+              return p;
+            })
           );
         },
         onProgress: (loaded, total) => {
@@ -220,9 +272,11 @@ export default function VisualPdfOrganizerTool({
             originalIndex: idx,
             pageNumber: pages.length + idx + 1,
             dataUrl: '',
+            originalDataUrl: '',
             rotation: 0,
             selected: initialMode === 'delete' || initialMode === 'extract' ? false : true,
             aspectRatio: 1 / 1.414,
+            originalAspectRatio: 1 / 1.414,
             docName: newFile.name,
           }));
 
@@ -238,11 +292,20 @@ export default function VisualPdfOrganizerTool({
         onPageReady: (thumb) => {
           if (currentSignal?.aborted) return;
           setPages((prev) =>
-            prev.map((p) =>
-              p.fileIndex === nextFileIndex && p.originalIndex === thumb.pageNumber - 1
-                ? { ...p, dataUrl: thumb.dataUrl, aspectRatio: thumb.aspectRatio }
-                : p
-            )
+            prev.map((p) => {
+              if (p.fileIndex === nextFileIndex && p.originalIndex === thumb.pageNumber - 1) {
+                const curRot = p.rotation || 0;
+                const finalAspect = curRot % 180 !== 0 ? 1 / thumb.aspectRatio : thumb.aspectRatio;
+                return {
+                  ...p,
+                  dataUrl: thumb.dataUrl,
+                  originalDataUrl: thumb.dataUrl,
+                  aspectRatio: finalAspect,
+                  originalAspectRatio: thumb.aspectRatio,
+                };
+              }
+              return p;
+            })
           );
         },
         onProgress: (loaded, total) => {
@@ -347,28 +410,70 @@ export default function VisualPdfOrganizerTool({
   };
 
   // Rotate single page
-  const rotatePage = (id: string, angleDelta: number) => {
+  const rotatePage = async (id: string, angleDelta: number) => {
+    const target = pages.find((p) => p.id === id);
+    if (!target) return;
+
+    const nextRot = (target.rotation + angleDelta + 360) % 360;
+    const baseAspect = target.originalAspectRatio || (target.rotation % 180 !== 0 ? 1 / target.aspectRatio : target.aspectRatio) || 1 / 1.414;
+    const nextAspect = nextRot % 180 !== 0 ? 1 / baseAspect : baseAspect;
+    const baseDataUrl = target.originalDataUrl || target.dataUrl;
+
+    // Fast sync update for rotation and aspect ratio
     setPages((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          const nextRot = (p.rotation + angleDelta + 360) % 360;
-          return { ...p, rotation: nextRot };
-        }
-        return p;
-      })
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              rotation: nextRot,
+              aspectRatio: nextAspect,
+            }
+          : p
+      )
     );
+
+    // Fast off-screen canvas rotation for pristine, unstretched image
+    if (baseDataUrl) {
+      const nextDataUrl = await rotateImageDataUrl(baseDataUrl, nextRot);
+      setPages((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, dataUrl: nextDataUrl } : p))
+      );
+    }
   };
 
   // Rotate selected pages
-  const rotateSelected = (angleDelta: number) => {
-    setPages((prev) =>
-      prev.map((p) => {
-        if (p.selected) {
-          return { ...p, rotation: (p.rotation + angleDelta + 360) % 360 };
-        }
-        return p;
+  const rotateSelected = async (angleDelta: number) => {
+    const targets = pages.filter((p) => p.selected);
+    if (targets.length === 0) return;
+
+    // Fast sync update for rotation and aspect ratio
+    const updatedSync = pages.map((p) => {
+      if (!p.selected) return p;
+      const nextRot = (p.rotation + angleDelta + 360) % 360;
+      const baseAspect = p.originalAspectRatio || (p.rotation % 180 !== 0 ? 1 / p.aspectRatio : p.aspectRatio) || 1 / 1.414;
+      const nextAspect = nextRot % 180 !== 0 ? 1 / baseAspect : baseAspect;
+      return {
+        ...p,
+        rotation: nextRot,
+        aspectRatio: nextAspect,
+      };
+    });
+    setPages(updatedSync);
+
+    // Fast parallel canvas rotation
+    const updatedImages = await Promise.all(
+      updatedSync.map(async (p) => {
+        if (!p.selected) return p;
+        const baseDataUrl = p.originalDataUrl || p.dataUrl;
+        if (!baseDataUrl) return p;
+        const nextDataUrl = await rotateImageDataUrl(baseDataUrl, p.rotation);
+        return {
+          ...p,
+          dataUrl: nextDataUrl,
+        };
       })
     );
+    setPages(updatedImages);
   };
 
   // Delete single page
@@ -413,9 +518,11 @@ export default function VisualPdfOrganizerTool({
       isBlank: true,
       pageNumber: insertIndex + 1,
       dataUrl: blankDataUrl,
+      originalDataUrl: blankDataUrl,
       rotation: 0,
       selected: true,
-      aspectRatio: 842 / 595,
+      aspectRatio: 595 / 842,
+      originalAspectRatio: 595 / 842,
       docName: 'Blank Page',
     };
 
@@ -978,7 +1085,7 @@ export default function VisualPdfOrganizerTool({
                         {/* Checkbox Floating top-left */}
                         <div
                           onClick={() => toggleSelectPage(page.id)}
-                          className="absolute -top-3 left-0 z-20 cursor-pointer p-0.5 rounded transition-transform hover:scale-110"
+                          className="absolute -top-2.5 left-0 z-20 cursor-pointer p-0.5 rounded transition-transform hover:scale-110"
                         >
                           {page.selected ? (
                             <CheckSquare className="w-5 h-5 text-primary fill-base-100" />
@@ -987,80 +1094,80 @@ export default function VisualPdfOrganizerTool({
                           )}
                         </div>
 
-                        {/* Page Preview Thumbnail Container */}
+                        {/* Fixed Bounding Preview Slot - Keeps uniform card size at all times */}
                         <div
                           onClick={() => toggleSelectPage(page.id)}
-                          style={{
-                            aspectRatio: page.rotation % 180 !== 0
-                              ? `${1 / (page.aspectRatio || 1 / 1.414)}`
-                              : `${page.aspectRatio || 1 / 1.414}`,
-                          }}
-                          className={`relative w-40 sm:w-48 bg-white rounded-none p-0 transition-all duration-200 cursor-pointer select-none flex items-center justify-center overflow-hidden ${
-                            page.selected
-                              ? 'ring-2 ring-primary shadow-lg shadow-primary/10'
-                              : 'border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50'
-                          }`}
+                          className="w-40 h-56 sm:w-48 sm:h-64 flex items-center justify-center relative cursor-pointer select-none"
                         >
-                          {/* Hover action pill overlay */}
-                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-base-100/95 backdrop-blur-sm p-1 rounded-lg border border-base-300 shadow-md">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setZoomPage(page);
-                              }}
-                              className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                              title={t('zoomIn', 'Zoom page')}
-                            >
-                              <ZoomIn className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                rotatePage(page.id, -90);
-                              }}
-                              className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                              title={t('rotateLeft', 'Rotate Left')}
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                rotatePage(page.id, 90);
-                              }}
-                              className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
-                              title={t('rotateRight', 'Rotate Right')}
-                            >
-                              <RotateCw className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deletePage(page.id);
-                              }}
-                              className="p-1 text-error hover:bg-error/10 rounded"
-                              title={t('delete', 'Delete')}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-
-                          {/* Rendered Canvas Image - Fills 100% of paper borders without top/bottom gaps */}
-                          {page.dataUrl ? (
-                            <img
-                              src={page.dataUrl}
-                              alt={`Page ${page.pageNumber}`}
-                              className="w-full h-full object-fill pointer-events-none select-none"
-                              style={{
-                                transform: page.rotation ? `rotate(${page.rotation}deg)` : undefined,
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 select-none bg-base-200/40">
-                              <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                              <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
+                          {/* Inner Paper Sheet - Strictly maintains page aspect ratio without distortion */}
+                          <div
+                            style={{
+                              aspectRatio: `${page.aspectRatio || 1 / 1.414}`,
+                            }}
+                            className={`relative max-w-full max-h-full bg-white rounded-none p-0 transition-all duration-200 flex items-center justify-center overflow-hidden ${
+                              page.selected
+                                ? 'ring-2 ring-primary shadow-lg shadow-primary/10'
+                                : 'border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50'
+                            }`}
+                          >
+                            {/* Hover action pill overlay */}
+                            <div className="absolute top-1.5 right-1.5 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-base-100/95 backdrop-blur-sm p-1 rounded-lg border border-base-300 shadow-md">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setZoomPage(page);
+                                }}
+                                className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
+                                title={t('zoomIn', 'Zoom page')}
+                              >
+                                <ZoomIn className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rotatePage(page.id, -90);
+                                }}
+                                className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
+                                title={t('rotateLeft', 'Rotate Left')}
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rotatePage(page.id, 90);
+                                }}
+                                className="p-1 text-base-content/70 hover:text-primary rounded hover:bg-base-200"
+                                title={t('rotateRight', 'Rotate Right')}
+                              >
+                                <RotateCw className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deletePage(page.id);
+                                }}
+                                className="p-1 text-error hover:bg-error/10 rounded"
+                                title={t('delete', 'Delete')}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </div>
-                          )}
+
+                            {/* Rendered Canvas Image - Fills paper cleanly without stretch or border distortion */}
+                            {page.dataUrl ? (
+                              <img
+                                src={page.dataUrl}
+                                alt={`Page ${page.pageNumber}`}
+                                className="w-full h-full object-contain pointer-events-none select-none block"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-2.5 p-4 text-base-content/50 select-none bg-base-200/40">
+                                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                                <span className="text-xs font-semibold text-base-content/70">{t('loading', 'Loading...')}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Pink / Rose Pill Badge with Document Name */}
@@ -1146,8 +1253,7 @@ export default function VisualPdfOrganizerTool({
                           <img
                             src={page.dataUrl}
                             alt={`Page ${page.pageNumber}`}
-                            className="w-full h-full object-contain"
-                            style={{ transform: `rotate(${page.rotation}deg)` }}
+                            className="w-full h-full object-contain pointer-events-none select-none"
                           />
                         ) : (
                           <Loader2 className="w-4 h-4 text-primary animate-spin" />
@@ -1252,9 +1358,6 @@ export default function VisualPdfOrganizerTool({
                 src={zoomPage.dataUrl}
                 alt={`Page ${zoomPage.pageNumber}`}
                 className="max-h-full object-contain rounded-none shadow-md bg-white"
-                style={{
-                  transform: `rotate(${zoomPage.rotation}deg)`,
-                }}
               />
             </div>
           </div>

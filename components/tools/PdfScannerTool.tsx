@@ -262,7 +262,7 @@ export default function PdfScannerTool() {
               </div>
               <div className="space-y-1.5 max-w-sm mx-auto">
                 <h4 className="font-bold text-base sm:text-lg text-base-content">{t('readyToScanDocs', 'Ready to Scan Documents')}</h4>
-                <p className="text-xs sm:text-sm text-base-content/60">{t('readyToScanDesc', 'Use your camera to capture pages, or select photos from your device library.')}</p>
+                <p className="text-xs sm:text-sm text-base-content/60 font-medium">20 MB upload limit per file</p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button
@@ -284,11 +284,6 @@ export default function PdfScannerTool() {
                     className="hidden"
                   />
                 </label>
-              </div>
-              <div className="pt-1">
-                <span className="text-[10px] sm:text-[11px] text-base-content/60 px-2.5 py-1 bg-base-200 rounded-lg font-medium">
-                  20 MB upload limit per file
-                </span>
               </div>
             </div>
           ) : (

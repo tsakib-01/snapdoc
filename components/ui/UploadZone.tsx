@@ -333,16 +333,13 @@ export default function UploadZone({
           <h3 className="text-sm sm:text-lg font-bold text-base-content">
             {displayTitle}
           </h3>
-          <p className="text-[11px] sm:text-sm text-base-content/60 mt-1">
-            {displaySubtitle}
+          <p className="text-[11px] sm:text-sm text-base-content/60 mt-1 font-medium">
+            20 MB upload limit per file
           </p>
 
-          <div className="mt-4 sm:mt-5 flex flex-wrap items-center justify-center gap-2">
-            <span className="btn btn-primary btn-sm rounded-xl px-4 sm:px-5 shadow-sm font-semibold text-xs sm:text-sm">
+          <div className="mt-4 sm:mt-5 flex items-center justify-center">
+            <span className="btn btn-primary btn-sm rounded-xl px-5 sm:px-6 shadow-sm font-semibold text-xs sm:text-sm">
               {multiple ? t('chooseFiles', 'Choose Files') : t('chooseFile', 'Choose File')}
-            </span>
-            <span className="text-[10px] sm:text-[11px] text-base-content/60 px-2.5 py-1 bg-base-200 rounded-lg font-medium">
-              20 MB upload limit per file
             </span>
           </div>
         </div>

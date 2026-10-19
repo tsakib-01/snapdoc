@@ -42,7 +42,7 @@ export default function SignPdfPage() {
   };
 
   return (
-    <ToolLayout tool={tool} isWide={true} noCardWrapper={true}>
+    <ToolLayout tool={tool} noCardWrapper={true}>
       <SignPdfTool />
     </ToolLayout>
   );

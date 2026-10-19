@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, Sparkles, ChevronDown, Image, FileText, Menu, X, ShieldCheck } from 'lucide-react';
+import { Search, Sparkles, ChevronDown, Image, FileText, Menu, X } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import SearchModal from './SearchModal';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
@@ -154,13 +154,6 @@ export default function Header() {
               </kbd>
             </button>
 
-            {/* Privacy Badge indicator */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold border border-emerald-500/20 whitespace-nowrap shrink-0">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <span className="hidden min-[480px]:inline whitespace-nowrap">{t('privacyBadge', '100% In-Memory')}</span>
-              <span className="inline min-[480px]:hidden whitespace-nowrap">In-Memory</span>
-            </div>
-
             {/* Theme Toggle */}
             <ThemeToggle />
 
@@ -178,15 +171,6 @@ export default function Header() {
         {/* Mobile Dropdown Navigation */}
         {isMobileMenuOpen && (
           <div className="lg:hidden border-b border-base-300 bg-base-100 p-4 space-y-3 animate-in slide-in-from-top-2 duration-150">
-            {/* Mobile In-Memory Privacy Badge */}
-            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>{t('privacyBadge', '100% In-Memory')}</span>
-              </div>
-              <span className="text-[11px] font-normal text-base-content/60">Zero server storage</span>
-            </div>
-
             <div className="space-y-1">
               <div className="font-semibold text-xs text-base-content/50 uppercase tracking-wider px-2 py-1">
                 {t('imageTools', 'Popular Image Tools')}

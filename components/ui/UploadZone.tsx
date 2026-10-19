@@ -253,7 +253,7 @@ export default function UploadZone({
     <div className="w-full space-y-4">
       {/* Loading state or Drag and drop card */}
       {showLoader ? (
-        <div className="relative flex flex-col items-center justify-center p-8 sm:p-12 md:p-14 rounded-2xl sm:rounded-3xl border-2 border-primary/40 bg-gradient-to-b from-primary/5 via-base-100 to-base-100 shadow-xl text-center overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="upload-dropzone relative flex flex-col items-center justify-center p-8 sm:p-12 md:p-14 rounded-2xl sm:rounded-3xl border-2 border-primary/40 bg-gradient-to-b from-primary/5 via-base-100 to-base-100 shadow-xl text-center overflow-hidden animate-in fade-in zoom-in-95 duration-200 w-full max-w-[912px] mx-auto min-h-[220px] sm:min-h-[270px] md:min-h-[300px]">
           {/* Subtle ambient pulse background glow */}
           <div className="absolute w-80 h-80 rounded-full bg-primary/10 blur-3xl -top-24 -left-24 pointer-events-none animate-pulse" />
           <div className="absolute w-80 h-80 rounded-full bg-secondary/10 blur-3xl -bottom-24 -right-24 pointer-events-none animate-pulse" />
@@ -320,7 +320,7 @@ export default function UploadZone({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => !disabled && inputRef.current?.click()}
-          className={`upload-dropzone relative flex flex-col items-center justify-center p-5 sm:p-10 md:p-12 rounded-2xl sm:rounded-3xl border-2 border-dashed transition-all cursor-pointer select-none text-center ${
+          className={`upload-dropzone relative flex flex-col items-center justify-center p-5 sm:p-10 md:p-12 rounded-2xl sm:rounded-3xl border-2 border-dashed transition-all cursor-pointer select-none text-center w-full max-w-[912px] mx-auto min-h-[220px] sm:min-h-[270px] md:min-h-[300px] ${
             isDragging
               ? 'border-primary bg-primary/5 scale-[1.01]'
               : 'border-base-300 bg-base-100 hover:border-primary/50 hover:bg-base-200/40'

@@ -187,4 +187,77 @@ header label span {
   white-space: nowrap !important;
 }
 
+/* ==========================================================================
+   Standardized Upload Boundary Box (Normalized to watermark-pdf)
+   Enforces identical width, height, and boundary box dimensions across all tools
+   ========================================================================== */
+
+/* 1. Standardize sandbox container on pages with an upload dropzone to watermark-pdf's max-w-5xl (1024px) */
+#tool-sandbox:has(.upload-dropzone) {
+  max-width: 1024px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100% !important;
+}
+
+/* 2. Unify any custom wrapper (e.g. max-w-2xl in organize-pdf, max-w-4xl in sign-pdf/doc-to-pdf) to the full watermark-pdf card width */
+.tool-interactive-sandbox div:has(> .upload-dropzone),
+.tool-interactive-sandbox div:has(> * > .upload-dropzone),
+.tool-interactive-sandbox .max-w-2xl:has(.upload-dropzone),
+.tool-interactive-sandbox .max-w-4xl:has(.upload-dropzone) {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 3. Enforce the exact boundary box size of watermark-pdf across all upload dropzones */
+.upload-dropzone {
+  width: 100% !important;
+  max-width: 912px !important;
+  min-height: 300px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 767px) {
+  .upload-dropzone {
+    min-height: 270px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .upload-dropzone {
+    min-height: 220px !important;
+  }
+}
+
+/* 4. Scanner Tool custom upload box: match watermark-pdf boundary box dimensions */
+.tool-interactive-sandbox div:has(> div > input[type="file"][accept="image/*"]):has(.lucide-camera) {
+  width: 100% !important;
+  max-width: 912px !important;
+  min-height: 300px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 767px) {
+  .tool-interactive-sandbox div:has(> div > input[type="file"][accept="image/*"]):has(.lucide-camera) {
+    min-height: 270px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .tool-interactive-sandbox div:has(> div > input[type="file"][accept="image/*"]):has(.lucide-camera) {
+    min-height: 220px !important;
+  }
+}
+
+
 

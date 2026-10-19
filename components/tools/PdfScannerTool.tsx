@@ -262,7 +262,7 @@ export default function PdfScannerTool() {
               </div>
               <div className="space-y-1.5 max-w-sm mx-auto">
                 <h4 className="font-bold text-base sm:text-lg text-base-content">{t('readyToScanDocs', 'Ready to Scan Documents')}</h4>
-                <p className="text-xs sm:text-sm text-base-content/60 font-medium">Up to 20 MB per file</p>
+                <p className="text-xs sm:text-sm text-base-content/60 font-medium">{t('supportsImagesLimit', 'Supports images · 20 MB limit per file')}</p>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                 <button

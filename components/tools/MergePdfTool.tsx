@@ -719,7 +719,7 @@ export default function MergePdfTool() {
                     {items.length === 1 ? t('addNextPdf', 'Add Next PDF') : t('addDocument', 'Add Document')}
                   </p>
                   <p className="text-[11px] text-base-content/50 mt-0.5">
-                    {t('clickBrowseOrDrop', 'Click to browse or drop file here')} · Up to 20 MB per file
+                    {t('supportsPdfsLimit', 'Supports PDFs · 20 MB limit per file')}
                   </p>
                 </div>
               </div>

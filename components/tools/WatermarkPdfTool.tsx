@@ -462,7 +462,7 @@ export default function WatermarkPdfTool() {
                       onChange={handleImageFileChange}
                       className="file-input file-input-bordered file-input-sm w-full rounded-xl"
                     />
-                    <p className="text-[11px] text-base-content/60 font-medium">Up to 20 MB per file</p>
+                    <p className="text-[11px] text-base-content/60 font-medium">{t('supportsImagesLimit', 'Supports images · 20 MB limit per file')}</p>
                   </div>
                 )}
 

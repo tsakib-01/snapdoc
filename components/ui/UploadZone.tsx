@@ -93,6 +93,16 @@ export default function UploadZone({
 
   const displayTitle = title === 'Drag & drop your files here' ? t('dropTitle', title) : t(title, title);
   const displaySubtitle = subtitle === 'or click to browse from your device' ? t('dropSubtitle', subtitle) : t(subtitle, subtitle);
+
+  // Friendly dynamic upload limit text based on file format
+  const lowerAccept = (accept || '').toLowerCase();
+  const isPdf = lowerAccept.includes('pdf');
+  const isImage = lowerAccept.includes('image') || lowerAccept.includes('png') || lowerAccept.includes('jpg') || lowerAccept.includes('jpeg') || lowerAccept.includes('webp');
+  const uploadLimitText = isPdf
+    ? t('supportsPdfsLimit', 'Supports PDFs · 20 MB limit per file')
+    : isImage
+    ? t('supportsImagesLimit', 'Supports images · 20 MB limit per file')
+    : t('supportsDocsLimit', 'Supports documents · 20 MB limit per file');
   const [internalLoading, setInternalLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingFileName, setLoadingFileName] = useState<string>('');
@@ -334,7 +344,7 @@ export default function UploadZone({
             {displayTitle}
           </h3>
           <p className="text-[11px] sm:text-sm text-base-content/60 mt-1 font-medium">
-            Up to 20 MB per file
+            {uploadLimitText}
           </p>
 
           <div className="mt-4 sm:mt-5 flex items-center justify-center">

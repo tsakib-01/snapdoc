@@ -125,7 +125,7 @@ export default function MergePdfTool() {
     if (!addedFiles) return;
     const oversized = Array.from(addedFiles).some((f) => f.size > 20 * 1024 * 1024);
     if (oversized) {
-      setError('One or more files exceeded the 20 MB upload limit per file.');
+      setError('Please choose files up to 20 MB each.');
     }
     const filesArray = Array.from(addedFiles).filter(
       (f) => (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) && f.size <= 20 * 1024 * 1024
@@ -719,7 +719,7 @@ export default function MergePdfTool() {
                     {items.length === 1 ? t('addNextPdf', 'Add Next PDF') : t('addDocument', 'Add Document')}
                   </p>
                   <p className="text-[11px] text-base-content/50 mt-0.5">
-                    {t('clickBrowseOrDrop', 'Click to browse or drop file here')} · 20 MB upload limit per file
+                    {t('clickBrowseOrDrop', 'Click to browse or drop file here')} · Up to 20 MB per file
                   </p>
                 </div>
               </div>

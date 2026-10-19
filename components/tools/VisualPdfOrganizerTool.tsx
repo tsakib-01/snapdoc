@@ -201,7 +201,7 @@ export default function VisualPdfOrganizerTool({
     setError(null);
     if (!newFile) return;
     if (newFile.size > 20 * 1024 * 1024) {
-      setError('File exceeds 20 MB upload limit per file.');
+      setError('Please choose a file smaller than 20 MB.');
       return;
     }
 

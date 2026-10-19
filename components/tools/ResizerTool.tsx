@@ -75,7 +75,7 @@ export default function ResizerTool() {
     if (!filesToAdd || filesToAdd.length === 0) return;
     const oversized = filesToAdd.some((f) => f.size > 20 * 1024 * 1024);
     if (oversized) {
-      setError('One or more files exceeded the 20 MB upload limit per file.');
+      setError('Please choose files up to 20 MB each.');
     }
     const validFiles = filesToAdd.filter((f) => f.size <= 20 * 1024 * 1024);
     if (validFiles.length === 0) return;

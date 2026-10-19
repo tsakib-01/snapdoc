@@ -1327,7 +1327,7 @@ export default function SignPdfTool() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-base-content">{t('uploadSealTitle', 'Upload Seal or Stamp Image')}</p>
-                          <p className="text-xs text-base-content/60">{t('uploadSealFormats', 'PNG, JPG, WebP or SVG supported')} (20 MB upload limit per file)</p>
+                          <p className="text-xs text-base-content/60">{t('uploadSealFormats', 'PNG, JPG, WebP or SVG supported')} · Up to 20 MB per file</p>
                         </div>
                         <button type="button" className="btn btn-xs btn-primary rounded-lg font-bold">
                           {t('browseFiles', 'Browse Files')}
@@ -1644,7 +1644,7 @@ export default function SignPdfTool() {
                   }}
                   className="file-input file-input-bordered file-input-md w-full rounded-2xl"
                 />
-                <p className="text-[11px] text-base-content/60 font-medium">20 MB upload limit per file</p>
+                <p className="text-[11px] text-base-content/60 font-medium">Up to 20 MB per file</p>
                 {uploadedSignatureUrl && (
                   <div className="p-3 rounded-2xl border border-base-300 bg-base-200/40 flex items-center justify-center">
                     <img

@@ -86,7 +86,7 @@ export default function ImageToPdfTool({
   const handleAddMoreFiles = async (additionalFiles: File[]) => {
     const oversized = additionalFiles.some((f) => f.size > 20 * 1024 * 1024);
     if (oversized) {
-      setError('One or more files exceeded the 20 MB upload limit per file.');
+      setError('Please choose files up to 20 MB each.');
     }
     const validFiles = additionalFiles.filter((f) => f.size <= 20 * 1024 * 1024);
     if (validFiles.length === 0) return;
@@ -436,7 +436,7 @@ export default function ImageToPdfTool({
                 <Plus className="w-5 h-5" />
               </div>
               <span className="text-xs font-bold text-base-content">{t('addMoreImages', 'Add More Images')}</span>
-              <span className="text-[10px] text-base-content/50 mt-0.5">{t('supportedImageFormats', 'JPG, PNG, WebP')} · 20 MB upload limit per file</span>
+              <span className="text-[10px] text-base-content/50 mt-0.5">{t('supportedImageFormats', 'JPG, PNG, WebP')} · Up to 20 MB per file</span>
               <input
                 ref={addMoreInputRef}
                 type="file"

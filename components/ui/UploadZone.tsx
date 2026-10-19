@@ -334,7 +334,7 @@ export default function UploadZone({
             {displayTitle}
           </h3>
           <p className="text-[11px] sm:text-sm text-base-content/60 mt-1 font-medium">
-            20 MB upload limit per file
+            Up to 20 MB per file
           </p>
 
           <div className="mt-4 sm:mt-5 flex items-center justify-center">

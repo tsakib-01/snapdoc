@@ -85,7 +85,7 @@ export default function WatermarkPdfTool() {
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] || null;
     if (f && f.size > 20 * 1024 * 1024) {
-      setError('Logo image exceeds 20 MB upload limit per file.');
+      setError('Please choose a logo image smaller than 20 MB.');
       return;
     }
     setImageFile(f);
@@ -462,7 +462,7 @@ export default function WatermarkPdfTool() {
                       onChange={handleImageFileChange}
                       className="file-input file-input-bordered file-input-sm w-full rounded-xl"
                     />
-                    <p className="text-[11px] text-base-content/60 font-medium">20 MB upload limit per file</p>
+                    <p className="text-[11px] text-base-content/60 font-medium">Up to 20 MB per file</p>
                   </div>
                 )}
 

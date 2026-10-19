@@ -28,7 +28,7 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
   }
 
   if (file.size > MAX_IMAGE_FILE_SIZE) {
-    return { valid: false, error: 'File exceeds 20 MB upload limit per file.' };
+    return { valid: false, error: 'Please choose an image smaller than 20 MB.' };
   }
 
   const isAllowed = ALLOWED_IMAGE_TYPES.includes(file.type) ||
@@ -47,7 +47,7 @@ export function validatePdfFile(file: File): { valid: boolean; error?: string } 
   }
 
   if (file.size > MAX_PDF_FILE_SIZE) {
-    return { valid: false, error: 'File exceeds 20 MB upload limit per file.' };
+    return { valid: false, error: 'Please choose a PDF smaller than 20 MB.' };
   }
 
   const isAllowed = ALLOWED_PDF_TYPES.includes(file.type) || /\.pdf$/i.test(file.name);

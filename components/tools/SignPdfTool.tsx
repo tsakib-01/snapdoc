@@ -929,7 +929,7 @@ export default function SignPdfTool() {
     <div className="w-full mx-auto select-none">
       {/* 0. Initial Upload Screen & Professional Large File Loading */}
       {(!file || loadingPdf) && (
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card p-3 sm:p-6 lg:p-8">
           <UploadZone
             accept=".pdf,application/pdf"
             maxFiles={1}
@@ -2343,19 +2343,21 @@ export default function SignPdfTool() {
 
       {/* 6. Success Download Screen */}
       {resultData && (
-        <ResultCard
-          newSize={resultData.size}
-          originalSize={file?.size || resultData.size}
-          filename={resultData.filename}
-          dataUrl={resultData.dataUrl}
-          format="PDF"
-          title={t('signedPdfSuccess', 'Your PDF has been signed successfully!')}
-          subtitle={t('signedPdfDesc', 'Your digital signatures and annotations have been securely flattened into your document.')}
-          resetLabel={t('signAnotherDoc', 'Sign Another Document')}
-          extraInfo={pages.length > 0 ? `${pages.length} ${t('pages', 'Pages')}` : undefined}
-          pageCount={pages.length}
-          onReset={handleReset}
-        />
+        <div className="max-w-4xl mx-auto bg-base-100 rounded-2xl sm:rounded-3xl border border-base-300 shadow-card p-3 sm:p-6 lg:p-8">
+          <ResultCard
+            newSize={resultData.size}
+            originalSize={file?.size || resultData.size}
+            filename={resultData.filename}
+            dataUrl={resultData.dataUrl}
+            format="PDF"
+            title={t('signedPdfSuccess', 'Your PDF has been signed successfully!')}
+            subtitle={t('signedPdfDesc', 'Your digital signatures and annotations have been securely flattened into your document.')}
+            resetLabel={t('signAnotherDoc', 'Sign Another Document')}
+            extraInfo={pages.length > 0 ? `${pages.length} ${t('pages', 'Pages')}` : undefined}
+            pageCount={pages.length}
+            onReset={handleReset}
+          />
+        </div>
       )}
     </div>
   );

@@ -174,28 +174,28 @@ export default function HomePage() {
 
       {/* Main Tools Showcase Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        {/* Mobile: Category Dropdown (replaces horizontal scroll on mobile) */}
-        <div className="sm:hidden relative w-full max-w-sm mx-auto z-20" ref={categoryDropdownRef}>
+        {/* Mobile: Category Dropdown (compact half-width pill selector) */}
+        <div className="sm:hidden relative flex justify-center z-20" ref={categoryDropdownRef}>
           <button
             type="button"
             onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-base-100 hover:bg-base-200/60 border border-base-300 rounded-2xl shadow-sm text-sm font-bold text-base-content transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.99]"
+            className="inline-flex items-center justify-between gap-3 px-3.5 py-2 bg-base-100 hover:bg-base-200/60 border border-base-300 rounded-2xl shadow-sm text-xs font-bold text-base-content transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 active:scale-[0.98]"
             aria-expanded={isCategoryDropdownOpen}
             aria-label="Filter tools by category"
           >
-            <div className="flex items-center gap-2.5 truncate">
-              <span className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-lg bg-primary/10 text-primary shrink-0">
                 {getCategoryIcon(activeCategory.id)}
               </span>
-              <span className="truncate font-bold text-sm">
+              <span className="font-bold text-xs whitespace-nowrap">
                 {activeCategoryName}
               </span>
-              <span className="badge badge-sm badge-ghost font-medium">
+              <span className="badge badge-xs badge-ghost font-medium">
                 {activeCategory.count}
               </span>
             </div>
             <ChevronDown
-              className={`w-4 h-4 text-base-content/60 transition-transform duration-200 shrink-0 ml-2 ${
+              className={`w-3.5 h-3.5 text-base-content/60 transition-transform duration-200 shrink-0 ${
                 isCategoryDropdownOpen ? 'rotate-180 text-primary' : ''
               }`}
             />
@@ -203,7 +203,7 @@ export default function HomePage() {
 
           {/* Dropdown Menu */}
           {isCategoryDropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-2 p-1.5 bg-base-100 border border-base-300 rounded-2xl shadow-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150 z-30">
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 p-1.5 bg-base-100 border border-base-300 rounded-2xl shadow-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150 z-30">
               {CATEGORIES.map((cat) => {
                 const catName = getCategoryName(cat);
                 const isSelected = selectedCategory === cat.id;

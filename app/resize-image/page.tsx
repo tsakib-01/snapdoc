@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default function ResizeImagePage() {
   return (
-    <ToolLayout tool={tool} isWide={true}>
+    <ToolLayout tool={tool}>
       <ResizerTool />
     </ToolLayout>
   );

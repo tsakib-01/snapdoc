@@ -98,6 +98,8 @@ export default function HomePage() {
       query === '' ||
       tool.name.toLowerCase().includes(query) ||
       tool.description.toLowerCase().includes(query) ||
+      tool.slug.toLowerCase().includes(query) ||
+      (tool.shortName && tool.shortName.toLowerCase().includes(query)) ||
       tool.keywords.some((k) => k.toLowerCase().includes(query));
 
     return matchesCategory && matchesQuery;

@@ -89,6 +89,8 @@ export default function SearchModal({ isOpen, onClose, onOpen }: SearchModalProp
         return (
           tool.name.toLowerCase().includes(normalizedQuery) ||
           tool.description.toLowerCase().includes(normalizedQuery) ||
+          tool.slug.toLowerCase().includes(normalizedQuery) ||
+          (tool.shortName && tool.shortName.toLowerCase().includes(normalizedQuery)) ||
           tool.category.toLowerCase().includes(normalizedQuery) ||
           tool.keywords.some((k) => k.toLowerCase().includes(normalizedQuery))
         );

@@ -91,6 +91,8 @@ export default function AllToolsPage() {
       q === '' ||
       t.name.toLowerCase().includes(q) ||
       t.description.toLowerCase().includes(q) ||
+      t.slug.toLowerCase().includes(q) ||
+      (t.shortName && t.shortName.toLowerCase().includes(q)) ||
       t.keywords.some((k) => k.toLowerCase().includes(q));
 
     return matchesCat && matchesQ;

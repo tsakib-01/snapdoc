@@ -108,7 +108,7 @@ export const TOOLS: ToolMeta[] = [
     category: 'compress',
     icon: 'Minimize2',
     acceptedTypes: 'image/jpeg,image/jpg,image/png,image/webp',
-    keywords: ['compress jpg to 20kb', '20kb photo converter', 'resize image 20 kb', '20kb photo', 'passport 20kb'],
+    keywords: ['compress jpg to 20kb', '20kb', '20 kb', 'jpg 20kb', 'jpg to 20kb', 'compress to 20kb', '20kb photo converter', 'resize image 20 kb', '20kb photo', 'passport 20kb'],
     features: [
       'Target 20 KB precision optimization',
       'Maintains legible text and facial clarity',
@@ -136,7 +136,7 @@ export const TOOLS: ToolMeta[] = [
     category: 'compress',
     icon: 'Minimize2',
     acceptedTypes: 'image/jpeg,image/jpg,image/png,image/webp',
-    keywords: ['compress jpg to 50kb', '50kb photo compressor', 'resize photo to 50kb', 'visa photo 50kb'],
+    keywords: ['compress jpg to 50kb', '50kb', '50 kb', 'jpg 50kb', 'jpg to 50kb', 'compress to 50kb', '50kb photo compressor', 'resize photo to 50kb', 'visa photo 50kb', 'compress 50kb'],
     features: [
       'Accurate 50 KB ceiling output',
       'Preserves color fidelity and sharpness',
@@ -164,7 +164,7 @@ export const TOOLS: ToolMeta[] = [
     category: 'compress',
     icon: 'Minimize2',
     acceptedTypes: 'image/jpeg,image/jpg,image/png,image/webp',
-    keywords: ['compress jpg to 100kb', '100kb image converter', 'shrink photo to 100kb'],
+    keywords: ['compress jpg to 100kb', '100kb', '100 kb', 'jpg 100kb', 'jpg to 100kb', 'compress to 100kb', '100kb image converter', 'shrink photo to 100kb'],
     features: ['Crisp 100KB output', 'Ideal for e-commerce and websites', 'Instant processing'],
     howTo: [
       { step: '1', text: 'Upload your JPG image.' },
@@ -183,7 +183,7 @@ export const TOOLS: ToolMeta[] = [
     category: 'compress',
     icon: 'Minimize2',
     acceptedTypes: 'image/jpeg,image/jpg,image/png,image/webp',
-    keywords: ['compress jpg to 200kb', '200kb photo converter', 'shrink image to 200kb'],
+    keywords: ['compress jpg to 200kb', '200kb', '200 kb', 'jpg 200kb', 'jpg to 200kb', 'compress to 200kb', '200kb photo converter', 'shrink image to 200kb'],
     features: ['High quality 200KB output', 'Fast in-memory compression'],
     howTo: [
       { step: '1', text: 'Upload your image.' },
@@ -202,7 +202,7 @@ export const TOOLS: ToolMeta[] = [
     category: 'compress',
     icon: 'Minimize2',
     acceptedTypes: 'image/jpeg,image/jpg,image/png,image/webp',
-    keywords: ['compress jpg to 500kb', '500kb photo compressor'],
+    keywords: ['compress jpg to 500kb', '500kb', '500 kb', 'jpg 500kb', 'jpg to 500kb', 'compress to 500kb', '500kb photo compressor'],
     features: ['Retains near-lossless clarity', 'Ultra-fast conversion'],
     howTo: [
       { step: '1', text: 'Upload your file.' },

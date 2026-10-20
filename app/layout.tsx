@@ -170,6 +170,13 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
+        {/* Monetag MultiTag */}
+        <script
+          src="https://quge5.com/88/tag.min.js"
+          data-zone="299223"
+          async
+          data-cfasync="false"
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script

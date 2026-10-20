@@ -176,6 +176,12 @@ export default function RootLayout({
             __html: `(function(s){s.dataset.zone='12082341',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));`,
           }}
         />
+        {/* Monetag Push Notifications */}
+        <script
+          src="https://5gvci.com/act/files/tag.min.js?z=12082359"
+          data-cfasync="false"
+          async
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script

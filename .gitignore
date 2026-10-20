@@ -42,3 +42,8 @@ converstion_of_files/uploads/
 converted/
 uploads/
 
+# marketing / spreadsheets
+*.xlsx
+*.xls
+~$*
+

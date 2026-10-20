@@ -57,11 +57,11 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="col-span-2 space-y-4">
             <Link href="/" className="flex items-center shrink-0" aria-label="JPGEasy Home">
-              <div className="h-8 w-auto flex items-center shrink-0">
+              <div className="h-[26px] w-auto flex items-center shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-light.png" alt="JPGEasy Logo" className="h-8 w-auto object-contain logo-light" />
+                <img src="/logo-light.png" alt="JPGEasy Logo" className="h-[26px] w-auto object-contain logo-light" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-dark.png" alt="JPGEasy Logo" className="h-8 w-auto object-contain logo-dark" />
+                <img src="/logo-dark.png" alt="JPGEasy Logo" className="h-[26px] w-auto object-contain logo-dark" />
               </div>
             </Link>
             <p className="text-xs text-base-content/70 leading-relaxed max-w-sm">

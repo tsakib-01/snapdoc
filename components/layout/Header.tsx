@@ -19,11 +19,11 @@ export default function Header() {
           {/* Logo & Brand */}
           <div className="flex items-center gap-3 sm:gap-6 min-w-0 shrink-0">
             <Link href="/" className="flex items-center group shrink-0" aria-label="JPGEasy Home">
-              <div className="h-8 sm:h-9 w-auto flex items-center justify-center group-hover:opacity-90 transition-opacity shrink-0">
+              <div className="h-[26px] w-auto flex items-center justify-center group-hover:opacity-90 transition-opacity shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-light.png" alt="JPGEasy Logo" className="h-8 sm:h-9 w-auto object-contain logo-light" />
+                <img src="/logo-light.png" alt="JPGEasy Logo" className="h-[26px] w-auto object-contain logo-light" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-dark.png" alt="JPGEasy Logo" className="h-8 sm:h-9 w-auto object-contain logo-dark" />
+                <img src="/logo-dark.png" alt="JPGEasy Logo" className="h-[26px] w-auto object-contain logo-dark" />
               </div>
             </Link>
 

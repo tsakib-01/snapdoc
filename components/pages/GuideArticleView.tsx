@@ -214,7 +214,7 @@ export default function GuideArticleView({
               {t('readyToOptimize', 'Ready to optimize your documents?')}
             </h3>
             <p className="text-xs sm:text-sm text-base-content/70 max-w-md mx-auto">
-              {t('tryFreeToolsDesc', "Use SnapDoc's fast, free, and completely in-memory tools with no file upload limits or registration.")}
+              {t('tryFreeToolsDesc', "Use JPGEASY's fast, free, and completely in-memory tools with no file upload limits or registration.")}
             </p>
             <Link
               href={`/${guide.primaryToolSlug}`}

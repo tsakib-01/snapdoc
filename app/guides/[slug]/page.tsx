@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!guide) {
     return {
-      title: 'Guide Not Found – SnapDoc',
+      title: 'Guide Not Found – JPGEASY',
     };
   }
 
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: guide.metaTitle,
       description: guide.metaDescription,
       url: canonicalUrl,
-      siteName: 'SnapDoc',
+      siteName: 'JPGEASY',
       locale: 'en_US',
       type: 'article',
       publishedTime: guide.publishedAt,
@@ -84,12 +84,12 @@ export default async function GuideArticlePage({ params }: PageProps) {
     dateModified: guide.updatedAt,
     author: {
       '@type': 'Organization',
-      name: 'SnapDoc',
+      name: 'JPGEASY',
       url: baseUrl,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'SnapDoc',
+      name: 'JPGEASY',
       logo: {
         '@type': 'ImageObject',
         url: `${baseUrl}/logo.png`,

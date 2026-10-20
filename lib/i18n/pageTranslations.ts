@@ -1,5 +1,5 @@
 /**
- * Comprehensive page content translations for SnapDoc
+ * Comprehensive page content translations for JPGEASY
  * Covers Homepage, Tools Directory, ToolLayout (About, HowTo, Features, FAQs),
  * UploadZone, SearchModal, and interactive tool interfaces across 27 languages.
  */

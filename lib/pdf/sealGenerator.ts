@@ -271,7 +271,7 @@ export async function generateOfficialSeal(config: SealConfig): Promise<string> 
     // Footer Security Code
     ctx.font = '13px monospace';
     ctx.fillStyle = color;
-    ctx.fillText('SNAPDOC VERIFIED DIGITAL CREDENTIAL • AUDIT COMPLIANT', cx, pad + 480);
+    ctx.fillText('JPGEASY VERIFIED DIGITAL CREDENTIAL • AUDIT COMPLIANT', cx, pad + 480);
   }
 
   return canvas.toDataURL('image/png');

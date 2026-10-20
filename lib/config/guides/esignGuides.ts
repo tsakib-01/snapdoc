@@ -14,7 +14,7 @@ export const ESIGN_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-10",
     "featured": true,
     "primaryToolSlug": "sign-pdf",
-    "primaryToolName": "SnapDoc eSign Tool",
+    "primaryToolName": "JPGEASY eSign Tool",
     "primaryToolCtaText": "Sign Your PDF Online",
     "relatedToolSlugs": [
       "flatten-pdf",
@@ -41,7 +41,7 @@ export const ESIGN_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Sign a PDF on SnapDoc"
+        "text": "Step-by-Step: How to Sign a PDF on JPGEASY"
       },
       {
         "id": "securing-your-signed-pdf",
@@ -79,7 +79,7 @@ export const ESIGN_GUIDES: GuideArticle[] = [
         "id": "three-ways-to-sign",
         "title": "Three Ways to Create Your Signature: Draw, Type, or Upload",
         "paragraphs": [
-          "SnapDoc offers three flexible methods to create your signature:",
+          "JPGEASY offers three flexible methods to create your signature:",
           "1. Draw: Use your mouse cursor, trackpad, or touchscreen finger/stylus on our smooth drawing canvas.",
           "2. Type: Enter your legal name and choose from elegant cursive handwriting calligraphy styles.",
           "3. Upload: Upload an existing high-resolution photo or transparent PNG scan of your real-world pen signature."
@@ -87,7 +87,7 @@ export const ESIGN_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Sign a PDF on SnapDoc",
+        "title": "Step-by-Step: How to Sign a PDF on JPGEASY",
         "paragraphs": [
           "Sign your document in four easy steps:"
         ],
@@ -95,7 +95,7 @@ export const ESIGN_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF document",
-            "text": "Drop your contract or form into SnapDoc's Sign PDF Online tool."
+            "text": "Drop your contract or form into JPGEASY's Sign PDF Online tool."
           },
           {
             "number": 2,
@@ -118,18 +118,18 @@ export const ESIGN_GUIDES: GuideArticle[] = [
         "id": "securing-your-signed-pdf",
         "title": "Securing Your Signed PDF Against Post-Sign Edits",
         "paragraphs": [
-          "Once you have signed a document, you should ensure nobody can tamper with your signature layer or modify underlying clauses. SnapDoc automatically bakes your signature into the document layer, and you can run the file through our Flatten PDF tool for permanent field locking."
+          "Once you have signed a document, you should ensure nobody can tamper with your signature layer or modify underlying clauses. JPGEASY automatically bakes your signature into the document layer, and you can run the file through our Flatten PDF tool for permanent field locking."
         ]
       }
     ],
     "faqs": [
       {
         "q": "Can I sign a PDF from my iPhone or Android phone?",
-        "a": "Yes! SnapDoc's signature drawing pad works exceptionally well with touchscreens and styluses on smartphones and tablets."
+        "a": "Yes! JPGEASY's signature drawing pad works exceptionally well with touchscreens and styluses on smartphones and tablets."
       },
       {
-        "q": "Is my signed document stored on SnapDoc servers?",
-        "a": "Never. SnapDoc processes documents completely in memory and deletes all buffers immediately. We never save, view, or catalog your private legal agreements."
+        "q": "Is my signed document stored on JPGEASY servers?",
+        "a": "Never. JPGEASY processes documents completely in memory and deletes all buffers immediately. We never save, view, or catalog your private legal agreements."
       },
       {
         "q": "Can I add multiple signatures or stamps to the same PDF?",
@@ -150,7 +150,7 @@ export const ESIGN_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-10",
     "featured": false,
     "primaryToolSlug": "sign-pdf",
-    "primaryToolName": "SnapDoc eSign & Seal Suite",
+    "primaryToolName": "JPGEASY eSign & Seal Suite",
     "primaryToolCtaText": "Explore eSign & Seal Tools",
     "relatedToolSlugs": [
       "watermark-pdf",
@@ -253,8 +253,8 @@ export const ESIGN_GUIDES: GuideArticle[] = [
         "a": "A visual image seal is an electronic stamp graphic placed on the PDF page. A cryptographic seal contains an encrypted digital certificate that cryptographically locks the file from unauthorized alterations."
       },
       {
-        "q": "Can SnapDoc help me stamp corporate logos or visual seals?",
-        "a": "Yes! SnapDoc's eSign and Watermark tools allow you to upload corporate emblem stamps, adjust transparency and position, and flatten the document securely."
+        "q": "Can JPGEASY help me stamp corporate logos or visual seals?",
+        "a": "Yes! JPGEASY's eSign and Watermark tools allow you to upload corporate emblem stamps, adjust transparency and position, and flatten the document securely."
       }
     ]
   }

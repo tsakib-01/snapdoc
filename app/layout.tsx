@@ -7,8 +7,8 @@ import ConnectionStatusBanner from '@/components/ui/ConnectionStatusBanner';
 export const metadata: Metadata = {
   metadataBase: new URL('https://snapdoc.app'),
   title: {
-    default: 'SnapDoc - Free Online Image & PDF Tools | Compress, Resize, Convert',
-    template: '%s | SnapDoc Tools',
+    default: 'JPGEASY - Free Online Image & PDF Tools | Compress, Resize, Convert',
+    template: '%s | JPGEASY Tools',
   },
   description:
     'Ultra-fast, privacy-first online tools to compress JPG to 10KB/20KB/50KB/100KB, resize images, convert Excel to PDF, merge & split PDFs, e-sign documents, and chat with PDF. 100% free with in-memory processing and zero permanent storage.',
@@ -51,9 +51,9 @@ export const metadata: Metadata = {
     'online pdf editor',
     'pdf converter',
   ],
-  authors: [{ name: 'SnapDoc Team' }, { name: 'Tasnim Sakib' }],
+  authors: [{ name: 'JPGEASY Team' }, { name: 'Tasnim Sakib' }],
   creator: 'Tasnim Sakib',
-  publisher: 'SnapDoc',
+  publisher: 'JPGEASY',
   category: 'technology',
   classification: 'Utilities',
   formatDetection: {
@@ -65,26 +65,26 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://snapdoc.app',
-    siteName: 'SnapDoc',
-    title: 'SnapDoc - Free Online Image & PDF Utilities',
+    siteName: 'JPGEASY',
+    title: 'JPGEASY - Free Online Image & PDF Utilities',
     description: 'Compress, resize, convert, e-sign, and optimize images & PDFs in memory with zero permanent storage.',
     images: [
       {
         url: 'https://snapdoc.app/logo.png',
         width: 512,
         height: 512,
-        alt: 'SnapDoc - Free Online Image and PDF Tools',
+        alt: 'JPGEASY - Free Online Image and PDF Tools',
         type: 'image/png',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SnapDoc - Free Online Image & PDF Utilities',
+    title: 'JPGEASY - Free Online Image & PDF Utilities',
     description: 'Compress, resize, convert, e-sign, and optimize images & PDFs in memory with zero permanent storage.',
     images: ['https://snapdoc.app/logo.png'],
-    creator: '@snapdoc',
-    site: '@snapdoc',
+    creator: '@jpgeasy',
+    site: '@jpgeasy',
   },
   robots: {
     index: true,
@@ -110,7 +110,7 @@ export const metadata: Metadata = {
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'SnapDoc',
+  name: 'JPGEASY',
   url: 'https://snapdoc.app',
   logo: 'https://snapdoc.app/logo.png',
   description: 'Ultra-fast, privacy-first online tools for image and PDF compression, conversion, e-signing, and organization.',
@@ -125,8 +125,8 @@ const organizationSchema = {
 const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'SnapDoc',
-  alternateName: ['SnapDoc Tools', 'SnapDoc App'],
+  name: 'JPGEASY',
+  alternateName: ['JPGEASY Tools', 'JPGEASY App'],
   url: 'https://snapdoc.app',
   description: 'Free online image and PDF processing suite with in-memory execution.',
   potentialAction: {
@@ -139,7 +139,7 @@ const websiteSchema = {
 const softwareApplicationSchema = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'SnapDoc',
+  name: 'JPGEASY',
   url: 'https://snapdoc.app',
   applicationCategory: 'MultimediaApplication',
   operatingSystem: 'All modern web browsers (Chrome, Edge, Safari, Firefox)',

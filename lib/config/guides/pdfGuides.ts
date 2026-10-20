@@ -14,7 +14,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-07",
     "featured": true,
     "primaryToolSlug": "compress-pdf",
-    "primaryToolName": "SnapDoc PDF Compressor",
+    "primaryToolName": "JPGEASY PDF Compressor",
     "primaryToolCtaText": "Compress Your PDF Free",
     "relatedToolSlugs": [
       "merge-pdf",
@@ -37,7 +37,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Compress PDF on SnapDoc"
+        "text": "Step-by-Step: How to Compress PDF on JPGEASY"
       },
       {
         "id": "tips-for-scanned-documents",
@@ -62,7 +62,7 @@ export const PDF_GUIDES: GuideArticle[] = [
         "id": "how-pdf-compression-works",
         "title": "How Modern PDF Compression Works",
         "paragraphs": [
-          "SnapDoc's PDF compressor applies multi-tier structural optimization:",
+          "JPGEASY's PDF compressor applies multi-tier structural optimization:",
           "1. Stream Compression: Deflates uncompressed text and content stream dictionaries using high-ratio FlateDecode algorithms.",
           "2. Image Optimization: Downsamples heavy embedded raster images to standard screen resolutions (150\u2013200 DPI) while preserving vector font outlines.",
           "3. Object Cleaning: Removes orphaned cross-reference tables, metadata duplicates, and lingering deletion history."
@@ -75,7 +75,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Compress PDF on SnapDoc",
+        "title": "Step-by-Step: How to Compress PDF on JPGEASY",
         "paragraphs": [
           "Shrinking your PDF takes only three simple steps:"
         ],
@@ -83,7 +83,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF file",
-            "text": "Drag and drop your PDF document into SnapDoc's Compress PDF tool."
+            "text": "Drag and drop your PDF document into JPGEASY's Compress PDF tool."
           },
           {
             "number": 2,
@@ -116,7 +116,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Are my sensitive business documents kept private?",
-        "a": "Yes. SnapDoc processes files entirely in memory and deletes all session buffers immediately upon completion. Nothing is stored in any database."
+        "a": "Yes. JPGEASY processes files entirely in memory and deletes all session buffers immediately upon completion. Nothing is stored in any database."
       }
     ]
   },
@@ -133,7 +133,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-08",
     "featured": true,
     "primaryToolSlug": "merge-pdf",
-    "primaryToolName": "SnapDoc PDF Merger",
+    "primaryToolName": "JPGEASY PDF Merger",
     "primaryToolCtaText": "Merge PDF Files Online",
     "relatedToolSlugs": [
       "split-pdf",
@@ -156,7 +156,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Merge PDFs on SnapDoc"
+        "text": "Step-by-Step: How to Merge PDFs on JPGEASY"
       },
       {
         "id": "troubleshooting-merges",
@@ -182,7 +182,7 @@ export const PDF_GUIDES: GuideArticle[] = [
         "title": "How to Prepare and Order Your Files Before Merging",
         "paragraphs": [
           "Before uploading, naming your source files with numerical prefixes (e.g. '01_Cover_Letter.pdf', '02_Resume.pdf', '03_Certificates.pdf') will automatically organize them in your desired sequence.",
-          "SnapDoc also provides an interactive drag-and-drop workspace where you can visually rearrange document cards before generating the final combined file."
+          "JPGEASY also provides an interactive drag-and-drop workspace where you can visually rearrange document cards before generating the final combined file."
         ],
         "callout": {
           "type": "info",
@@ -192,7 +192,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Merge PDFs on SnapDoc",
+        "title": "Step-by-Step: How to Merge PDFs on JPGEASY",
         "paragraphs": [
           "Follow these simple steps:"
         ],
@@ -200,7 +200,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF files",
-            "text": "Select up to 20 PDF documents and drag them into the SnapDoc Merge PDF upload area."
+            "text": "Select up to 20 PDF documents and drag them into the JPGEASY Merge PDF upload area."
           },
           {
             "number": 2,
@@ -210,7 +210,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 3,
             "title": "Click 'Merge PDF'",
-            "text": "SnapDoc stitches the documents together in memory with zero quality degradation."
+            "text": "JPGEASY stitches the documents together in memory with zero quality degradation."
           },
           {
             "number": 4,
@@ -230,7 +230,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "faqs": [
       {
         "q": "How many PDFs can I merge at once?",
-        "a": "You can merge up to 20 documents simultaneously on SnapDoc without any fees or page limits."
+        "a": "You can merge up to 20 documents simultaneously on JPGEASY without any fees or page limits."
       },
       {
         "q": "Will hyperlinks and bookmarks be preserved after merging?",
@@ -238,7 +238,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Can I merge PDFs on an iPhone or Android phone?",
-        "a": "Yes, SnapDoc's PDF Merger is completely mobile responsive and works directly in mobile browsers."
+        "a": "Yes, JPGEASY's PDF Merger is completely mobile responsive and works directly in mobile browsers."
       }
     ]
   },
@@ -255,7 +255,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-09",
     "featured": false,
     "primaryToolSlug": "split-pdf",
-    "primaryToolName": "SnapDoc PDF Splitter",
+    "primaryToolName": "JPGEASY PDF Splitter",
     "primaryToolCtaText": "Split Your PDF Online",
     "relatedToolSlugs": [
       "extract-pdf-pages",
@@ -278,7 +278,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Split a PDF on SnapDoc"
+        "text": "Step-by-Step: How to Split a PDF on JPGEASY"
       },
       {
         "id": "syntax-for-page-ranges",
@@ -309,12 +309,12 @@ export const PDF_GUIDES: GuideArticle[] = [
         "callout": {
           "type": "tip",
           "title": "ZIP Archive Download",
-          "text": "When splitting a document into individual pages, SnapDoc bundles them into a clean ZIP folder so you don't have to download files one by one."
+          "text": "When splitting a document into individual pages, JPGEASY bundles them into a clean ZIP folder so you don't have to download files one by one."
         }
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Split a PDF on SnapDoc",
+        "title": "Step-by-Step: How to Split a PDF on JPGEASY",
         "paragraphs": [
           "Follow these instructions to split your document:"
         ],
@@ -322,7 +322,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF",
-            "text": "Select your document and upload it to SnapDoc's Split PDF tool."
+            "text": "Select your document and upload it to JPGEASY's Split PDF tool."
           },
           {
             "number": 2,
@@ -363,7 +363,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "q": "How do I split every page into a separate file?",
-        "a": "Select the 'Split all pages' option in SnapDoc. Each page will be saved as its own PDF inside a ZIP archive."
+        "a": "Select the 'Split all pages' option in JPGEASY. Each page will be saved as its own PDF inside a ZIP archive."
       }
     ]
   },
@@ -380,7 +380,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-09",
     "featured": false,
     "primaryToolSlug": "rotate-pdf",
-    "primaryToolName": "SnapDoc PDF Rotator",
+    "primaryToolName": "JPGEASY PDF Rotator",
     "primaryToolCtaText": "Rotate PDF Pages Free",
     "relatedToolSlugs": [
       "organize-pdf",
@@ -403,7 +403,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: Rotating PDF Pages on SnapDoc"
+        "text": "Step-by-Step: Rotating PDF Pages on JPGEASY"
       },
       {
         "id": "rotating-single-pages",
@@ -421,7 +421,7 @@ export const PDF_GUIDES: GuideArticle[] = [
         "title": "Temporary Viewer Rotation vs. Permanent PDF Rotation",
         "paragraphs": [
           "When you press the rotate button in Adobe Acrobat Reader or Google Chrome, it changes the runtime viewport angle in your application cache. It does not update the internal PDF `/Rotate` dictionary key of the document object.",
-          "To fix the document permanently for all recipients, the document's MediaBox coordinates and rotation dictionary must be re-stamped. SnapDoc updates the actual file specification so your pages stay upright on every device."
+          "To fix the document permanently for all recipients, the document's MediaBox coordinates and rotation dictionary must be re-stamped. JPGEASY updates the actual file specification so your pages stay upright on every device."
         ]
       },
       {
@@ -433,7 +433,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: Rotating PDF Pages on SnapDoc",
+        "title": "Step-by-Step: Rotating PDF Pages on JPGEASY",
         "paragraphs": [
           "Fix your PDF orientation in seconds with visual thumbnails:"
         ],
@@ -441,7 +441,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF",
-            "text": "Drop your PDF document into SnapDoc's Rotate PDF tool."
+            "text": "Drop your PDF document into JPGEASY's Rotate PDF tool."
           },
           {
             "number": 2,
@@ -464,7 +464,7 @@ export const PDF_GUIDES: GuideArticle[] = [
         "id": "rotating-single-pages",
         "title": "How to Rotate Individual Pages Selectively",
         "paragraphs": [
-          "In documents containing mixed portrait text and landscape diagrams or financial tables, rotating all pages is counterproductive. SnapDoc allows you to hover over only the landscape pages and rotate them 90\u00b0 while leaving standard portrait pages completely untouched."
+          "In documents containing mixed portrait text and landscape diagrams or financial tables, rotating all pages is counterproductive. JPGEASY allows you to hover over only the landscape pages and rotate them 90\u00b0 while leaving standard portrait pages completely untouched."
         ],
         "callout": {
           "type": "info",
@@ -476,7 +476,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "faqs": [
       {
         "q": "Does rotating a PDF permanently affect how other people see it?",
-        "a": "Yes! When you download the rotated PDF from SnapDoc, the rotation is written permanently into the file structure so it opens right-side up for everyone."
+        "a": "Yes! When you download the rotated PDF from JPGEASY, the rotation is written permanently into the file structure so it opens right-side up for everyone."
       },
       {
         "q": "Can I rotate only odd or even pages?",
@@ -501,7 +501,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-09",
     "featured": false,
     "primaryToolSlug": "delete-pdf-pages",
-    "primaryToolName": "SnapDoc PDF Page Remover",
+    "primaryToolName": "JPGEASY PDF Page Remover",
     "primaryToolCtaText": "Delete PDF Pages Online",
     "relatedToolSlugs": [
       "organize-pdf",
@@ -524,7 +524,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Delete Pages on SnapDoc"
+        "text": "Step-by-Step: How to Delete Pages on JPGEASY"
       },
       {
         "id": "privacy-considerations",
@@ -548,7 +548,7 @@ export const PDF_GUIDES: GuideArticle[] = [
         "id": "visual-page-selection",
         "title": "Visual Thumbnail Selection vs. Page Number Entry",
         "paragraphs": [
-          "Guessing page numbers from memory often leads to accidentally deleting the wrong invoice or signature page. SnapDoc generates real-time visual thumbnail previews of every page, allowing you to click the trash can icon directly on the exact thumbnail you want to discard."
+          "Guessing page numbers from memory often leads to accidentally deleting the wrong invoice or signature page. JPGEASY generates real-time visual thumbnail previews of every page, allowing you to click the trash can icon directly on the exact thumbnail you want to discard."
         ],
         "callout": {
           "type": "tip",
@@ -558,7 +558,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Delete Pages on SnapDoc",
+        "title": "Step-by-Step: How to Delete Pages on JPGEASY",
         "paragraphs": [
           "Here is the easiest way to remove pages:"
         ],
@@ -566,7 +566,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF",
-            "text": "Select your document and upload it to SnapDoc's Delete PDF Pages tool."
+            "text": "Select your document and upload it to JPGEASY's Delete PDF Pages tool."
           },
           {
             "number": 2,
@@ -621,7 +621,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-09",
     "featured": false,
     "primaryToolSlug": "watermark-pdf",
-    "primaryToolName": "SnapDoc PDF Watermarker",
+    "primaryToolName": "JPGEASY PDF Watermarker",
     "primaryToolCtaText": "Watermark Your PDF Online",
     "relatedToolSlugs": [
       "add-page-numbers-to-pdf",
@@ -644,7 +644,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: Adding a Watermark on SnapDoc"
+        "text": "Step-by-Step: Adding a Watermark on JPGEASY"
       },
       {
         "id": "opacity-and-positioning",
@@ -681,7 +681,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: Adding a Watermark on SnapDoc",
+        "title": "Step-by-Step: Adding a Watermark on JPGEASY",
         "paragraphs": [
           "Applying a watermark takes less than a minute:"
         ],
@@ -689,7 +689,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF file",
-            "text": "Drag and drop your document into SnapDoc's Watermark PDF tool."
+            "text": "Drag and drop your document into JPGEASY's Watermark PDF tool."
           },
           {
             "number": 2,
@@ -719,7 +719,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "faqs": [
       {
         "q": "Will the watermark appear on every single page?",
-        "a": "Yes, SnapDoc stamps the configured watermark consistently across every page in the document."
+        "a": "Yes, JPGEASY stamps the configured watermark consistently across every page in the document."
       },
       {
         "q": "Can someone easily remove the watermark?",
@@ -727,7 +727,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Can I watermark large PDF files with hundreds of pages?",
-        "a": "Yes, SnapDoc processes documents with hundreds of pages smoothly in memory."
+        "a": "Yes, JPGEASY processes documents with hundreds of pages smoothly in memory."
       }
     ]
   },
@@ -744,7 +744,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-09",
     "featured": false,
     "primaryToolSlug": "add-page-numbers-to-pdf",
-    "primaryToolName": "SnapDoc Page Numbering Tool",
+    "primaryToolName": "JPGEASY Page Numbering Tool",
     "primaryToolCtaText": "Add Page Numbers to PDF",
     "relatedToolSlugs": [
       "watermark-pdf",
@@ -771,7 +771,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: Adding Page Numbers on SnapDoc"
+        "text": "Step-by-Step: Adding Page Numbers on JPGEASY"
       },
       {
         "id": "frequently-asked-questions",
@@ -792,7 +792,7 @@ export const PDF_GUIDES: GuideArticle[] = [
         "id": "placement-options-and-formats",
         "title": "Placement Positions and Numbering Formats",
         "paragraphs": [
-          "SnapDoc supports six distinct placement positions:",
+          "JPGEASY supports six distinct placement positions:",
           "Top Left, Top Center, Top Right (Headers)",
           "Bottom Left, Bottom Center, Bottom Right (Footers)",
           "You can also choose between standard numbering styles: '1, 2, 3...', 'Page 1 of 25', or '1 of 25'."
@@ -807,12 +807,12 @@ export const PDF_GUIDES: GuideArticle[] = [
         "id": "skipping-cover-pages",
         "title": "How to Skip Cover Pages and Title Sheets",
         "paragraphs": [
-          "Formal books and reports almost never print 'Page 1' on the front title cover. SnapDoc allows you to set a custom 'Start numbering from page' offset (e.g. Page 2). The front cover remains clean without any stamp, while page 2 begins sequentially as page 1 or page 2 based on your preference."
+          "Formal books and reports almost never print 'Page 1' on the front title cover. JPGEASY allows you to set a custom 'Start numbering from page' offset (e.g. Page 2). The front cover remains clean without any stamp, while page 2 begins sequentially as page 1 or page 2 based on your preference."
         ]
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: Adding Page Numbers on SnapDoc",
+        "title": "Step-by-Step: Adding Page Numbers on JPGEASY",
         "paragraphs": [
           "Paginate your PDF in seconds:"
         ],
@@ -820,7 +820,7 @@ export const PDF_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Upload your PDF",
-            "text": "Drop your PDF file into SnapDoc's Add Page Numbers tool."
+            "text": "Drop your PDF file into JPGEASY's Add Page Numbers tool."
           },
           {
             "number": 2,
@@ -851,7 +851,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "q": "What fonts are used for the stamped page numbers?",
-        "a": "SnapDoc uses clean, modern Helvetica/Arial typography that integrates naturally into any document design."
+        "a": "JPGEASY uses clean, modern Helvetica/Arial typography that integrates naturally into any document design."
       }
     ]
   },
@@ -868,7 +868,7 @@ export const PDF_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-10",
     "featured": true,
     "primaryToolSlug": "pdf-ocr",
-    "primaryToolName": "SnapDoc PDF OCR Extractor",
+    "primaryToolName": "JPGEASY PDF OCR Extractor",
     "primaryToolCtaText": "Extract Text from PDF Free",
     "relatedToolSlugs": [
       "pdf-to-jpg",
@@ -898,8 +898,8 @@ export const PDF_GUIDES: GuideArticle[] = [
         "text": "Key Benefits of Applying OCR to Business Documents"
       },
       {
-        "id": "how-to-use-snapdoc-ocr",
-        "text": "How to Extract Text with SnapDoc's OCR Tool"
+        "id": "how-to-use-jpgeasy-ocr",
+        "text": "How to Extract Text with JPGEASY's OCR Tool"
       },
       {
         "id": "frequently-asked-questions",
@@ -949,10 +949,10 @@ export const PDF_GUIDES: GuideArticle[] = [
         ]
       },
       {
-        "id": "how-to-use-snapdoc-ocr",
-        "title": "How to Extract Text with SnapDoc's OCR Tool",
+        "id": "how-to-use-jpgeasy-ocr",
+        "title": "How to Extract Text with JPGEASY's OCR Tool",
         "paragraphs": [
-          "SnapDoc makes text extraction effortless: upload your scanned PDF document to our PDF OCR tool. The engine extracts the recognized text streams directly into an interactive editor where you can copy to clipboard or export as a Word/text document."
+          "JPGEASY makes text extraction effortless: upload your scanned PDF document to our PDF OCR tool. The engine extracts the recognized text streams directly into an interactive editor where you can copy to clipboard or export as a Word/text document."
         ]
       }
     ],
@@ -967,7 +967,7 @@ export const PDF_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Can I copy tables extracted by OCR into Microsoft Excel?",
-        "a": "Yes! Use SnapDoc's specialized PDF to Excel tool to convert tabular scanned data directly into structured spreadsheet rows and columns."
+        "a": "Yes! Use JPGEASY's specialized PDF to Excel tool to convert tabular scanned data directly into structured spreadsheet rows and columns."
       }
     ]
   }

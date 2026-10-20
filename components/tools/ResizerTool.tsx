@@ -534,7 +534,7 @@ export default function ResizerTool() {
             </div>
           </div>
 
-          {/* RIGHT: SnapDoc Styled Resize Settings Panel */}
+          {/* RIGHT: JPGEASY Styled Resize Settings Panel */}
           <div className="w-full lg:w-80 xl:w-96 rounded-2xl bg-base-100 border border-base-300 p-5 shadow-lg space-y-5 shrink-0 lg:sticky lg:top-20">
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-base-200">
@@ -550,7 +550,7 @@ export default function ResizerTool() {
               </div>
             </div>
 
-            {/* Mode Segmented Tab Selector (SnapDoc native style) */}
+            {/* Mode Segmented Tab Selector (JPGEASY native style) */}
             <div className="grid grid-cols-2 p-1 rounded-xl bg-base-200/70 border border-base-300/60 gap-1">
               <button
                 type="button"

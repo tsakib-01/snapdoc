@@ -295,7 +295,7 @@ export default function CompressPdfTool() {
               {t('pdfOptimalExplanation', 'Your document is composed of clean vector text and streams with no bloated images or redundant metadata.')}
             </p>
             <p className="text-base-content/60">
-              {t('pdfOptimalPreserved', 'To preserve complete document fidelity and avoid making the file larger, SnapDoc kept your file at its exact optimal size.')}
+              {t('pdfOptimalPreserved', 'To preserve complete document fidelity and avoid making the file larger, JPGEASY kept your file at its exact optimal size.')}
             </p>
           </div>
 

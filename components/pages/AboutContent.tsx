@@ -11,10 +11,10 @@ export default function AboutContent() {
     <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 space-y-8">
       <div className="space-y-3 text-center sm:text-left">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-base-content">
-          {t('aboutTitle', 'About SnapDoc')}
+          {t('aboutTitle', 'About JPGEASY')}
         </h1>
         <p className="text-base text-base-content/70 leading-relaxed max-w-2xl">
-          {t('aboutSubtitle', 'SnapDoc was created to eliminate bloated, ad-ridden, privacy-invasive file converters.')}
+          {t('aboutSubtitle', 'JPGEASY was created to eliminate bloated, ad-ridden, privacy-invasive file converters.')}
         </p>
       </div>
 
@@ -33,7 +33,7 @@ export default function AboutContent() {
           <p>
             {t(
               'aboutMission2',
-              'SnapDoc changes that by providing a completely free, zero-storage, in-memory tool suite that runs at native machine speed.'
+              'JPGEASY changes that by providing a completely free, zero-storage, in-memory tool suite that runs at native machine speed.'
             )}
           </p>
         </div>

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     canonical: `https://snapdoc.app/${tool.slug}`,
   },
   openGraph: {
-    title: `${tool.name} - SnapDoc Tools`,
+    title: `${tool.name} - JPGEASY Tools`,
     description: tool.description,
   },
 };

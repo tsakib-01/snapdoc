@@ -37,7 +37,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Compress JPG on SnapDoc"
+        "text": "Step-by-Step: How to Compress JPG on JPGEASY"
       },
       {
         "id": "best-practices",
@@ -79,15 +79,15 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Compress JPG on SnapDoc",
+        "title": "Step-by-Step: How to Compress JPG on JPGEASY",
         "paragraphs": [
-          "SnapDoc's smart JPG compressor processes your files directly in memory with client-side acceleration, guaranteeing your private photos never get stored or cataloged on third-party servers."
+          "JPGEASY's smart JPG compressor processes your files directly in memory with client-side acceleration, guaranteeing your private photos never get stored or cataloged on third-party servers."
         ],
         "steps": [
           {
             "number": 1,
             "title": "Upload your JPG or JPEG image",
-            "text": "Drag and drop your image directly into the SnapDoc upload zone, or click Browse to select files from your computer or phone."
+            "text": "Drag and drop your image directly into the JPGEASY upload zone, or click Browse to select files from your computer or phone."
           },
           {
             "number": 2,
@@ -111,7 +111,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "title": "Best Practices for Web & Social Publishing",
         "paragraphs": [
           "For e-commerce websites and blogs, maintaining an average image weight under 150KB is essential for scoring well on Google Core Web Vitals (specifically Largest Contentful Paint).",
-          "If you are submitting images to government job portals or university application forms, always verify whether the portal specifies a maximum kilobyte limit (such as 20KB or 50KB) in addition to specific pixel dimensions. Use SnapDoc's specialized kilobyte-targeted tools to hit the exact threshold on the first try."
+          "If you are submitting images to government job portals or university application forms, always verify whether the portal specifies a maximum kilobyte limit (such as 20KB or 50KB) in addition to specific pixel dimensions. Use JPGEASY's specialized kilobyte-targeted tools to hit the exact threshold on the first try."
         ]
       }
     ],
@@ -122,11 +122,11 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Does compressing a JPG remove EXIF metadata?",
-        "a": "Yes, SnapDoc strips unnecessary camera EXIF data (such as GPS coordinates, camera model, and creation timestamps) to maximize file savings and protect your personal privacy."
+        "a": "Yes, JPGEASY strips unnecessary camera EXIF data (such as GPS coordinates, camera model, and creation timestamps) to maximize file savings and protect your personal privacy."
       },
       {
         "q": "Can I compress multiple JPG files at once?",
-        "a": "Yes, you can upload up to 10 JPG files simultaneously on SnapDoc and download all compressed files in a single batch."
+        "a": "Yes, you can upload up to 10 JPG files simultaneously on JPGEASY and download all compressed files in a single batch."
       }
     ]
   },
@@ -204,7 +204,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "id": "step-by-step-10kb",
         "title": "Step-by-Step Guide to Compress JPG to 10KB",
         "paragraphs": [
-          "Follow these simple steps using the SnapDoc Compress JPG to 10KB tool:"
+          "Follow these simple steps using the JPGEASY Compress JPG to 10KB tool:"
         ],
         "steps": [
           {
@@ -241,11 +241,11 @@ export const IMAGE_GUIDES: GuideArticle[] = [
     "faqs": [
       {
         "q": "Will my signature remain legible at 10KB?",
-        "a": "Yes. SnapDoc optimizes line sharpness specifically for signatures and official stamps so strokes and curves remain sharp and clearly identifiable."
+        "a": "Yes. JPGEASY optimizes line sharpness specifically for signatures and official stamps so strokes and curves remain sharp and clearly identifiable."
       },
       {
         "q": "What if my original photo is 5MB or larger?",
-        "a": "SnapDoc handles multi-megabyte originals effortlessly by cascading dimension scaling and quality optimization until the output lands safely under 10KB."
+        "a": "JPGEASY handles multi-megabyte originals effortlessly by cascading dimension scaling and quality optimization until the output lands safely under 10KB."
       },
       {
         "q": "Is my uploaded photo or signature saved on your servers?",
@@ -289,7 +289,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "how-to-compress-to-20kb",
-        "text": "How to Compress to 20KB on SnapDoc"
+        "text": "How to Compress to 20KB on JPGEASY"
       },
       {
         "id": "verification-checklist",
@@ -307,7 +307,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "title": "Where is the 20KB File Limit Commonly Required?",
         "paragraphs": [
           "Most registration portals mandate image files to be between 10KB and 20KB (or strictly under 20KB). Portals enforcing this include civil service application platforms, public school teacher entrance tests, visa renewal services, and digital signature certificates.",
-          "Submitting a file that is even 20.05KB will trigger automated validator failure. Using SnapDoc ensures your file stays safely between 17KB and 19.5KB, satisfying both maximum and minimum threshold criteria."
+          "Submitting a file that is even 20.05KB will trigger automated validator failure. Using JPGEASY ensures your file stays safely between 17KB and 19.5KB, satisfying both maximum and minimum threshold criteria."
         ]
       },
       {
@@ -325,7 +325,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "how-to-compress-to-20kb",
-        "title": "How to Compress to 20KB on SnapDoc",
+        "title": "How to Compress to 20KB on JPGEASY",
         "paragraphs": [
           "Follow these four quick steps:"
         ],
@@ -333,7 +333,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
           {
             "number": 1,
             "title": "Select your photo or scan",
-            "text": "Drag your image into SnapDoc's Compress JPG to 20KB tool."
+            "text": "Drag your image into JPGEASY's Compress JPG to 20KB tool."
           },
           {
             "number": 2,
@@ -454,13 +454,13 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "id": "step-by-step-guide",
         "title": "Step-by-Step: Compressing to 50KB",
         "paragraphs": [
-          "Shrinking your image to 50KB takes only three clicks on SnapDoc:"
+          "Shrinking your image to 50KB takes only three clicks on JPGEASY:"
         ],
         "steps": [
           {
             "number": 1,
             "title": "Drop your image into the tool",
-            "text": "Upload your JPG, JPEG, or PNG file into SnapDoc's Compress JPG to 50KB tool."
+            "text": "Upload your JPG, JPEG, or PNG file into JPGEASY's Compress JPG to 50KB tool."
           },
           {
             "number": 2,
@@ -489,11 +489,11 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Can I batch compress multiple photos to 50KB?",
-        "a": "Yes, SnapDoc supports batch processing, allowing you to upload and optimize multiple images at once."
+        "a": "Yes, JPGEASY supports batch processing, allowing you to upload and optimize multiple images at once."
       },
       {
         "q": "What happens if my original image is already below 50KB?",
-        "a": "SnapDoc's smart optimizer detects this and avoids recompressing unnecessarily, preserving your file's existing quality."
+        "a": "JPGEASY's smart optimizer detects this and avoids recompressing unnecessarily, preserving your file's existing quality."
       }
     ]
   },
@@ -570,13 +570,13 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "id": "how-to-compress",
         "title": "How to Compress JPG to 100KB Step-by-Step",
         "paragraphs": [
-          "Here is how to optimize your photos in under 10 seconds with SnapDoc:"
+          "Here is how to optimize your photos in under 10 seconds with JPGEASY:"
         ],
         "steps": [
           {
             "number": 1,
             "title": "Upload your image",
-            "text": "Drag and drop your high-resolution JPG or JPEG into SnapDoc's Compress JPG to 100KB tool."
+            "text": "Drag and drop your high-resolution JPG or JPEG into JPGEASY's Compress JPG to 100KB tool."
           },
           {
             "number": 2,
@@ -605,11 +605,11 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "q": "Can I compress RAW camera files directly to 100KB JPG?",
-        "a": "Convert your camera RAW file (CR2, NEF, ARW) to JPG first, then upload it to SnapDoc to instantly shrink it to 100KB."
+        "a": "Convert your camera RAW file (CR2, NEF, ARW) to JPG first, then upload it to JPGEASY to instantly shrink it to 100KB."
       },
       {
         "q": "Is there a limit on how many photos I can compress?",
-        "a": "SnapDoc allows you to optimize your images freely with no watermarks and no daily upload caps."
+        "a": "JPGEASY allows you to optimize your images freely with no watermarks and no daily upload caps."
       }
     ]
   },
@@ -626,7 +626,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-08",
     "featured": true,
     "primaryToolSlug": "compress-jpg",
-    "primaryToolName": "SnapDoc JPG Compressor",
+    "primaryToolName": "JPGEASY JPG Compressor",
     "primaryToolCtaText": "Reduce Your JPG File Size",
     "relatedToolSlugs": [
       "resize-image",
@@ -681,7 +681,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "id": "method-1-lossy-compression",
         "title": "Method 1: Smart Lossy Compression",
         "paragraphs": [
-          "Modern compressors like SnapDoc don't just compress the entire image uniformly. They use perceptual quantization to preserve sharp edges and high-contrast boundaries (such as text or facial profiles) while applying stronger compression to smooth, low-contrast areas (like clear skies or plain backgrounds). Setting quality to 80%\u201385% typically reduces file size by 65% with zero visible difference."
+          "Modern compressors like JPGEASY don't just compress the entire image uniformly. They use perceptual quantization to preserve sharp edges and high-contrast boundaries (such as text or facial profiles) while applying stronger compression to smooth, low-contrast areas (like clear skies or plain backgrounds). Setting quality to 80%\u201385% typically reduces file size by 65% with zero visible difference."
         ]
       },
       {
@@ -709,7 +709,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
         "id": "method-5-converting-to-webp",
         "title": "Method 5: Converting to Modern WebP Format",
         "paragraphs": [
-          "If your target environment supports modern formats (over 97% of modern web browsers do), converting your JPG to WebP can yield an additional 25% to 35% file size reduction at equivalent visual quality. SnapDoc provides a dedicated JPG to WebP converter for this exact purpose."
+          "If your target environment supports modern formats (over 97% of modern web browsers do), converting your JPG to WebP can yield an additional 25% to 35% file size reduction at equivalent visual quality. JPGEASY provides a dedicated JPG to WebP converter for this exact purpose."
         ]
       }
     ],
@@ -741,7 +741,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
     "updatedAt": "2026-03-05",
     "featured": false,
     "primaryToolSlug": "resize-image",
-    "primaryToolName": "SnapDoc Image Resizer",
+    "primaryToolName": "JPGEASY Image Resizer",
     "primaryToolCtaText": "Resize Your Image Now",
     "relatedToolSlugs": [
       "crop-image",
@@ -768,7 +768,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "text": "Step-by-Step: How to Resize Images on SnapDoc"
+        "text": "Step-by-Step: How to Resize Images on JPGEASY"
       },
       {
         "id": "popular-social-dimensions",
@@ -812,15 +812,15 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "step-by-step-guide",
-        "title": "Step-by-Step: How to Resize Images on SnapDoc",
+        "title": "Step-by-Step: How to Resize Images on JPGEASY",
         "paragraphs": [
-          "Resizing images with pixel precision on SnapDoc takes just a few clicks:"
+          "Resizing images with pixel precision on JPGEASY takes just a few clicks:"
         ],
         "steps": [
           {
             "number": 1,
             "title": "Upload your image",
-            "text": "Drag and drop your JPG, PNG, or WebP file into the SnapDoc Image Resizer."
+            "text": "Drag and drop your JPG, PNG, or WebP file into the JPGEASY Image Resizer."
           },
           {
             "number": 2,
@@ -855,11 +855,11 @@ export const IMAGE_GUIDES: GuideArticle[] = [
     "faqs": [
       {
         "q": "Can I resize an image without changing its aspect ratio?",
-        "a": "Yes! SnapDoc locks aspect ratio by default. Changing the width automatically calculates the exact height required to prevent distortion."
+        "a": "Yes! JPGEASY locks aspect ratio by default. Changing the width automatically calculates the exact height required to prevent distortion."
       },
       {
         "q": "Will resizing a PNG make the transparent background white?",
-        "a": "No, SnapDoc preserves full alpha transparency when resizing PNG and WebP files."
+        "a": "No, JPGEASY preserves full alpha transparency when resizing PNG and WebP files."
       },
       {
         "q": "What is the best format for resized web graphics?",
@@ -911,7 +911,7 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "converting-between-formats",
-        "text": "How to Convert Between JPG and PNG on SnapDoc"
+        "text": "How to Convert Between JPG and PNG on JPGEASY"
       },
       {
         "id": "frequently-asked-questions",
@@ -963,9 +963,9 @@ export const IMAGE_GUIDES: GuideArticle[] = [
       },
       {
         "id": "converting-between-formats",
-        "title": "How to Convert Between JPG and PNG on SnapDoc",
+        "title": "How to Convert Between JPG and PNG on JPGEASY",
         "paragraphs": [
-          "SnapDoc offers dedicated bi-directional conversion tools:",
+          "JPGEASY offers dedicated bi-directional conversion tools:",
           "To turn a photography JPG into a lossless PNG for graphic editing, use our JPG to PNG Converter.",
           "To convert heavy PNG files into lightweight JPGs with custom background color replacement for transparent areas, use our PNG to JPG Converter."
         ]

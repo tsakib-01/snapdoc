@@ -51,7 +51,7 @@ export default function GuidesIndexPage() {
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>{t('learningCenter', 'SnapDoc Learning Center')}</span>
+          <span>{t('learningCenter', 'JPGEASY Learning Center')}</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-base-content">
           {t('guidesTitle', 'Guides & How-To Articles')}

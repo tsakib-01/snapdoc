@@ -76,7 +76,7 @@ export default function Footer() {
             </div>
 
             <div className="text-xs text-base-content/50 mt-2">
-              &copy; {new Date().getFullYear()} SnapDoc. {t('allRightsReserved', 'All rights reserved.')}
+              &copy; {new Date().getFullYear()} JPGEASY. {t('allRightsReserved', 'All rights reserved.')}
             </div>
           </div>
 

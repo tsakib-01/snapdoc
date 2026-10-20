@@ -52,7 +52,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
     screenshot: `${baseUrl}/logo.png`,
     author: {
       '@type': 'Organization',
-      name: 'SnapDoc',
+      name: 'JPGEASY',
       url: baseUrl,
       logo: `${baseUrl}/logo.png`,
     },

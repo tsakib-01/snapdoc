@@ -151,7 +151,7 @@ function generateDigitalSealDataUrl(signerName: string, reason: string, certId: 
 
   ctx.fillStyle = '#059669';
   ctx.font = 'bold 9px sans-serif';
-  ctx.fillText('SNAPDOC TRUST ENGINE • ISO 32000 AUDIT SECURE', 112, 134);
+  ctx.fillText('JPGEASY TRUST ENGINE • ISO 32000 AUDIT SECURE', 112, 134);
 
   return canvas.toDataURL('image/png');
 }
@@ -992,7 +992,7 @@ export default function SignPdfTool() {
                     <span>{t('signWithDigitalSeal', 'Sign with digital seal')}</span>
                   </button>
                   <p className="text-xs text-base-content/60 pt-1">{t('signWithDigitalSealDesc', 'Add a digital seal with audit trail certificate.')}</p>
-                  <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ {t('freeWithSnapDoc', '100% Free with SnapDoc')}</div>
+                  <div className="text-[11px] text-emerald-600 font-semibold pt-1">✨ {t('freeWithJPGEASY', '100% Free with JPGEASY')}</div>
                 </div>
               </div>
             </div>

@@ -25,7 +25,7 @@ export default function TermsContent() {
           <p>
             {t(
               'termsSec1P1',
-              'By accessing or using SnapDoc, you agree to comply with and be bound by these Terms of Service. If you do not agree, please do not use our services.'
+              'By accessing or using JPGEASY, you agree to comply with and be bound by these Terms of Service. If you do not agree, please do not use our services.'
             )}
           </p>
         </section>
@@ -37,7 +37,7 @@ export default function TermsContent() {
           <p>
             {t(
               'termsSec2P1',
-              'SnapDoc provides free image and PDF manipulation tools for personal, academic, and commercial purposes. You agree not to upload malicious software, illegal material, or use automated scrapers that excessively load our servers.'
+              'JPGEASY provides free image and PDF manipulation tools for personal, academic, and commercial purposes. You agree not to upload malicious software, illegal material, or use automated scrapers that excessively load our servers.'
             )}
           </p>
         </section>
@@ -49,7 +49,7 @@ export default function TermsContent() {
           <p>
             {t(
               'termsSec3P1',
-              'The services are provided "as is" without warranty of any kind. While we strive for high conversion accuracy and file fidelity, SnapDoc is not liable for data loss or discrepancies in processed files. Always retain a local backup of your original files.'
+              'The services are provided "as is" without warranty of any kind. While we strive for high conversion accuracy and file fidelity, JPGEASY is not liable for data loss or discrepancies in processed files. Always retain a local backup of your original files.'
             )}
           </p>
         </section>

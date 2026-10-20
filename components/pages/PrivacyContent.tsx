@@ -31,7 +31,7 @@ export default function PrivacyContent() {
           <p>
             {t(
               'privacySec1P1',
-              'SnapDoc is designed around a strict ephemeral in-memory architecture. When you upload an image or PDF document to any of our tools, the file is temporarily processed in volatile RAM buffers solely to perform the requested optimization, conversion, or transformation.'
+              'JPGEASY is designed around a strict ephemeral in-memory architecture. When you upload an image or PDF document to any of our tools, the file is temporarily processed in volatile RAM buffers solely to perform the requested optimization, conversion, or transformation.'
             )}
           </p>
           <p>
@@ -63,7 +63,7 @@ export default function PrivacyContent() {
           <p>
             {t(
               'privacySec3P1',
-              'SnapDoc is completely free to use without creating an account, registering an email address, or submitting personal information. We do not track individual users across sessions.'
+              'JPGEASY is completely free to use without creating an account, registering an email address, or submitting personal information. We do not track individual users across sessions.'
             )}
           </p>
         </section>

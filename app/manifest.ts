@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'SnapDoc - Free Online Image & PDF Tools',
-    short_name: 'SnapDoc',
+    name: 'JPGEASY - Free Online Image & PDF Tools',
+    short_name: 'JPGEASY',
     description: 'Ultra-fast, privacy-first online tools to compress JPG, resize images, convert Excel to PDF, merge, split, and sign PDFs with zero storage.',
     start_url: '/',
     display: 'standalone',

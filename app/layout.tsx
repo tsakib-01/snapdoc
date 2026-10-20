@@ -5,7 +5,7 @@ import Footer from '@/components/layout/Footer';
 import ConnectionStatusBanner from '@/components/ui/ConnectionStatusBanner';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://snapdoc.app'),
+  metadataBase: new URL('https://jpgeasy.com'),
   title: {
     default: 'JPGEASY - Free Online Image & PDF Tools | Compress, Resize, Convert',
     template: '%s | JPGEASY Tools',
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description:
     'Ultra-fast, privacy-first online tools to compress JPG to 10KB/20KB/50KB/100KB, resize images, convert Excel to PDF, merge & split PDFs, e-sign documents, and chat with PDF. 100% free with in-memory processing and zero permanent storage.',
   alternates: {
-    canonical: 'https://snapdoc.app',
+    canonical: 'https://jpgeasy.com',
   },
   keywords: [
     'compress jpg',
@@ -64,13 +64,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://snapdoc.app',
+    url: 'https://jpgeasy.com',
     siteName: 'JPGEASY',
     title: 'JPGEASY - Free Online Image & PDF Utilities',
     description: 'Compress, resize, convert, e-sign, and optimize images & PDFs in memory with zero permanent storage.',
     images: [
       {
-        url: 'https://snapdoc.app/logo.png',
+        url: 'https://jpgeasy.com/logo.png',
         width: 512,
         height: 512,
         alt: 'JPGEASY - Free Online Image and PDF Tools',
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'JPGEASY - Free Online Image & PDF Utilities',
     description: 'Compress, resize, convert, e-sign, and optimize images & PDFs in memory with zero permanent storage.',
-    images: ['https://snapdoc.app/logo.png'],
+    images: ['https://jpgeasy.com/logo.png'],
     creator: '@jpgeasy',
     site: '@jpgeasy',
   },
@@ -111,14 +111,14 @@ const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'JPGEASY',
-  url: 'https://snapdoc.app',
-  logo: 'https://snapdoc.app/logo.png',
+  url: 'https://jpgeasy.com',
+  logo: 'https://jpgeasy.com/logo.png',
   description: 'Ultra-fast, privacy-first online tools for image and PDF compression, conversion, e-signing, and organization.',
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer support',
     email: 'support@jpgeasy.com',
-    url: 'https://snapdoc.app/about',
+    url: 'https://jpgeasy.com/about',
   },
 };
 
@@ -127,11 +127,11 @@ const websiteSchema = {
   '@type': 'WebSite',
   name: 'JPGEASY',
   alternateName: ['JPGEASY Tools', 'JPGEASY App'],
-  url: 'https://snapdoc.app',
+  url: 'https://jpgeasy.com',
   description: 'Free online image and PDF processing suite with in-memory execution.',
   potentialAction: {
     '@type': 'SearchAction',
-    target: 'https://snapdoc.app/tools?q={search_term_string}',
+    target: 'https://jpgeasy.com/tools?q={search_term_string}',
     'query-input': 'required name=search_term_string',
   },
 };
@@ -140,7 +140,7 @@ const softwareApplicationSchema = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'JPGEASY',
-  url: 'https://snapdoc.app',
+  url: 'https://jpgeasy.com',
   applicationCategory: 'MultimediaApplication',
   operatingSystem: 'All modern web browsers (Chrome, Edge, Safari, Firefox)',
   browserRequirements: 'Requires JavaScript and HTML5 Canvas support.',

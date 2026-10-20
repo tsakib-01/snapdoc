@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   description:
     'Browse 30+ free, privacy-first online tools. Compress JPG to exact sizes (10KB, 20KB, 50KB), convert Excel to PDF, sign documents, chat with PDF, resize, crop, merge, and split files.',
   alternates: {
-    canonical: 'https://snapdoc.app/tools',
+    canonical: 'https://jpgeasy.com/tools',
   },
   openGraph: {
     title: 'All Free Image & PDF Tools | JPGEASY',
     description:
       'Explore 30+ free utilities for PDF and image compression, conversion, editing, and e-signing. 100% private, client-side processing.',
-    url: 'https://snapdoc.app/tools',
+    url: 'https://jpgeasy.com/tools',
     siteName: 'JPGEASY',
     images: [
       {

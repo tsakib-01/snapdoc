@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Extract PDF Pages Online - Select & Save Specific Pages',
   description: 'Visually select and extract specific pages from your PDF file. Download as a single PDF or a ZIP archive.',
   alternates: {
-    canonical: 'https://snapdoc.app/extract-pdf-pages',
+    canonical: 'https://jpgeasy.com/extract-pdf-pages',
   },
 };
 

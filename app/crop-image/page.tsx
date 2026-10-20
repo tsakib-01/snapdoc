@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: tool.description,
   keywords: tool.keywords,
   alternates: {
-    canonical: `https://snapdoc.app/${tool.slug}`,
+    canonical: `https://jpgeasy.com/${tool.slug}`,
   },
   openGraph: {
     title: `${tool.name} - JPGEASY Tools`,

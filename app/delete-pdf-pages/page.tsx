@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Delete PDF Pages Online - Remove Unwanted Pages',
   description: 'Visually select and remove unwanted or blank pages from any PDF document in seconds.',
   alternates: {
-    canonical: 'https://snapdoc.app/delete-pdf-pages',
+    canonical: 'https://jpgeasy.com/delete-pdf-pages',
   },
 };
 

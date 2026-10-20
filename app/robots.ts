@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/'],
     },
-    sitemap: 'https://snapdoc.app/sitemap.xml',
-    host: 'https://snapdoc.app',
+    sitemap: 'https://jpgeasy.com/sitemap.xml',
+    host: 'https://jpgeasy.com',
   };
 }

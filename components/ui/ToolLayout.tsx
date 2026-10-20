@@ -29,7 +29,7 @@ export default function ToolLayout({ tool, children, isWide = false, noCardWrapp
 
   const relatedGuides = getRelatedGuidesForTool(tool.slug, 3);
 
-  const baseUrl = 'https://snapdoc.app';
+  const baseUrl = 'https://jpgeasy.com';
   const toolUrl = `${baseUrl}/${tool.slug}`;
 
   // Structured Data Schema.org Objects for Google Rich Results

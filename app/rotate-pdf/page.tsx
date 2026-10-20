@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Rotate PDF Pages Online - Rotate All or Individual Pages',
   description: 'Rotate PDF pages 90, 180, or 270 degrees with live visual page previews. Save and download permanently.',
   alternates: {
-    canonical: 'https://snapdoc.app/rotate-pdf',
+    canonical: 'https://jpgeasy.com/rotate-pdf',
   },
 };
 

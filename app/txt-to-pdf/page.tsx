@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'TXT & Text to PDF Converter - Free Online PDF Generator',
   description: 'Convert plain text files or pasted text into styled, formatted PDF documents.',
   alternates: {
-    canonical: 'https://snapdoc.app/txt-to-pdf',
+    canonical: 'https://jpgeasy.com/txt-to-pdf',
   },
 };
 

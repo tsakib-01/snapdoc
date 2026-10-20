@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Terms of Service - JPGEASY',
   description: 'Terms and conditions for using JPGEASY online image and PDF tools.',
   alternates: {
-    canonical: 'https://snapdoc.app/terms',
+    canonical: 'https://jpgeasy.com/terms',
   },
 };
 

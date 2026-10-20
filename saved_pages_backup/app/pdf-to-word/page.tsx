@@ -8,12 +8,12 @@ export const metadata: Metadata = {
   description: 'Convert PDF documents to editable Microsoft Word (.docx) with 100% layout and font preservation, full Bangla & Indic conjunct support, tables, and images.',
   keywords: ['pdf to word', 'convert pdf to word', 'pdf to docx', 'bangla pdf to word', 'exact layout pdf to word', 'multilingual pdf converter', 'editable word converter'],
   alternates: {
-    canonical: 'https://snapdoc.app/pdf-to-word',
+    canonical: 'https://jpgeasy.com/pdf-to-word',
   },
   openGraph: {
     title: 'PDF to Word Converter (.docx) - SnapDoc Tools',
     description: 'Convert PDF documents to editable Microsoft Word (.docx) with 100% layout and font preservation.',
-    url: 'https://snapdoc.app/pdf-to-word',
+    url: 'https://jpgeasy.com/pdf-to-word',
   },
   twitter: {
     card: 'summary_large_image',

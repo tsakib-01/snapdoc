@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'About Us - JPGEASY Image & PDF Tools',
   description: 'Learn more about JPGEASY, providing lightning-fast, privacy-first file utilities.',
   alternates: {
-    canonical: 'https://snapdoc.app/about',
+    canonical: 'https://jpgeasy.com/about',
   },
 };
 

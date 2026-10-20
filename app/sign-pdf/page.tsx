@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Sign PDF Online - Free Digital eSignature Tool',
   description: 'Draw, type, or upload your signature to sign PDF contracts and documents securely online for free.',
   alternates: {
-    canonical: 'https://snapdoc.app/sign-pdf',
+    canonical: 'https://jpgeasy.com/sign-pdf',
   },
 };
 

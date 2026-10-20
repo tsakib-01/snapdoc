@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'PDF to PNG Converter - Extract High-Resolution PNG Images',
   description: 'Convert PDF pages into high-quality PNG images online. Download individual pages or all pages as a ZIP archive.',
   alternates: {
-    canonical: 'https://snapdoc.app/pdf-to-png',
+    canonical: 'https://jpgeasy.com/pdf-to-png',
   },
 };
 

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy - 100% In-Memory Processing Guarantee',
   description: 'Learn about our strict zero file storage policy and privacy architecture.',
   alternates: {
-    canonical: 'https://snapdoc.app/privacy',
+    canonical: 'https://jpgeasy.com/privacy',
   },
 };
 

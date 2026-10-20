@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Add Page Numbers to PDF - Online PDF Numbering Tool',
   description: 'Easily insert page numbers into your PDF with custom placement, typography, and numbering formats.',
   alternates: {
-    canonical: 'https://snapdoc.app/add-page-numbers-to-pdf',
+    canonical: 'https://jpgeasy.com/add-page-numbers-to-pdf',
   },
 };
 

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'HTML to PDF Converter - Convert Web Snippets & Code to PDF',
   description: 'Convert HTML code snippets and web templates into formatted PDF documents online for free.',
   alternates: {
-    canonical: 'https://snapdoc.app/html-to-pdf',
+    canonical: 'https://jpgeasy.com/html-to-pdf',
   },
 };
 

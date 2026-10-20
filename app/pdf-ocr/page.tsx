@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   title: 'PDF OCR & Text Extractor - Convert Scanned PDF to Searchable Text',
   description: 'Turn image-based and scanned PDFs into searchable, selectable, and editable machine-readable text online for free.',
   alternates: {
-    canonical: 'https://snapdoc.app/pdf-ocr',
+    canonical: 'https://jpgeasy.com/pdf-ocr',
   },
 };
 

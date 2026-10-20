@@ -3,7 +3,7 @@ import { TOOLS } from '@/lib/config/tools';
 import { GUIDES } from '@/lib/config/guides';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://snapdoc.app';
+  const baseUrl = 'https://jpgeasy.com';
   const lastModified = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [

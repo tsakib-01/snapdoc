@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Watermark PDF Online - Add Text or Image Logo Watermark',
   description: 'Add custom text stamps or image logos to your PDF with adjustable transparency and rotation.',
   alternates: {
-    canonical: 'https://snapdoc.app/watermark-pdf',
+    canonical: 'https://jpgeasy.com/watermark-pdf',
   },
 };
 

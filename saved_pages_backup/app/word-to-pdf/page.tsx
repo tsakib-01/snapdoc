@@ -8,12 +8,12 @@ export const metadata: Metadata = {
   description: 'Convert Microsoft Word (.docx, .doc) documents into high-resolution, print-ready PDF files with exact typography, layouts, tables, and multilingual font rendering.',
   keywords: ['word to pdf', 'docx to pdf', 'convert word to pdf', 'bangla word to pdf', 'exact font word to pdf', 'high quality word to pdf', 'doc to pdf converter'],
   alternates: {
-    canonical: 'https://snapdoc.app/word-to-pdf',
+    canonical: 'https://jpgeasy.com/word-to-pdf',
   },
   openGraph: {
     title: 'Word to PDF Converter - SnapDoc Tools',
     description: 'Convert Microsoft Word (.docx, .doc) documents into high-resolution, print-ready PDF files.',
-    url: 'https://snapdoc.app/word-to-pdf',
+    url: 'https://jpgeasy.com/word-to-pdf',
   },
   twitter: {
     card: 'summary_large_image',

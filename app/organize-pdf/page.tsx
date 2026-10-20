@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Organize PDF Pages Online - Visual Reorder, Delete & Rotate',
   description: 'View real-time page previews of your PDF to visually reorder, rotate, delete, or organize pages with zero uploads stored.',
   alternates: {
-    canonical: 'https://snapdoc.app/organize-pdf',
+    canonical: 'https://jpgeasy.com/organize-pdf',
   },
 };
 

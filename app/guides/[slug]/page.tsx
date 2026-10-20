@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const canonicalUrl = `https://snapdoc.app/guides/${guide.slug}`;
+  const canonicalUrl = `https://jpgeasy.com/guides/${guide.slug}`;
 
   return {
     title: guide.metaTitle,
@@ -70,7 +70,7 @@ export default async function GuideArticlePage({ params }: PageProps) {
     .map((s) => getToolBySlug(s))
     .filter((t): t is NonNullable<typeof t> => Boolean(t));
 
-  const baseUrl = 'https://snapdoc.app';
+  const baseUrl = 'https://jpgeasy.com';
   const guideUrl = `${baseUrl}/guides/${guide.slug}`;
 
   // Article Schema

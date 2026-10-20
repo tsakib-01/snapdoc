@@ -18,14 +18,13 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 lg:gap-4">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3 sm:gap-6 min-w-0 shrink-0">
-            <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+            <Link href="/" className="flex items-center group shrink-0" aria-label="JPGEasy Home">
+              <div className="h-8 sm:h-9 w-auto flex items-center justify-center group-hover:opacity-90 transition-opacity shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="SnapDoc Logo" className="w-full h-full object-contain" />
+                <img src="/logo-light.png" alt="JPGEasy Logo" className="h-8 sm:h-9 w-auto object-contain logo-light" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-dark.png" alt="JPGEasy Logo" className="h-8 sm:h-9 w-auto object-contain logo-dark" />
               </div>
-              <span className="font-bold text-lg leading-tight tracking-tight text-base-content group-hover:text-primary transition-colors whitespace-nowrap">
-                Snap<span className="text-primary">Doc</span>
-              </span>
             </Link>
 
             {/* Desktop Navigation Links */}

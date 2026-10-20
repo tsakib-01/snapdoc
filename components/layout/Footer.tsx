@@ -56,14 +56,13 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
           {/* Brand Info */}
           <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shrink-0">
+            <Link href="/" className="flex items-center shrink-0" aria-label="JPGEasy Home">
+              <div className="h-8 w-auto flex items-center shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="SnapDoc Logo" className="w-full h-full object-contain" />
+                <img src="/logo-light.png" alt="JPGEasy Logo" className="h-8 w-auto object-contain logo-light" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-dark.png" alt="JPGEasy Logo" className="h-8 w-auto object-contain logo-dark" />
               </div>
-              <span className="font-bold text-lg tracking-tight">
-                Snap<span className="text-primary">Doc</span>
-              </span>
             </Link>
             <p className="text-xs text-base-content/70 leading-relaxed max-w-sm">
               {t(

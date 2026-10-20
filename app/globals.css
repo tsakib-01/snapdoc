@@ -133,6 +133,28 @@ body {
   color: #6ee7b7 !important;
 }
 
+/* Light / Dark Mode Logo Switcher */
+.logo-dark {
+  display: none !important;
+}
+.logo-light {
+  display: inline-block !important;
+}
+
+[data-theme='dark'] .logo-light {
+  display: none !important;
+}
+[data-theme='dark'] .logo-dark {
+  display: inline-block !important;
+}
+
+[data-theme='light'] .logo-light {
+  display: inline-block !important;
+}
+[data-theme='light'] .logo-dark {
+  display: none !important;
+}
+
 /* Google Translate widget reset to keep website design 100% clean and native */
 .goog-te-banner-frame,
 .goog-te-banner-frame.skiptranslate,

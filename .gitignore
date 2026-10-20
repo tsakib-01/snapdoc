@@ -47,3 +47,6 @@ uploads/
 *.xls
 ~$*
 
+# raw design assets
+New Logo/
+

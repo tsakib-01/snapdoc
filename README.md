@@ -1,8 +1,8 @@
-# SnapDoc 🚀
+# JPGEASY 🚀
 
 > High-Speed, Privacy-First Online Image & PDF Tools.
 
-SnapDoc is a modern, responsive web application for image and PDF processing. All file operations run **100% in-memory** with zero permanent disk storage, zero databases, and complete privacy.
+JPGEASY is a modern, responsive web application for image and PDF processing. All file operations run **100% in-memory** with zero permanent disk storage, zero databases, and complete privacy.
 
 ---
 

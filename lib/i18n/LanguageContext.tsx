@@ -1480,6 +1480,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Multi-language is turned off: enforce English and clean up legacy language preferences
     try {
+      localStorage.removeItem('jpgeasy_lang');
       localStorage.removeItem('snapdoc_lang');
     } catch (_) {}
     setLanguageState('en');
@@ -1498,7 +1499,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const setLanguage = (code: string) => {
     setLanguageState(code);
-    localStorage.setItem('snapdoc_lang', code);
+    localStorage.setItem('jpgeasy_lang', code);
     applyHtmlLang(code);
   };
 

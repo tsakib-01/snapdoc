@@ -117,7 +117,7 @@ const organizationSchema = {
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'customer support',
-    email: 'support@snapdoc.app',
+    email: 'support@jpgeasy.com',
     url: 'https://snapdoc.app/about',
   },
 };
@@ -176,9 +176,24 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const savedTheme = localStorage.getItem('theme');
+                // Instantly purge legacy service workers and old caches
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    for (var i = 0; i < regs.length; i++) {
+                      regs[i].unregister();
+                    }
+                  }).catch(function() {});
+                }
+                if ('caches' in window) {
+                  caches.keys().then(function(keys) {
+                    for (var j = 0; j < keys.length; j++) {
+                      caches.delete(keys[j]);
+                    }
+                  }).catch(function() {});
+                }
+                var savedTheme = localStorage.getItem('theme');
                 document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
-                const savedLang = localStorage.getItem('snapdoc_lang');
+                var savedLang = localStorage.getItem('jpgeasy_lang') || localStorage.getItem('snapdoc_lang');
                 if (savedLang) {
                   document.documentElement.setAttribute('lang', savedLang);
                   document.documentElement.setAttribute('dir', savedLang === 'ar' ? 'rtl' : 'ltr');

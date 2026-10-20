@@ -11,18 +11,20 @@ export default function ConnectionStatusBanner() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Purge any legacy service worker and cached files
+    // Register JPGEASY offline service worker so refreshing stays on the page instead of browser dino page
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        for (const registration of registrations) {
-          registration.unregister().catch(() => {});
-        }
-      }).catch(() => {});
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.debug('ServiceWorker registration optional error:', err);
+      });
     }
+
+    // Clean up any legacy snapdoc cache
     if ('caches' in window) {
       caches.keys().then((names) => {
         for (const name of names) {
-          caches.delete(name).catch(() => {});
+          if (name.includes('snapdoc')) {
+            caches.delete(name).catch(() => {});
+          }
         }
       }).catch(() => {});
     }
